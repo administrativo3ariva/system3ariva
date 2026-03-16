@@ -41,15 +41,11 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border p-4">
         {!collapsed && (
-          <div className="flex items-center gap-2">
-            <Building2 className="h-6 w-6 text-sidebar-primary" />
-            <div>
-              <h1 className="font-display text-sm font-bold text-sidebar-foreground">3A Riva</h1>
-              <p className="text-[10px] text-sidebar-foreground/60">Investimentos</p>
-            </div>
+          <div className="flex items-center justify-center">
+            <img src={logo} alt="3A Riva Investimentos" className="h-10 object-contain" />
           </div>
         )}
-        {collapsed && <Building2 className="h-6 w-6 text-sidebar-primary mx-auto" />}
+        {collapsed && <img src={logo} alt="3A Riva" className="h-6 object-contain mx-auto" />}
       </SidebarHeader>
 
       <SidebarContent>
