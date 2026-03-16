@@ -1,4 +1,5 @@
-import { Package, BarChart3, ArrowLeftRight, FileUp, Building2, ClipboardList, PlusCircle, Users, LayoutDashboard } from 'lucide-react';
+import { Package, BarChart3, ArrowLeftRight, FileUp, ClipboardList, PlusCircle, Users, LayoutDashboard } from 'lucide-react';
+import logo from '@/assets/Logo.png';
 import { useLocation } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import { useApp } from '@/contexts/AppContext';
