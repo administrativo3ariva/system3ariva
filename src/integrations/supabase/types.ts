@@ -14,7 +14,241 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assets: {
+        Row: {
+          acquisition_date: string | null
+          branch: string
+          category: string
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          name: string
+          quantity: number
+          total_price: number
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          acquisition_date?: string | null
+          branch: string
+          category: string
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          acquisition_date?: string | null
+          branch?: string
+          category?: string
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      collaborators: {
+        Row: {
+          active: boolean
+          created_at: string
+          department: string
+          id: string
+          name: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          department: string
+          id?: string
+          name: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          department?: string
+          id?: string
+          name?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      nf_items: {
+        Row: {
+          id: string
+          name: string
+          nf_upload_id: string
+          quantity: number
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          id?: string
+          name: string
+          nf_upload_id: string
+          quantity: number
+          total_price?: number
+          unit_price?: number
+        }
+        Update: {
+          id?: string
+          name?: string
+          nf_upload_id?: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nf_items_nf_upload_id_fkey"
+            columns: ["nf_upload_id"]
+            isOneToOne: false
+            referencedRelation: "nf_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nf_uploads: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: string
+          status: string
+          supplier: string | null
+          total_value: number | null
+          updated_at: string
+          upload_date: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          id?: string
+          status?: string
+          supplier?: string | null
+          total_value?: number | null
+          updated_at?: string
+          upload_date?: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          status?: string
+          supplier?: string | null
+          total_value?: number | null
+          updated_at?: string
+          upload_date?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          min_stock: number | null
+          name: string
+          quantity: number
+          total_price: number
+          unit: string
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          min_stock?: number | null
+          name: string
+          quantity?: number
+          total_price?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          min_stock?: number | null
+          name?: string
+          quantity?: number
+          total_price?: number
+          unit?: string
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      stock_movements: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          product_id: string
+          product_name: string
+          quantity: number
+          responsible: string | null
+          type: string
+          unit: string
+          user: string
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          product_id: string
+          product_name: string
+          quantity: number
+          responsible?: string | null
+          type: string
+          unit?: string
+          user?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          product_id?: string
+          product_name?: string
+          quantity?: number
+          responsible?: string | null
+          type?: string
+          unit?: string
+          user?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
