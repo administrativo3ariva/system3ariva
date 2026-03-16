@@ -132,7 +132,7 @@ export default function StockMovements() {
                 {form.type === 'saida' && (
                   <div className="grid gap-2">
                     <Label>Responsável pela Retirada</Label>
-                    <Select value={form.responsible} onValueChange={v => setForm(f => ({ ...f, responsible: v }))}>
+                    <Select value={form.responsible || undefined} onValueChange={v => setForm(f => ({ ...f, responsible: v }))}>
                       <SelectTrigger><SelectValue placeholder="Selecione o responsável" /></SelectTrigger>
                       <SelectContent>
                         {activeCollabs.map(c => <SelectItem key={c.id} value={c.name}>{c.name} — {c.unit}</SelectItem>)}
