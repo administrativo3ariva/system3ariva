@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Plus, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 import { useApp } from '@/contexts/AppContext';
 import { BranchBadge } from '@/components/BranchBadge';
 import { StockMovement, STOCK_UNITS, StockUnit } from '@/lib/types';
