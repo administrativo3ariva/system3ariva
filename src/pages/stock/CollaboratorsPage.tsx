@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Plus, UserCheck, UserX, Pencil } from 'lucide-react';
-import { useApp } from '@/contexts/AppContext';
-import { Collaborator, STOCK_UNITS, StockUnit } from '@/lib/types';
+import { useCollaborators, useAddCollaborator, useUpdateCollaborator } from '@/hooks/use-collaborators';
+import { STOCK_UNITS, StockUnit } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,40 +11,39 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BranchBadge } from '@/components/BranchBadge';
 import { Switch } from '@/components/ui/switch';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CollaboratorsPage() {
-  const { collaborators, setCollaborators } = useApp();
+  const { data: collaborators = [], isLoading } = useCollaborators();
+  const addCollaborator = useAddCollaborator();
+  const updateCollaborator = useUpdateCollaborator();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', unit: 'BH-Matriz' as StockUnit, department: '' });
 
   const handleSave = () => {
     if (editId) {
-      setCollaborators(prev => prev.map(c => c.id === editId ? { ...c, name: form.name, unit: form.unit, department: form.department } : c));
+      updateCollaborator.mutate({ id: editId, name: form.name, unit: form.unit, department: form.department }, {
+        onSuccess: () => { setForm({ name: '', unit: 'BH-Matriz', department: '' }); setEditId(null); setDialogOpen(false); }
+      });
     } else {
-      const newCollab: Collaborator = {
-        id: Date.now().toString(),
-        name: form.name,
-        unit: form.unit,
-        department: form.department,
-        active: true,
-      };
-      setCollaborators(prev => [...prev, newCollab]);
+      addCollaborator.mutate({ name: form.name, unit: form.unit, department: form.department, active: true }, {
+        onSuccess: () => { setForm({ name: '', unit: 'BH-Matriz', department: '' }); setDialogOpen(false); }
+      });
     }
-    setForm({ name: '', unit: 'BH-Matriz', department: '' });
-    setEditId(null);
-    setDialogOpen(false);
   };
 
-  const startEdit = (c: Collaborator) => {
-    setForm({ name: c.name, unit: c.unit, department: c.department });
+  const startEdit = (c: typeof collaborators[0]) => {
+    setForm({ name: c.name, unit: c.unit as StockUnit, department: c.department });
     setEditId(c.id);
     setDialogOpen(true);
   };
 
-  const toggleActive = (id: string) => {
-    setCollaborators(prev => prev.map(c => c.id === id ? { ...c, active: !c.active } : c));
+  const toggleActive = (c: typeof collaborators[0]) => {
+    updateCollaborator.mutate({ id: c.id, active: !c.active });
   };
+
+  if (isLoading) return <div className="space-y-4 p-6">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -116,7 +115,7 @@ export default function CollaboratorsPage() {
                   }
                 </TableCell>
                 <TableCell>
-                  <Switch checked={c.active} onCheckedChange={() => toggleActive(c.id)} />
+                  <Switch checked={c.active} onCheckedChange={() => toggleActive(c)} />
                 </TableCell>
                 <TableCell>
                   <Button variant="ghost" size="sm" onClick={() => startEdit(c)}>

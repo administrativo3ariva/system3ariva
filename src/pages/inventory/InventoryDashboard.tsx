@@ -1,22 +1,25 @@
 import { DollarSign, Building2, Layers, Monitor } from 'lucide-react';
-import { useApp } from '@/contexts/AppContext';
+import { useAssets } from '@/hooks/use-assets';
 import { KpiCard } from '@/components/KpiCard';
 import { BranchBadge } from '@/components/BranchBadge';
 import { BRANCH_LABELS, Branch, ALL_BRANCHES } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function InventoryDashboard() {
-  const { assets } = useApp();
+  const { data: assets = [], isLoading } = useAssets();
 
-  const totalValue = assets.reduce((s, a) => s + a.totalPrice, 0);
+  if (isLoading) return <div className="space-y-4 p-6">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}</div>;
+
+  const totalValue = assets.reduce((s, a) => s + Number(a.total_price), 0);
   const totalItems = assets.length;
 
   const byBranch = assets.reduce((acc, a) => {
-    acc[a.branch] = (acc[a.branch] || 0) + a.totalPrice;
+    acc[a.branch] = (acc[a.branch] || 0) + Number(a.total_price);
     return acc;
   }, {} as Record<string, number>);
 
   const byCategory = assets.reduce((acc, a) => {
-    acc[a.category] = (acc[a.category] || 0) + a.totalPrice;
+    acc[a.category] = (acc[a.category] || 0) + Number(a.total_price);
     return acc;
   }, {} as Record<string, number>);
 
@@ -37,7 +40,6 @@ export default function InventoryDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* By Branch */}
         <div className="bg-card rounded-lg border p-5">
           <h2 className="section-title text-base mb-4">Patrimônio por Filial</h2>
           <div className="space-y-3">
@@ -49,7 +51,7 @@ export default function InventoryDashboard() {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-accent rounded-full" style={{ width: `${(val / totalValue) * 100}%` }} />
+                    <div className="h-full bg-accent rounded-full" style={{ width: `${totalValue > 0 ? (val / totalValue) * 100 : 0}%` }} />
                   </div>
                   <span className="text-sm font-medium w-28 text-right">R$ {val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                 </div>
@@ -58,7 +60,6 @@ export default function InventoryDashboard() {
           </div>
         </div>
 
-        {/* By Category */}
         <div className="bg-card rounded-lg border p-5">
           <h2 className="section-title text-base mb-4">Distribuição por Categoria</h2>
           <div className="space-y-3">
@@ -67,7 +68,7 @@ export default function InventoryDashboard() {
                 <span className="text-sm">{cat}</span>
                 <div className="flex items-center gap-3">
                   <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full bg-primary rounded-full" style={{ width: `${(val / totalValue) * 100}%` }} />
+                    <div className="h-full bg-primary rounded-full" style={{ width: `${totalValue > 0 ? (val / totalValue) * 100 : 0}%` }} />
                   </div>
                   <span className="text-sm font-medium w-28 text-right">R$ {val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                 </div>

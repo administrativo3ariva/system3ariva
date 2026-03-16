@@ -1,43 +1,42 @@
 import { useState } from 'react';
 import { Upload, FileText, Check, X, Eye } from 'lucide-react';
-import { useApp } from '@/contexts/AppContext';
-import { NfUpload, NfItem } from '@/lib/types';
+import { useNfUploads, useAddNfUpload, useUpdateNfUpload } from '@/hooks/use-nf-uploads';
+import type { DbNfUpload } from '@/hooks/use-nf-uploads';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function NfUploadPage() {
-  const { nfUploads, setNfUploads } = useApp();
-  const [previewNf, setPreviewNf] = useState<NfUpload | null>(null);
+  const { data: nfUploads = [], isLoading } = useNfUploads();
+  const addNfUpload = useAddNfUpload();
+  const updateNfUpload = useUpdateNfUpload();
+  const [previewNf, setPreviewNf] = useState<DbNfUpload | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
   const handleUpload = () => {
-    // Simulates OCR extraction
-    const newNf: NfUpload = {
-      id: Date.now().toString(),
-      fileName: `NF-${Math.floor(Math.random() * 9000 + 1000)}.pdf`,
-      uploadDate: new Date().toISOString().split('T')[0],
+    addNfUpload.mutate({
+      file_name: `NF-${Math.floor(Math.random() * 9000 + 1000)}.pdf`,
+      upload_date: new Date().toISOString().split('T')[0],
       status: 'pendente',
       supplier: 'Fornecedor Simulado',
-      totalValue: 523.40,
+      total_value: 523.40,
       items: [
-        { name: 'Produto extraído via OCR', quantity: 10, unitPrice: 52.34, totalPrice: 523.40 },
+        { name: 'Produto extraído via OCR', quantity: 10, unit_price: 52.34, total_price: 523.40 },
       ],
-    };
-    setNfUploads(prev => [newNf, ...prev]);
-    setPreviewNf(newNf);
+    });
   };
 
   const handleApprove = (id: string) => {
-    setNfUploads(prev => prev.map(nf => nf.id === id ? { ...nf, status: 'aprovado' as const } : nf));
+    updateNfUpload.mutate({ id, status: 'aprovado' });
     setPreviewNf(null);
   };
 
   const handleReject = (id: string) => {
-    setNfUploads(prev => prev.map(nf => nf.id === id ? { ...nf, status: 'rejeitado' as const } : nf));
+    updateNfUpload.mutate({ id, status: 'rejeitado' });
     setPreviewNf(null);
   };
 
@@ -47,6 +46,8 @@ export default function NfUploadPage() {
     return <Badge variant="secondary">Pendente</Badge>;
   };
 
+  if (isLoading) return <div className="space-y-4 p-6">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>;
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -54,7 +55,6 @@ export default function NfUploadPage() {
         <p className="text-sm text-muted-foreground">Faça upload de NFs para extração automática via OCR</p>
       </div>
 
-      {/* Upload Area */}
       <div
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
           dragOver ? 'border-accent bg-accent/5' : 'border-border hover:border-accent/50'
@@ -69,7 +69,6 @@ export default function NfUploadPage() {
         <p className="text-xs text-muted-foreground mt-1">PDF ou imagem — extração automática via OCR</p>
       </div>
 
-      {/* NFs List */}
       <div className="bg-card rounded-lg border overflow-x-auto">
         <Table>
           <TableHeader>
@@ -87,12 +86,12 @@ export default function NfUploadPage() {
               <TableRow key={nf.id} className="table-row-hover">
                 <TableCell className="font-medium text-sm flex items-center gap-2">
                   <FileText className="h-4 w-4 text-muted-foreground" />
-                  {nf.fileName}
+                  {nf.file_name}
                 </TableCell>
                 <TableCell className="text-sm">{nf.supplier || '—'}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">{new Date(nf.uploadDate).toLocaleDateString('pt-BR')}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">{new Date(nf.upload_date).toLocaleDateString('pt-BR')}</TableCell>
                 <TableCell className="text-right font-medium">
-                  {nf.totalValue ? `R$ ${nf.totalValue.toFixed(2)}` : '—'}
+                  {nf.total_value ? `R$ ${Number(nf.total_value).toFixed(2)}` : '—'}
                 </TableCell>
                 <TableCell>{statusBadge(nf.status)}</TableCell>
                 <TableCell>
@@ -106,22 +105,21 @@ export default function NfUploadPage() {
         </Table>
       </div>
 
-      {/* Preview Dialog */}
       <Dialog open={!!previewNf} onOpenChange={() => setPreviewNf(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="font-display">Conferência — {previewNf?.fileName}</DialogTitle>
+            <DialogTitle className="font-display">Conferência — {previewNf?.file_name}</DialogTitle>
           </DialogHeader>
           {previewNf && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-muted-foreground text-xs">Fornecedor</Label>
-                  <Input defaultValue={previewNf.supplier} className="mt-1" />
+                  <Input defaultValue={previewNf.supplier || ''} className="mt-1" />
                 </div>
                 <div>
                   <Label className="text-muted-foreground text-xs">Data</Label>
-                  <Input defaultValue={previewNf.uploadDate} className="mt-1" />
+                  <Input defaultValue={previewNf.upload_date} className="mt-1" />
                 </div>
               </div>
 
@@ -137,12 +135,12 @@ export default function NfUploadPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {previewNf.items.map((item, i) => (
+                    {(previewNf.nf_items || []).map((item, i) => (
                       <TableRow key={i}>
                         <TableCell><Input defaultValue={item.name} className="h-8" /></TableCell>
                         <TableCell className="text-right"><Input defaultValue={item.quantity} className="h-8 w-16 ml-auto text-right" /></TableCell>
-                        <TableCell className="text-right"><Input defaultValue={item.unitPrice.toFixed(2)} className="h-8 w-24 ml-auto text-right" /></TableCell>
-                        <TableCell className="text-right font-medium">R$ {item.totalPrice.toFixed(2)}</TableCell>
+                        <TableCell className="text-right"><Input defaultValue={Number(item.unit_price).toFixed(2)} className="h-8 w-24 ml-auto text-right" /></TableCell>
+                        <TableCell className="text-right font-medium">R$ {Number(item.total_price).toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

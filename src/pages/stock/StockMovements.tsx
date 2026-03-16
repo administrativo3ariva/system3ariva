@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Plus, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { useApp } from '@/contexts/AppContext';
+import { useProducts } from '@/hooks/use-products';
+import { useMovements, useAddMovement } from '@/hooks/use-movements';
+import { useCollaborators } from '@/hooks/use-collaborators';
 import { BranchBadge } from '@/components/BranchBadge';
-import { StockMovement, STOCK_UNITS, StockUnit } from '@/lib/types';
+import { STOCK_UNITS, StockUnit } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,9 +14,14 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function StockMovements() {
-  const { movements, setMovements, products, setProducts, collaborators } = useApp();
+  const { data: movements = [], isLoading } = useMovements();
+  const { data: products = [] } = useProducts();
+  const { data: collaborators = [] } = useCollaborators();
+  const addMovement = useAddMovement();
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [filterType, setFilterType] = useState<string>('all');
   const [form, setForm] = useState({
@@ -23,9 +30,7 @@ export default function StockMovements() {
   });
 
   const activeCollabs = collaborators.filter(c => c.active);
-  const filtered = movements
-    .filter(m => filterType === 'all' || m.type === filterType)
-    .sort((a, b) => b.date.localeCompare(a.date));
+  const filtered = filterType === 'all' ? movements : movements.filter(m => m.type === filterType);
 
   const handleAdd = () => {
     const product = products.find(p => p.id === form.productId);
@@ -43,33 +48,22 @@ export default function StockMovements() {
       return;
     }
 
-    const mov: StockMovement = {
-      id: Date.now().toString(),
-      productId: form.productId,
-      productName: product.name,
+    addMovement.mutate({
+      product_id: form.productId,
+      product_name: product.name,
       type: form.type,
       quantity: qty,
       date: new Date().toISOString().split('T')[0],
       user: 'Admin',
-      responsible: form.type === 'saida' ? form.responsible : undefined,
-      notes: form.notes,
+      responsible: form.type === 'saida' ? form.responsible : null,
+      notes: form.notes || null,
       unit: form.unit,
-    };
-    setMovements(prev => [mov, ...prev]);
-
-    // Update product quantity based on movement type
-    setProducts(prev => prev.map(p => {
-      if (p.id !== form.productId) return p;
-      let newQty = p.quantity;
-      if (form.type === 'entrada') newQty += qty;
-      else if (form.type === 'saida') newQty = Math.max(0, newQty - qty);
-      else if (form.type === 'ajuste') newQty = qty;
-      return { ...p, quantity: newQty, totalPrice: newQty * p.unitPrice };
-    }));
-
-    toast.success(`Movimentação de ${form.type} registrada: ${product.name} (${qty} un.)`);
-    setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', unit: 'BH-Matriz' });
-    setDialogOpen(false);
+    }, {
+      onSuccess: () => {
+        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', unit: 'BH-Matriz' });
+        setDialogOpen(false);
+      }
+    });
   };
 
   const typeIcon = (t: string) => {
@@ -77,6 +71,8 @@ export default function StockMovements() {
     if (t === 'saida') return <TrendingDown className="h-3 w-3 mr-1" />;
     return <RefreshCw className="h-3 w-3 mr-1" />;
   };
+
+  if (isLoading) return <div className="space-y-4 p-6">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -130,7 +126,7 @@ export default function StockMovements() {
                 </div>
                 <div className="grid gap-2">
                   <Label>Produto</Label>
-                  <Select value={form.productId} onValueChange={v => setForm(f => ({ ...f, productId: v }))}>
+                  <Select value={form.productId || undefined} onValueChange={v => setForm(f => ({ ...f, productId: v }))}>
                     <SelectTrigger><SelectValue placeholder="Selecione o produto" /></SelectTrigger>
                     <SelectContent>
                       {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
@@ -156,7 +152,9 @@ export default function StockMovements() {
                   <Label>Observações</Label>
                   <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
                 </div>
-                <Button onClick={handleAdd} className="bg-accent text-accent-foreground hover:bg-accent/90">Registrar</Button>
+                <Button onClick={handleAdd} disabled={addMovement.isPending} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                  {addMovement.isPending ? 'Registrando...' : 'Registrar'}
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -181,7 +179,7 @@ export default function StockMovements() {
             {filtered.map(m => (
               <TableRow key={m.id} className="table-row-hover">
                 <TableCell className="text-sm">{new Date(m.date).toLocaleDateString('pt-BR')}</TableCell>
-                <TableCell className="font-medium text-sm">{m.productName}</TableCell>
+                <TableCell className="font-medium text-sm">{m.product_name}</TableCell>
                 <TableCell>
                   <Badge variant={m.type === 'entrada' ? 'default' : m.type === 'saida' ? 'destructive' : 'secondary'} className="text-xs">
                     {typeIcon(m.type)}{m.type}

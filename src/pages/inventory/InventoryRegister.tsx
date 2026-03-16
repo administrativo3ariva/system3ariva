@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useApp } from '@/contexts/AppContext';
-import { AssetItem, ALL_BRANCHES, Branch } from '@/lib/types';
+import { useAssets, useAddAsset } from '@/hooks/use-assets';
+import { ALL_BRANCHES, Branch } from '@/lib/types';
 import { ASSET_CATEGORIES } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 
 export default function InventoryRegister() {
-  const { assets, setAssets } = useApp();
+  const { data: assets = [] } = useAssets();
+  const addAsset = useAddAsset();
   const [form, setForm] = useState({
     name: '', description: '', category: '', quantity: '1',
     unitPrice: '', branch: '' as string, acquisitionDate: '',
@@ -33,22 +34,22 @@ export default function InventoryRegister() {
     const price = parseFloat(form.unitPrice) || 0;
     const code = generateCode(branch);
 
-    const newAsset: AssetItem = {
-      id: Date.now().toString(),
+    addAsset.mutate({
       code,
       name: form.name,
-      description: form.description,
+      description: form.description || null,
       category: form.category,
       quantity: qty,
-      unitPrice: price,
-      totalPrice: qty * price,
+      unit_price: price,
+      total_price: qty * price,
       branch,
-      acquisitionDate: form.acquisitionDate || new Date().toISOString().split('T')[0],
-    };
-
-    setAssets(prev => [...prev, newAsset]);
-    toast.success(`Bem cadastrado: ${code}`);
-    setForm({ name: '', description: '', category: '', quantity: '1', unitPrice: '', branch: '', acquisitionDate: '' });
+      acquisition_date: form.acquisitionDate || new Date().toISOString().split('T')[0],
+      image_url: null,
+    }, {
+      onSuccess: () => {
+        setForm({ name: '', description: '', category: '', quantity: '1', unitPrice: '', branch: '', acquisitionDate: '' });
+      }
+    });
   };
 
   return (
@@ -82,7 +83,7 @@ export default function InventoryRegister() {
             </div>
             <div className="grid gap-2">
               <Label>Filial *</Label>
-              <Select value={form.branch} onValueChange={v => setForm(f => ({ ...f, branch: v }))}>
+              <Select value={form.branch || undefined} onValueChange={v => setForm(f => ({ ...f, branch: v }))}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {ALL_BRANCHES.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
@@ -114,8 +115,8 @@ export default function InventoryRegister() {
           </div>
         )}
 
-        <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-          Cadastrar Patrimônio
+        <Button type="submit" disabled={addAsset.isPending} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+          {addAsset.isPending ? 'Cadastrando...' : 'Cadastrar Patrimônio'}
         </Button>
       </form>
     </div>

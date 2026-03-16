@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Search, Filter, Pencil, ImageIcon } from 'lucide-react';
-import { useApp } from '@/contexts/AppContext';
+import { useAssets, useUpdateAsset, DbAsset } from '@/hooks/use-assets';
 import { BranchBadge } from '@/components/BranchBadge';
-import { ALL_BRANCHES, Branch, AssetItem } from '@/lib/types';
+import { ALL_BRANCHES, Branch } from '@/lib/types';
 import { ASSET_CATEGORIES } from '@/lib/mock-data';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
@@ -12,15 +12,17 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
 export default function InventoryList() {
-  const { assets, setAssets } = useApp();
+  const { data: assets = [], isLoading } = useAssets();
+  const updateAsset = useUpdateAsset();
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState<string>('all');
   const [activeBranch, setActiveBranch] = useState<string>('all');
-  const [editingAsset, setEditingAsset] = useState<AssetItem | null>(null);
-  const [editForm, setEditForm] = useState<Partial<AssetItem>>({});
+  const [editingAsset, setEditingAsset] = useState<DbAsset | null>(null);
+  const [editForm, setEditForm] = useState<Partial<DbAsset>>({});
 
   const branchesWithAssets = [...new Set(assets.map(a => a.branch))].sort();
 
@@ -31,7 +33,7 @@ export default function InventoryList() {
     return true;
   });
 
-  const openEdit = (asset: AssetItem) => {
+  const openEdit = (asset: DbAsset) => {
     setEditingAsset(asset);
     setEditForm({ ...asset });
   };
@@ -42,28 +44,24 @@ export default function InventoryList() {
       return;
     }
     const qty = editForm.quantity || 1;
-    const price = editForm.unitPrice || 0;
-    setAssets(prev =>
-      prev.map(a =>
-        a.id === editingAsset.id
-          ? { ...a, ...editForm, quantity: qty, unitPrice: price, totalPrice: qty * price }
-          : a
-      )
-    );
-    toast.success('Item atualizado com sucesso');
-    setEditingAsset(null);
+    const price = editForm.unit_price || 0;
+    updateAsset.mutate({
+      id: editingAsset.id,
+      name: editForm.name,
+      description: editForm.description,
+      category: editForm.category,
+      branch: editForm.branch,
+      quantity: qty,
+      unit_price: price,
+      total_price: qty * price,
+      acquisition_date: editForm.acquisition_date,
+      image_url: editForm.image_url,
+    }, {
+      onSuccess: () => setEditingAsset(null),
+    });
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditForm(f => ({ ...f, imageUrl: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  if (isLoading) return <div className="space-y-4 p-6">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -72,7 +70,6 @@ export default function InventoryList() {
         <p className="text-sm text-muted-foreground">{filtered.length} itens — Todas as filiais</p>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -87,7 +84,6 @@ export default function InventoryList() {
         </Select>
       </div>
 
-      {/* Branch Tabs */}
       <Tabs value={activeBranch} onValueChange={setActiveBranch}>
         <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="all" className="text-xs">Todas</TabsTrigger>
@@ -117,12 +113,8 @@ export default function InventoryList() {
                 {filtered.map(a => (
                   <TableRow key={a.id} className="table-row-hover">
                     <TableCell>
-                      {a.imageUrl ? (
-                        <img
-                          src={a.imageUrl}
-                          alt={a.name}
-                          className="w-10 h-10 rounded-md object-cover border border-border"
-                        />
+                      {a.image_url ? (
+                        <img src={a.image_url} alt={a.name} className="w-10 h-10 rounded-md object-cover border border-border" />
                       ) : (
                         <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center">
                           <ImageIcon className="h-4 w-4 text-muted-foreground" />
@@ -139,9 +131,9 @@ export default function InventoryList() {
                     <TableCell className="text-sm">{a.category}</TableCell>
                     <TableCell><BranchBadge branch={a.branch} /></TableCell>
                     <TableCell className="text-right">{a.quantity}</TableCell>
-                    <TableCell className="text-right text-sm">R$ {a.unitPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="text-right font-medium">R$ {a.totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{new Date(a.acquisitionDate).toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell className="text-right text-sm">R$ {Number(a.unit_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className="text-right font-medium">R$ {Number(a.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{a.acquisition_date ? new Date(a.acquisition_date).toLocaleDateString('pt-BR') : '—'}</TableCell>
                     <TableCell>
                       <Button variant="ghost" size="icon" onClick={() => openEdit(a)} className="h-8 w-8">
                         <Pencil className="h-4 w-4" />
@@ -155,7 +147,6 @@ export default function InventoryList() {
         </TabsContent>
       </Tabs>
 
-      {/* Edit Sheet */}
       <Sheet open={!!editingAsset} onOpenChange={open => !open && setEditingAsset(null)}>
         <SheetContent className="overflow-y-auto sm:max-w-lg">
           <SheetHeader>
@@ -164,22 +155,10 @@ export default function InventoryList() {
           </SheetHeader>
 
           <div className="space-y-5 mt-6">
-            {/* Image preview & upload */}
             <div className="grid gap-2">
-              <Label>Imagem do Bem</Label>
-              <div className="flex items-center gap-4">
-                {editForm.imageUrl ? (
-                  <img src={editForm.imageUrl} alt="Preview" className="w-20 h-20 rounded-lg object-cover border border-border" />
-                ) : (
-                  <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center">
-                    <ImageIcon className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                )}
-                <div>
-                  <Input type="file" accept="image/*" onChange={handleImageChange} className="text-xs" />
-                  <p className="text-xs text-muted-foreground mt-1">JPG, PNG até 5MB</p>
-                </div>
-              </div>
+              <Label>Imagem (URL)</Label>
+              <Input value={editForm.image_url || ''} onChange={e => setEditForm(f => ({ ...f, image_url: e.target.value }))} placeholder="https://..." />
+              {editForm.image_url && <img src={editForm.image_url} alt="Preview" className="w-20 h-20 rounded-lg object-cover border border-border" />}
             </div>
 
             <div className="grid gap-2">
@@ -204,7 +183,7 @@ export default function InventoryList() {
               </div>
               <div className="grid gap-2">
                 <Label>Filial</Label>
-                <Select value={editForm.branch || ''} onValueChange={v => setEditForm(f => ({ ...f, branch: v as Branch }))}>
+                <Select value={editForm.branch || ''} onValueChange={v => setEditForm(f => ({ ...f, branch: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {ALL_BRANCHES.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
@@ -220,17 +199,17 @@ export default function InventoryList() {
               </div>
               <div className="grid gap-2">
                 <Label>Valor Unit. *</Label>
-                <Input type="number" step="0.01" value={editForm.unitPrice || ''} onChange={e => setEditForm(f => ({ ...f, unitPrice: parseFloat(e.target.value) || 0 }))} />
+                <Input type="number" step="0.01" value={editForm.unit_price || ''} onChange={e => setEditForm(f => ({ ...f, unit_price: parseFloat(e.target.value) || 0 }))} />
               </div>
               <div className="grid gap-2">
                 <Label>Aquisição</Label>
-                <Input type="date" value={editForm.acquisitionDate || ''} onChange={e => setEditForm(f => ({ ...f, acquisitionDate: e.target.value }))} />
+                <Input type="date" value={editForm.acquisition_date || ''} onChange={e => setEditForm(f => ({ ...f, acquisition_date: e.target.value }))} />
               </div>
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button onClick={handleSaveEdit} className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90">
-                Salvar Alterações
+              <Button onClick={handleSaveEdit} disabled={updateAsset.isPending} className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90">
+                {updateAsset.isPending ? 'Salvando...' : 'Salvar Alterações'}
               </Button>
               <Button variant="outline" onClick={() => setEditingAsset(null)} className="flex-1">
                 Cancelar

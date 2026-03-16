@@ -1,20 +1,27 @@
 import { Package, AlertTriangle, ArrowLeftRight, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
-import { useApp } from '@/contexts/AppContext';
+import { useProducts } from '@/hooks/use-products';
+import { useMovements } from '@/hooks/use-movements';
 import { KpiCard } from '@/components/KpiCard';
 import { BranchBadge } from '@/components/BranchBadge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function StockDashboard() {
-  const { products, movements } = useApp();
+  const { data: products = [], isLoading: loadingProducts } = useProducts();
+  const { data: movements = [], isLoading: loadingMovements } = useMovements();
 
-  const totalValue = products.reduce((s, p) => s + p.totalPrice, 0);
+  if (loadingProducts || loadingMovements) {
+    return <div className="space-y-4 p-6">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}</div>;
+  }
+
+  const totalValue = products.reduce((s, p) => s + Number(p.total_price), 0);
   const totalItems = products.reduce((s, p) => s + p.quantity, 0);
-  const lowStock = products.filter(p => p.minStock && p.quantity <= p.minStock);
-  const recentMoves = [...movements].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
+  const lowStock = products.filter(p => p.min_stock && p.quantity <= p.min_stock);
+  const recentMoves = movements.slice(0, 5);
 
   const categoryTotals = products.reduce((acc, p) => {
-    acc[p.category] = (acc[p.category] || 0) + p.totalPrice;
+    acc[p.category] = (acc[p.category] || 0) + Number(p.total_price);
     return acc;
   }, {} as Record<string, number>);
 
@@ -33,7 +40,6 @@ export default function StockDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Movements */}
         <div className="bg-card rounded-lg border p-5">
           <h2 className="section-title text-base mb-4">Movimentações Recentes</h2>
           <Table>
@@ -48,7 +54,7 @@ export default function StockDashboard() {
             <TableBody>
               {recentMoves.map(m => (
                 <TableRow key={m.id} className="table-row-hover">
-                  <TableCell className="font-medium text-sm">{m.productName}</TableCell>
+                  <TableCell className="font-medium text-sm">{m.product_name}</TableCell>
                   <TableCell>
                     <Badge variant={m.type === 'entrada' ? 'default' : m.type === 'saida' ? 'destructive' : 'secondary'} className="text-xs">
                       {m.type === 'entrada' && <TrendingUp className="h-3 w-3 mr-1" />}
@@ -64,7 +70,6 @@ export default function StockDashboard() {
           </Table>
         </div>
 
-        {/* Category Distribution & Low Stock */}
         <div className="space-y-6">
           <div className="bg-card rounded-lg border p-5">
             <h2 className="section-title text-base mb-4">Distribuição por Categoria</h2>
@@ -74,7 +79,7 @@ export default function StockDashboard() {
                   <span className="text-sm">{cat}</span>
                   <div className="flex items-center gap-3">
                     <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                      <div className="h-full bg-accent rounded-full" style={{ width: `${(val / totalValue) * 100}%` }} />
+                      <div className="h-full bg-accent rounded-full" style={{ width: `${totalValue > 0 ? (val / totalValue) * 100 : 0}%` }} />
                     </div>
                     <span className="text-sm font-medium w-24 text-right">R$ {val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                   </div>
@@ -96,7 +101,7 @@ export default function StockDashboard() {
                       <span>{p.name}</span>
                       <BranchBadge branch={p.unit} />
                     </div>
-                    <span className="text-warning font-medium">{p.quantity} / {p.minStock}</span>
+                    <span className="text-warning font-medium">{p.quantity} / {p.min_stock}</span>
                   </div>
                 ))}
               </div>
