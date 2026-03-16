@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Plus, Search, Filter } from 'lucide-react';
-import { useApp } from '@/contexts/AppContext';
+import { useProducts, useAddProduct } from '@/hooks/use-products';
 import { BranchBadge } from '@/components/BranchBadge';
-import { Product, STOCK_UNITS, StockUnit } from '@/lib/types';
+import { STOCK_UNITS, StockUnit } from '@/lib/types';
 import { PRODUCT_CATEGORIES } from '@/lib/mock-data';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
@@ -10,9 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function StockProducts() {
-  const { products, setProducts } = useApp();
+  const { data: products = [], isLoading } = useProducts();
+  const addProduct = useAddProduct();
   const [search, setSearch] = useState('');
   const [filterUnit, setFilterUnit] = useState<string>('all');
   const [filterCat, setFilterCat] = useState<string>('all');
@@ -29,20 +31,23 @@ export default function StockProducts() {
   const handleAdd = () => {
     const qty = parseInt(form.quantity) || 0;
     const price = parseFloat(form.unitPrice) || 0;
-    const newProduct: Product = {
-      id: Date.now().toString(),
+    addProduct.mutate({
       name: form.name,
       category: form.category,
       quantity: qty,
-      unitPrice: price,
-      totalPrice: qty * price,
+      unit_price: price,
+      total_price: qty * price,
       unit: form.unit,
-      minStock: parseInt(form.minStock) || undefined,
-    };
-    setProducts(prev => [...prev, newProduct]);
-    setForm({ name: '', category: '', quantity: '', unitPrice: '', unit: 'BH-Matriz', minStock: '' });
-    setDialogOpen(false);
+      min_stock: parseInt(form.minStock) || null,
+    }, {
+      onSuccess: () => {
+        setForm({ name: '', category: '', quantity: '', unitPrice: '', unit: 'BH-Matriz', minStock: '' });
+        setDialogOpen(false);
+      }
+    });
   };
+
+  if (isLoading) return <div className="space-y-4 p-6">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -100,13 +105,14 @@ export default function StockProducts() {
                   <Input type="number" value={form.minStock} onChange={e => setForm(f => ({ ...f, minStock: e.target.value }))} />
                 </div>
               </div>
-              <Button onClick={handleAdd} className="bg-accent text-accent-foreground hover:bg-accent/90">Cadastrar</Button>
+              <Button onClick={handleAdd} disabled={addProduct.isPending} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                {addProduct.isPending ? 'Cadastrando...' : 'Cadastrar'}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -128,7 +134,6 @@ export default function StockProducts() {
         </Select>
       </div>
 
-      {/* Table */}
       <div className="bg-card rounded-lg border overflow-x-auto">
         <Table>
           <TableHeader>
@@ -147,9 +152,9 @@ export default function StockProducts() {
                 <TableCell className="font-medium">{p.name}</TableCell>
                 <TableCell className="text-sm">{p.category}</TableCell>
                 <TableCell><BranchBadge branch={p.unit} /></TableCell>
-                <TableCell className={`text-right font-medium ${p.minStock && p.quantity <= p.minStock ? 'text-warning' : ''}`}>{p.quantity}</TableCell>
-                <TableCell className="text-right text-sm">R$ {p.unitPrice.toFixed(2)}</TableCell>
-                <TableCell className="text-right font-medium">R$ {p.totalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                <TableCell className={`text-right font-medium ${p.min_stock && p.quantity <= p.min_stock ? 'text-warning' : ''}`}>{p.quantity}</TableCell>
+                <TableCell className="text-right text-sm">R$ {Number(p.unit_price).toFixed(2)}</TableCell>
+                <TableCell className="text-right font-medium">R$ {Number(p.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
               </TableRow>
             ))}
           </TableBody>
