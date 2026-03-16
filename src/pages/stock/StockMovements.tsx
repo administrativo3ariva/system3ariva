@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 
 export default function StockMovements() {
-  const { movements, setMovements, products, collaborators } = useApp();
+  const { movements, setMovements, products, setProducts, collaborators } = useApp();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [filterType, setFilterType] = useState<string>('all');
   const [form, setForm] = useState({
