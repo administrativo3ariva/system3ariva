@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Plus, Search, Filter } from 'lucide-react';
-import { useProducts, useAddProduct } from '@/hooks/use-products';
+import { Plus, Search, Filter, Pencil, AlertTriangle } from 'lucide-react';
+import { useProducts, useAddProduct, useUpdateProduct, DbProduct } from '@/hooks/use-products';
 import { BranchBadge } from '@/components/BranchBadge';
 import { STOCK_UNITS, StockUnit } from '@/lib/types';
 import { PRODUCT_CATEGORIES } from '@/lib/mock-data';
@@ -10,16 +10,23 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from 'sonner';
 
 export default function StockProducts() {
   const { data: products = [], isLoading } = useProducts();
   const addProduct = useAddProduct();
+  const updateProduct = useUpdateProduct();
   const [search, setSearch] = useState('');
   const [filterUnit, setFilterUnit] = useState<string>('all');
   const [filterCat, setFilterCat] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ name: '', category: '', quantity: '', unitPrice: '', unit: 'BH-Matriz' as StockUnit, minStock: '' });
+
+  // Edit state
+  const [editingProduct, setEditingProduct] = useState<DbProduct | null>(null);
+  const [editForm, setEditForm] = useState<Partial<DbProduct>>({});
 
   const filtered = products.filter(p => {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
@@ -43,6 +50,35 @@ export default function StockProducts() {
       onSuccess: () => {
         setForm({ name: '', category: '', quantity: '', unitPrice: '', unit: 'BH-Matriz', minStock: '' });
         setDialogOpen(false);
+      }
+    });
+  };
+
+  const openEdit = (p: DbProduct) => {
+    setEditingProduct(p);
+    setEditForm({ ...p });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingProduct || !editForm.name) {
+      toast.error('Preencha o nome do produto');
+      return;
+    }
+    const qty = editForm.quantity ?? 0;
+    const price = Number(editForm.unit_price) || 0;
+    updateProduct.mutate({
+      id: editingProduct.id,
+      name: editForm.name,
+      category: editForm.category,
+      quantity: qty,
+      unit_price: price,
+      total_price: qty * price,
+      unit: editForm.unit,
+      min_stock: editForm.min_stock ?? null,
+    }, {
+      onSuccess: () => {
+        toast.success('Produto atualizado');
+        setEditingProduct(null);
       }
     });
   };
@@ -142,24 +178,109 @@ export default function StockProducts() {
               <TableHead>Categoria</TableHead>
               <TableHead>Unidade</TableHead>
               <TableHead className="text-right">Qtd</TableHead>
+              <TableHead className="text-right">Mín.</TableHead>
               <TableHead className="text-right">Valor Unit.</TableHead>
               <TableHead className="text-right">Valor Total</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map(p => (
-              <TableRow key={p.id} className="table-row-hover">
-                <TableCell className="font-medium">{p.name}</TableCell>
-                <TableCell className="text-sm">{p.category}</TableCell>
-                <TableCell><BranchBadge branch={p.unit} /></TableCell>
-                <TableCell className={`text-right font-medium ${p.min_stock && p.quantity <= p.min_stock ? 'text-warning' : ''}`}>{p.quantity}</TableCell>
-                <TableCell className="text-right text-sm">R$ {Number(p.unit_price).toFixed(2)}</TableCell>
-                <TableCell className="text-right font-medium">R$ {Number(p.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-              </TableRow>
-            ))}
+            {filtered.map(p => {
+              const isLow = p.min_stock != null && p.quantity <= p.min_stock;
+              return (
+                <TableRow key={p.id} className="table-row-hover">
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      {isLow && <AlertTriangle className="h-4 w-4 text-warning shrink-0" />}
+                      {p.name}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-sm">{p.category}</TableCell>
+                  <TableCell><BranchBadge branch={p.unit} /></TableCell>
+                  <TableCell className={`text-right font-medium ${isLow ? 'text-warning' : ''}`}>{p.quantity}</TableCell>
+                  <TableCell className="text-right text-sm text-muted-foreground">{p.min_stock ?? '—'}</TableCell>
+                  <TableCell className="text-right text-sm">R$ {Number(p.unit_price).toFixed(2)}</TableCell>
+                  <TableCell className="text-right font-medium">R$ {Number(p.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" onClick={() => openEdit(p)} className="h-8 w-8">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
+
+      {/* Edit Sheet */}
+      <Sheet open={!!editingProduct} onOpenChange={open => !open && setEditingProduct(null)}>
+        <SheetContent className="overflow-y-auto sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>Editar Produto</SheetTitle>
+            <SheetDescription>{editingProduct?.name}</SheetDescription>
+          </SheetHeader>
+
+          <div className="space-y-5 mt-6">
+            <div className="grid gap-2">
+              <Label>Nome *</Label>
+              <Input value={editForm.name || ''} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Categoria</Label>
+                <Select value={editForm.category || ''} onValueChange={v => setEditForm(f => ({ ...f, category: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PRODUCT_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Unidade</Label>
+                <Select value={editForm.unit || 'BH-Matriz'} onValueChange={v => setEditForm(f => ({ ...f, unit: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {STOCK_UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="grid gap-2">
+                <Label>Quantidade</Label>
+                <Input type="number" value={editForm.quantity ?? ''} onChange={e => setEditForm(f => ({ ...f, quantity: parseInt(e.target.value) || 0 }))} />
+              </div>
+              <div className="grid gap-2">
+                <Label>Valor Unit.</Label>
+                <Input type="number" step="0.01" value={editForm.unit_price ?? ''} onChange={e => setEditForm(f => ({ ...f, unit_price: parseFloat(e.target.value) || 0 }))} />
+              </div>
+              <div className="grid gap-2">
+                <Label>Estoque Mín.</Label>
+                <Input type="number" value={editForm.min_stock ?? ''} onChange={e => setEditForm(f => ({ ...f, min_stock: e.target.value ? parseInt(e.target.value) : null }))} placeholder="Ex: 10" />
+              </div>
+            </div>
+
+            {editForm.min_stock != null && editForm.quantity != null && editForm.quantity <= editForm.min_stock && (
+              <div className="flex items-center gap-2 p-3 rounded-md bg-warning/10 border border-warning/30 text-warning text-sm">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>Estoque atual ({editForm.quantity}) está abaixo ou igual ao mínimo ({editForm.min_stock})</span>
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-4">
+              <Button onClick={handleSaveEdit} disabled={updateProduct.isPending} className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90">
+                {updateProduct.isPending ? 'Salvando...' : 'Salvar Alterações'}
+              </Button>
+              <Button variant="outline" onClick={() => setEditingProduct(null)} className="flex-1">
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
