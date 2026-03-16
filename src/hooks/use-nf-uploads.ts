@@ -14,6 +14,7 @@ export type DbNfItem = {
 export type DbNfUpload = {
   id: string;
   file_name: string;
+  file_url?: string | null;
   upload_date: string;
   status: string;
   supplier: string | null;
@@ -35,33 +36,110 @@ export function useNfUploads() {
   });
 }
 
-export function useAddNfUpload() {
+export function useUploadAndProcessNf() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ items, ...nf }: Omit<DbNfUpload, 'id'> & { items: Omit<DbNfItem, 'id' | 'nf_upload_id'>[] }) => {
-      const { data, error } = await supabase.from('nf_uploads').insert(nf).select().single();
-      if (error) throw error;
-      if (items.length > 0) {
-        const { error: itemsError } = await supabase.from('nf_items').insert(
-          items.map(i => ({ ...i, nf_upload_id: data.id }))
-        );
-        if (itemsError) throw itemsError;
+    mutationFn: async (file: File) => {
+      // 1. Upload file to storage
+      const fileName = `${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('nf-files')
+        .upload(fileName, file);
+      if (uploadError) throw uploadError;
+
+      // 2. Get public URL
+      const { data: urlData } = supabase.storage
+        .from('nf-files')
+        .getPublicUrl(fileName);
+      const fileUrl = urlData.publicUrl;
+
+      // 3. Create nf_uploads record as 'processando'
+      const { data: nfRecord, error: insertError } = await supabase
+        .from('nf_uploads')
+        .insert({
+          file_name: file.name,
+          file_url: fileUrl,
+          status: 'processando',
+        })
+        .select()
+        .single();
+      if (insertError) throw insertError;
+
+      // 4. Call edge function for OCR
+      try {
+        const { data: ocrResult, error: fnError } = await supabase.functions.invoke('process-nf', {
+          body: { fileUrl },
+        });
+        if (fnError) throw fnError;
+
+        // 5. Update nf_uploads with extracted data
+        await supabase
+          .from('nf_uploads')
+          .update({
+            supplier: ocrResult.supplier || null,
+            total_value: ocrResult.total_value || null,
+            status: 'pendente',
+          })
+          .eq('id', nfRecord.id);
+
+        // 6. Insert extracted items
+        if (ocrResult.items && ocrResult.items.length > 0) {
+          await supabase.from('nf_items').insert(
+            ocrResult.items.map((item: any) => ({
+              nf_upload_id: nfRecord.id,
+              name: item.name,
+              quantity: item.quantity || 1,
+              unit_price: item.unit_price || 0,
+              total_price: item.total_price || 0,
+            }))
+          );
+        }
+      } catch (ocrError) {
+        // Mark as error but don't fail the whole upload
+        await supabase
+          .from('nf_uploads')
+          .update({ status: 'erro_ocr' })
+          .eq('id', nfRecord.id);
+        console.error('OCR processing failed:', ocrError);
       }
-      return data;
+
+      return nfRecord;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['nf_uploads'] }); toast.success('NF enviada'); },
-    onError: () => toast.error('Erro ao enviar NF'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['nf_uploads'] });
+      toast.success('NF enviada e processada!');
+    },
+    onError: (err) => {
+      console.error(err);
+      toast.error('Erro ao enviar NF');
+    },
   });
 }
 
 export function useUpdateNfUpload() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; status?: string }) => {
+    mutationFn: async ({ id, ...updates }: { id: string; status?: string; supplier?: string; total_value?: number }) => {
       const { error } = await supabase.from('nf_uploads').update(updates).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['nf_uploads'] }); },
     onError: () => toast.error('Erro ao atualizar NF'),
+  });
+}
+
+export function useDeleteNfUpload() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from('nf_items').delete().eq('nf_upload_id', id);
+      const { error } = await supabase.from('nf_uploads').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['nf_uploads'] });
+      toast.success('NF removida');
+    },
+    onError: () => toast.error('Erro ao remover NF'),
   });
 }
