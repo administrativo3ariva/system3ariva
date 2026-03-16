@@ -29,12 +29,15 @@ export default function StockMovements() {
   const handleAdd = () => {
     const product = products.find(p => p.id === form.productId);
     if (!product) return;
+    const qty = parseInt(form.quantity) || 0;
+    if (qty <= 0) return;
+
     const mov: StockMovement = {
       id: Date.now().toString(),
       productId: form.productId,
       productName: product.name,
       type: form.type,
-      quantity: parseInt(form.quantity) || 0,
+      quantity: qty,
       date: new Date().toISOString().split('T')[0],
       user: 'Admin',
       responsible: form.type === 'saida' ? form.responsible : undefined,
@@ -42,6 +45,17 @@ export default function StockMovements() {
       unit: form.unit,
     };
     setMovements(prev => [mov, ...prev]);
+
+    // Update product quantity based on movement type
+    setProducts(prev => prev.map(p => {
+      if (p.id !== form.productId) return p;
+      let newQty = p.quantity;
+      if (form.type === 'entrada') newQty += qty;
+      else if (form.type === 'saida') newQty = Math.max(0, newQty - qty);
+      else if (form.type === 'ajuste') newQty = qty; // ajuste sets absolute value
+      return { ...p, quantity: newQty, totalPrice: newQty * p.unitPrice };
+    }));
+
     setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', unit: 'BH-Matriz' });
     setDialogOpen(false);
   };

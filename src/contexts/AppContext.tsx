@@ -1,6 +1,22 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AppModule, Product, StockMovement, Collaborator, AssetItem, NfUpload } from '@/lib/types';
 import { mockProducts, mockMovements, mockCollaborators, mockAssets, mockNfUploads } from '@/lib/mock-data';
+
+function loadFromStorage<T>(key: string, fallback: T): T {
+  try {
+    const stored = localStorage.getItem(key);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return fallback;
+}
+
+function usePersisted<T>(key: string, fallback: T) {
+  const [state, setState] = useState<T>(() => loadFromStorage(key, fallback));
+  useEffect(() => {
+    localStorage.setItem(key, JSON.stringify(state));
+  }, [key, state]);
+  return [state, setState] as const;
+}
 
 interface AppContextType {
   activeModule: AppModule;
@@ -21,11 +37,11 @@ const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [activeModule, setActiveModule] = useState<AppModule>('stock');
-  const [products, setProducts] = useState<Product[]>(mockProducts);
-  const [movements, setMovements] = useState<StockMovement[]>(mockMovements);
-  const [collaborators, setCollaborators] = useState<Collaborator[]>(mockCollaborators);
-  const [assets, setAssets] = useState<AssetItem[]>(mockAssets);
-  const [nfUploads, setNfUploads] = useState<NfUpload[]>(mockNfUploads);
+  const [products, setProducts] = usePersisted<Product[]>('app_products', mockProducts);
+  const [movements, setMovements] = usePersisted<StockMovement[]>('app_movements', mockMovements);
+  const [collaborators, setCollaborators] = usePersisted<Collaborator[]>('app_collaborators', mockCollaborators);
+  const [assets, setAssets] = usePersisted<AssetItem[]>('app_assets', mockAssets);
+  const [nfUploads, setNfUploads] = usePersisted<NfUpload[]>('app_nfuploads', mockNfUploads);
 
   return (
     <AppContext.Provider value={{
