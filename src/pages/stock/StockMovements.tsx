@@ -29,9 +29,19 @@ export default function StockMovements() {
 
   const handleAdd = () => {
     const product = products.find(p => p.id === form.productId);
-    if (!product) return;
+    if (!product) {
+      toast.error('Selecione um produto');
+      return;
+    }
     const qty = parseInt(form.quantity) || 0;
-    if (qty <= 0) return;
+    if (qty <= 0) {
+      toast.error('Informe uma quantidade válida');
+      return;
+    }
+    if (form.type === 'saida' && !form.responsible) {
+      toast.error('Selecione o responsável pela retirada');
+      return;
+    }
 
     const mov: StockMovement = {
       id: Date.now().toString(),
@@ -53,10 +63,11 @@ export default function StockMovements() {
       let newQty = p.quantity;
       if (form.type === 'entrada') newQty += qty;
       else if (form.type === 'saida') newQty = Math.max(0, newQty - qty);
-      else if (form.type === 'ajuste') newQty = qty; // ajuste sets absolute value
+      else if (form.type === 'ajuste') newQty = qty;
       return { ...p, quantity: newQty, totalPrice: newQty * p.unitPrice };
     }));
 
+    toast.success(`Movimentação de ${form.type} registrada: ${product.name} (${qty} un.)`);
     setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', unit: 'BH-Matriz' });
     setDialogOpen(false);
   };
