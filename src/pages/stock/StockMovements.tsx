@@ -116,9 +116,9 @@ export default function StockMovements() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid gap-2">
+                   <div className="grid gap-2">
                     <Label>Unidade</Label>
-                    <Select value={form.unit} onValueChange={v => setForm(f => ({ ...f, unit: v as StockUnit }))}>
+                    <Select value={form.unit} onValueChange={v => setForm(f => ({ ...f, unit: v as StockUnit, floor: '' }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {STOCK_UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
@@ -126,6 +126,17 @@ export default function StockMovements() {
                     </Select>
                   </div>
                 </div>
+                {form.unit === 'BH-Matriz' && (
+                  <div className="grid gap-2">
+                    <Label>Andar</Label>
+                    <Select value={form.floor || undefined} onValueChange={v => setForm(f => ({ ...f, floor: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Selecione o andar" /></SelectTrigger>
+                      <SelectContent>
+                        {BH_MATRIZ_FLOORS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="grid gap-2">
                   <Label>Produto</Label>
                   <Select value={form.productId || undefined} onValueChange={v => setForm(f => ({ ...f, productId: v }))}>
