@@ -3,6 +3,7 @@ import { Search, Filter, Pencil, ImageIcon } from 'lucide-react';
 import { useAssets, useUpdateAsset, DbAsset } from '@/hooks/use-assets';
 import { BranchBadge } from '@/components/BranchBadge';
 import { ALL_BRANCHES, Branch, BH_MATRIZ_FLOORS } from '@/lib/types';
+import { FloorPicker } from '@/components/FloorPicker';
 import { ASSET_CATEGORIES } from '@/lib/mock-data';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
