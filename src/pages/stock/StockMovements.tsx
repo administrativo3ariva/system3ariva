@@ -6,7 +6,7 @@ import { useProducts } from '@/hooks/use-products';
 import { useMovements, useAddMovement } from '@/hooks/use-movements';
 import { useCollaborators } from '@/hooks/use-collaborators';
 import { BranchBadge } from '@/components/BranchBadge';
-import { STOCK_UNITS, StockUnit } from '@/lib/types';
+import { STOCK_UNITS, StockUnit, BH_MATRIZ_FLOORS } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
