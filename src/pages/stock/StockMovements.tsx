@@ -309,11 +309,7 @@ export default function StockMovements() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Unidade</p>
-                  <p className="text-sm font-medium">
-                    {viewMovement.unit}
-                    {viewMovement.floor && `-${viewMovement.floor.replace('º andar', '')}`}
-                  </p>
-                </div>
+                  <BranchBadge branch={viewMovement.unit} floor={viewMovement.floor} />
               </div>
               {viewMovement.responsible && (
                 <div>
