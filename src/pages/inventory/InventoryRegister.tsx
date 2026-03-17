@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAssets, useAddAsset } from '@/hooks/use-assets';
 import { ALL_BRANCHES, Branch, BH_MATRIZ_FLOORS } from '@/lib/types';
+import { FloorPicker } from '@/components/FloorPicker';
 import { ASSET_CATEGORIES } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -93,15 +94,10 @@ export default function InventoryRegister() {
             </div>
           </div>
           {form.branch === 'BH-Matriz' && (
-            <div className="grid gap-2">
-              <Label>Andar</Label>
-              <Select value={form.floor || undefined} onValueChange={v => setForm(f => ({ ...f, floor: v }))}>
-                <SelectTrigger><SelectValue placeholder="Selecione o andar" /></SelectTrigger>
-                <SelectContent>
-                  {BH_MATRIZ_FLOORS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+            <FloorPicker
+              value={form.floor}
+              onChange={v => setForm(f => ({ ...f, floor: v }))}
+            />
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

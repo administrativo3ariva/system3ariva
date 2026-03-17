@@ -6,6 +6,7 @@ import { useMovements, useAddMovement, useUpdateMovement, useDeleteMovement, DbM
 import { useCollaborators } from '@/hooks/use-collaborators';
 import { BranchBadge } from '@/components/BranchBadge';
 import { STOCK_UNITS, StockUnit, BH_MATRIZ_FLOORS } from '@/lib/types';
+import { FloorPicker } from '@/components/FloorPicker';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -153,15 +154,10 @@ export default function StockMovements() {
         </div>
       </div>
       {formState.unit === 'BH-Matriz' && (
-        <div className="grid gap-2">
-          <Label>Andar</Label>
-          <Select value={formState.floor || undefined} onValueChange={v => setFormState((f: any) => ({ ...f, floor: v }))}>
-            <SelectTrigger><SelectValue placeholder="Selecione o andar" /></SelectTrigger>
-            <SelectContent>
-              {BH_MATRIZ_FLOORS.map(fl => <SelectItem key={fl} value={fl}>{fl}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+        <FloorPicker
+          value={formState.floor || ''}
+          onChange={v => setFormState((f: any) => ({ ...f, floor: v }))}
+        />
       )}
       {!isEdit && (
         <div className="grid gap-2">

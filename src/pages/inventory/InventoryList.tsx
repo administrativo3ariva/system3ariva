@@ -3,6 +3,7 @@ import { Search, Filter, Pencil, ImageIcon } from 'lucide-react';
 import { useAssets, useUpdateAsset, DbAsset } from '@/hooks/use-assets';
 import { BranchBadge } from '@/components/BranchBadge';
 import { ALL_BRANCHES, Branch, BH_MATRIZ_FLOORS } from '@/lib/types';
+import { FloorPicker } from '@/components/FloorPicker';
 import { ASSET_CATEGORIES } from '@/lib/mock-data';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
@@ -56,6 +57,7 @@ export default function InventoryList() {
       total_price: qty * price,
       acquisition_date: editForm.acquisition_date,
       image_url: editForm.image_url,
+      floor: editForm.branch === 'BH-Matriz' ? (editForm.floor || null) : null,
     }, {
       onSuccess: () => setEditingAsset(null),
     });
@@ -192,15 +194,10 @@ export default function InventoryList() {
               </div>
             </div>
             {editForm.branch === 'BH-Matriz' && (
-              <div className="grid gap-2">
-                <Label>Andar</Label>
-                <Select value={editForm.floor || ''} onValueChange={v => setEditForm(f => ({ ...f, floor: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Selecione o andar" /></SelectTrigger>
-                  <SelectContent>
-                    {BH_MATRIZ_FLOORS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+              <FloorPicker
+                value={editForm.floor || ''}
+                onChange={v => setEditForm(f => ({ ...f, floor: v }))}
+              />
             )}
 
             <div className="grid grid-cols-3 gap-4">
