@@ -37,9 +37,41 @@ export function useAddMovement() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['movements'] });
-      qc.invalidateQueries({ queryKey: ['products'] }); // trigger updates product qty
+      qc.invalidateQueries({ queryKey: ['products'] });
       toast.success('Movimentação registrada');
     },
     onError: () => toast.error('Erro ao registrar movimentação'),
+  });
+}
+
+export function useUpdateMovement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<DbMovement> & { id: string }) => {
+      const { error } = await supabase.from('stock_movements').update(updates).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['movements'] });
+      qc.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Movimentação atualizada');
+    },
+    onError: () => toast.error('Erro ao atualizar movimentação'),
+  });
+}
+
+export function useDeleteMovement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('stock_movements').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['movements'] });
+      qc.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Movimentação removida');
+    },
+    onError: () => toast.error('Erro ao remover movimentação'),
   });
 }
