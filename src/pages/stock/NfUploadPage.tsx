@@ -15,6 +15,7 @@ export default function NfUploadPage() {
   const uploadNf = useUploadAndProcessNf();
   const updateNfUpload = useUpdateNfUpload();
   const deleteNfUpload = useDeleteNfUpload();
+  const approveNf = useApproveNf();
   const [previewNf, setPreviewNf] = useState<DbNfUpload | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
