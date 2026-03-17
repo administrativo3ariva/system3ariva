@@ -21,8 +21,17 @@ export default function NfUploadPage() {
   const deleteNfUpload = useDeleteNfUpload();
   const approveNf = useApproveNf();
   const [previewNf, setPreviewNf] = useState<DbNfUpload | null>(null);
+  const [editedItems, setEditedItems] = useState<DbNfUpload['nf_items']>([]);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (previewNf) {
+      setEditedItems(
+        (previewNf.nf_items || []).map(item => ({ ...item }))
+      );
+    }
+  }, [previewNf]);
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
