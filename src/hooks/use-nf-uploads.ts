@@ -121,6 +121,76 @@ export function useUpdateNfUpload() {
   });
 }
 
+export function useApproveNf() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (nf: DbNfUpload) => {
+      // 1. Update NF status to approved
+      const { error: updateError } = await supabase
+        .from('nf_uploads')
+        .update({ status: 'aprovado' })
+        .eq('id', nf.id);
+      if (updateError) throw updateError;
+
+      // 2. For each NF item, find or create product and register stock movement
+      const items = nf.nf_items || [];
+      for (const item of items) {
+        // Check if product already exists by name (case-insensitive)
+        const { data: existing } = await supabase
+          .from('products')
+          .select('id, name')
+          .ilike('name', item.name)
+          .limit(1);
+
+        let productId: string;
+        let productName: string;
+
+        if (existing && existing.length > 0) {
+          productId = existing[0].id;
+          productName = existing[0].name;
+        } else {
+          // Create new product
+          const { data: newProduct, error: productError } = await supabase
+            .from('products')
+            .insert({
+              name: item.name,
+              category: 'NF Import',
+              quantity: 0,
+              unit_price: item.unit_price,
+              total_price: 0,
+              unit: 'BH-Matriz',
+            })
+            .select()
+            .single();
+          if (productError || !newProduct) throw productError || new Error('Erro ao criar produto');
+          productId = newProduct.id;
+          productName = newProduct.name;
+        }
+
+        // Register stock entry movement
+        const { error: moveError } = await supabase.from('stock_movements').insert({
+          product_id: productId,
+          product_name: productName,
+          type: 'entrada',
+          quantity: item.quantity,
+          notes: `NF: ${nf.file_name} — ${nf.supplier || 'Fornecedor não identificado'}`,
+        });
+        if (moveError) throw moveError;
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['nf_uploads'] });
+      qc.invalidateQueries({ queryKey: ['products'] });
+      qc.invalidateQueries({ queryKey: ['movements'] });
+      toast.success('NF aprovada e itens adicionados ao estoque!');
+    },
+    onError: (err: any) => {
+      console.error('Approve NF error:', err);
+      toast.error(err?.message || 'Erro ao aprovar NF');
+    },
+  });
+}
+
 export function useDeleteNfUpload() {
   const qc = useQueryClient();
   return useMutation({
