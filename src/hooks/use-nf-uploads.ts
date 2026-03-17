@@ -22,6 +22,28 @@ export type DbNfUpload = {
   nf_items?: DbNfItem[];
 };
 
+function fileToBase64(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') {
+        reject(new Error('Falha ao ler o arquivo selecionado.'));
+        return;
+      }
+
+      const [, base64 = ''] = reader.result.split(',');
+      resolve(base64);
+    };
+
+    reader.onerror = () => {
+      reject(reader.error ?? new Error('Falha ao ler o arquivo selecionado.'));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
 export function useNfUploads() {
   return useQuery({
     queryKey: ['nf_uploads'],
@@ -38,81 +60,49 @@ export function useNfUploads() {
 
 export function useUploadAndProcessNf() {
   const qc = useQueryClient();
+
   return useMutation({
     mutationFn: async (file: File) => {
-      // 1. Upload file to storage
-      const sanitized = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const fileName = `${Date.now()}-${sanitized}`;
-      const { error: uploadError } = await supabase.storage
-        .from('nf-files')
-        .upload(fileName, file);
-      if (uploadError) throw uploadError;
+      const fileDataBase64 = await fileToBase64(file);
 
-      // 2. Get public URL
-      const { data: urlData } = supabase.storage
-        .from('nf-files')
-        .getPublicUrl(fileName);
-      const fileUrl = urlData.publicUrl;
+      const { data, error } = await supabase.functions.invoke('process-nf', {
+        body: {
+          fileName: file.name,
+          fileType: file.type || 'application/octet-stream',
+          fileDataBase64,
+        },
+      });
 
-      // 3. Create nf_uploads record as 'processando'
-      const { data: nfRecord, error: insertError } = await supabase
-        .from('nf_uploads')
-        .insert({
-          file_name: file.name,
-          file_url: fileUrl,
-          status: 'processando',
-        })
-        .select()
-        .single();
-      if (insertError) throw insertError;
+      if (error) {
+        let message = error.message || 'Erro ao enviar NF';
 
-      // 4. Call edge function for OCR
-      try {
-        const { data: ocrResult, error: fnError } = await supabase.functions.invoke('process-nf', {
-          body: { fileUrl },
-        });
-        if (fnError) throw fnError;
-
-        // 5. Update nf_uploads with extracted data
-        await supabase
-          .from('nf_uploads')
-          .update({
-            supplier: ocrResult.supplier || null,
-            total_value: ocrResult.total_value || null,
-            status: 'pendente',
-          })
-          .eq('id', nfRecord.id);
-
-        // 6. Insert extracted items
-        if (ocrResult.items && ocrResult.items.length > 0) {
-          await supabase.from('nf_items').insert(
-            ocrResult.items.map((item: any) => ({
-              nf_upload_id: nfRecord.id,
-              name: item.name,
-              quantity: item.quantity || 1,
-              unit_price: item.unit_price || 0,
-              total_price: item.total_price || 0,
-            }))
-          );
+        if (error.context instanceof Response) {
+          try {
+            const payload = await error.context.json();
+            message = payload?.error || message;
+          } catch {
+            // ignore response parsing errors
+          }
         }
-      } catch (ocrError) {
-        // Mark as error but don't fail the whole upload
-        await supabase
-          .from('nf_uploads')
-          .update({ status: 'erro_ocr' })
-          .eq('id', nfRecord.id);
-        console.error('OCR processing failed:', ocrError);
+
+        throw new Error(message);
       }
 
-      return nfRecord;
+      return data as { status?: string; error?: string };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['nf_uploads'] });
+
+      if (data?.error) {
+        toast.warning(data.error || 'NF enviada para conferência, mas houve falha na extração automática.');
+        return;
+      }
+
       toast.success('NF enviada e processada!');
     },
     onError: (err: any) => {
       console.error('Upload NF error:', err?.message || err);
-      toast.error(`Erro ao enviar NF: ${err?.message || 'erro desconhecido'}`);
+      toast.error(err?.message || 'Erro ao enviar NF');
     },
   });
 }
@@ -124,7 +114,9 @@ export function useUpdateNfUpload() {
       const { error } = await supabase.from('nf_uploads').update(updates).eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['nf_uploads'] }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['nf_uploads'] });
+    },
     onError: () => toast.error('Erro ao atualizar NF'),
   });
 }
