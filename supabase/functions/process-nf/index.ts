@@ -348,22 +348,16 @@ serve(async (req) => {
         ? (processingError as AiGatewayError).status!
         : 200;
 
-      await supabaseAdmin
-        .from("nf_uploads")
-        .update({ status: "erro_ocr" })
-        .eq("id", nfRecord.id);
-
       console.error("Error processing NF:", processingError);
 
       return new Response(
         JSON.stringify({
           id: nfRecord.id,
           file_url: fileUrl,
-          status: "erro_ocr",
+          status: "pendente",
           error: message,
         }),
         {
-          status,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );

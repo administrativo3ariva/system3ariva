@@ -93,8 +93,8 @@ export function useUploadAndProcessNf() {
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['nf_uploads'] });
 
-      if (data?.status === 'erro_ocr') {
-        toast.warning(data.error || 'NF enviada, mas houve erro na extração automática.');
+      if (data?.error) {
+        toast.warning(data.error || 'NF enviada para conferência, mas houve falha na extração automática.');
         return;
       }
 
