@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Plus, UserCheck, UserX, Pencil } from 'lucide-react';
 import { useCollaborators, useAddCollaborator, useUpdateCollaborator } from '@/hooks/use-collaborators';
-import { STOCK_UNITS, StockUnit } from '@/lib/types';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useApp } from '@/contexts/AppContext';
+import { BRANCH_LABELS } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
