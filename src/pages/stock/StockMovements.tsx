@@ -84,7 +84,6 @@ export default function StockMovements() {
       quantity: String(m.quantity),
       responsible: m.responsible || '',
       notes: m.notes || '',
-      unit: m.unit as StockUnit,
       floor: m.floor || '',
     });
   };
