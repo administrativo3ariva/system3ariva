@@ -1,3 +1,4 @@
+import React from 'react';
 import { Package, BarChart3, ArrowLeftRight, FileUp, ClipboardList, PlusCircle, Users, LayoutDashboard, MapPin, ChevronDown } from 'lucide-react';
 import logo from '@/assets/Logo.png';
 import { useLocation } from 'react-router-dom';
