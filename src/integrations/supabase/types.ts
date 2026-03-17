@@ -22,6 +22,7 @@ export type Database = {
           code: string
           created_at: string
           description: string | null
+          floor: string | null
           id: string
           image_url: string | null
           name: string
@@ -37,6 +38,7 @@ export type Database = {
           code: string
           created_at?: string
           description?: string | null
+          floor?: string | null
           id?: string
           image_url?: string | null
           name: string
@@ -52,6 +54,7 @@ export type Database = {
           code?: string
           created_at?: string
           description?: string | null
+          floor?: string | null
           id?: string
           image_url?: string | null
           name?: string
@@ -206,6 +209,7 @@ export type Database = {
         Row: {
           created_at: string
           date: string
+          floor: string | null
           id: string
           notes: string | null
           product_id: string
@@ -219,6 +223,7 @@ export type Database = {
         Insert: {
           created_at?: string
           date?: string
+          floor?: string | null
           id?: string
           notes?: string | null
           product_id: string
@@ -232,6 +237,7 @@ export type Database = {
         Update: {
           created_at?: string
           date?: string
+          floor?: string | null
           id?: string
           notes?: string | null
           product_id?: string
