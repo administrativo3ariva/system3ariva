@@ -31,8 +31,8 @@ export default function NfUploadPage() {
     });
   };
 
-  const handleApprove = (id: string) => {
-    updateNfUpload.mutate({ id, status: 'aprovado' });
+  const handleApprove = (nf: DbNfUpload) => {
+    approveNf.mutate(nf);
     setPreviewNf(null);
   };
 
