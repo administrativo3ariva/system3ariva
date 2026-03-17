@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { toast } from 'sonner';
 import { useProducts } from '@/hooks/use-products';
 import { useMovements, useAddMovement } from '@/hooks/use-movements';
 import { useCollaborators } from '@/hooks/use-collaborators';
