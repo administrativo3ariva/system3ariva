@@ -5,7 +5,7 @@ import { useProducts } from '@/hooks/use-products';
 import { useMovements, useAddMovement } from '@/hooks/use-movements';
 import { useCollaborators } from '@/hooks/use-collaborators';
 import { BranchBadge } from '@/components/BranchBadge';
-import { STOCK_UNITS, StockUnit } from '@/lib/types';
+import { STOCK_UNITS, StockUnit, BH_MATRIZ_FLOORS } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,7 +26,7 @@ export default function StockMovements() {
   const [filterType, setFilterType] = useState<string>('all');
   const [form, setForm] = useState({
     productId: '', type: 'entrada' as 'entrada' | 'saida' | 'ajuste',
-    quantity: '', responsible: '', notes: '', unit: 'BH-Matriz' as StockUnit,
+    quantity: '', responsible: '', notes: '', unit: 'BH-Matriz' as StockUnit, floor: '',
   });
 
   const activeCollabs = collaborators.filter(c => c.active);
@@ -58,9 +58,10 @@ export default function StockMovements() {
       responsible: form.type === 'saida' ? form.responsible : null,
       notes: form.notes || null,
       unit: form.unit,
+      floor: form.unit === 'BH-Matriz' ? (form.floor || null) : null,
     }, {
       onSuccess: () => {
-        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', unit: 'BH-Matriz' });
+        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', unit: 'BH-Matriz', floor: '' });
         setDialogOpen(false);
       }
     });
@@ -114,9 +115,9 @@ export default function StockMovements() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid gap-2">
+                   <div className="grid gap-2">
                     <Label>Unidade</Label>
-                    <Select value={form.unit} onValueChange={v => setForm(f => ({ ...f, unit: v as StockUnit }))}>
+                    <Select value={form.unit} onValueChange={v => setForm(f => ({ ...f, unit: v as StockUnit, floor: '' }))}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {STOCK_UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
@@ -124,6 +125,17 @@ export default function StockMovements() {
                     </Select>
                   </div>
                 </div>
+                {form.unit === 'BH-Matriz' && (
+                  <div className="grid gap-2">
+                    <Label>Andar</Label>
+                    <Select value={form.floor || undefined} onValueChange={v => setForm(f => ({ ...f, floor: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Selecione o andar" /></SelectTrigger>
+                      <SelectContent>
+                        {BH_MATRIZ_FLOORS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="grid gap-2">
                   <Label>Produto</Label>
                   <Select value={form.productId || undefined} onValueChange={v => setForm(f => ({ ...f, productId: v }))}>
@@ -185,7 +197,7 @@ export default function StockMovements() {
                     {typeIcon(m.type)}{m.type}
                   </Badge>
                 </TableCell>
-                <TableCell><BranchBadge branch={m.unit} /></TableCell>
+                <TableCell><BranchBadge branch={m.unit} />{m.floor && <span className="ml-1 text-xs text-muted-foreground">({m.floor})</span>}</TableCell>
                 <TableCell className="text-right font-medium">{m.quantity}</TableCell>
                 <TableCell className="text-sm">{m.responsible || '—'}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{m.user}</TableCell>

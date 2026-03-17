@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Search, Filter, Pencil, ImageIcon } from 'lucide-react';
 import { useAssets, useUpdateAsset, DbAsset } from '@/hooks/use-assets';
 import { BranchBadge } from '@/components/BranchBadge';
-import { ALL_BRANCHES, Branch } from '@/lib/types';
+import { ALL_BRANCHES, Branch, BH_MATRIZ_FLOORS } from '@/lib/types';
 import { ASSET_CATEGORIES } from '@/lib/mock-data';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
@@ -129,7 +129,7 @@ export default function InventoryList() {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">{a.category}</TableCell>
-                    <TableCell><BranchBadge branch={a.branch} /></TableCell>
+                    <TableCell><BranchBadge branch={a.branch} />{a.floor && <span className="ml-1 text-xs text-muted-foreground">({a.floor})</span>}</TableCell>
                     <TableCell className="text-right">{a.quantity}</TableCell>
                     <TableCell className="text-right text-sm">R$ {Number(a.unit_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell className="text-right font-medium">R$ {Number(a.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
@@ -183,7 +183,7 @@ export default function InventoryList() {
               </div>
               <div className="grid gap-2">
                 <Label>Filial</Label>
-                <Select value={editForm.branch || ''} onValueChange={v => setEditForm(f => ({ ...f, branch: v }))}>
+                <Select value={editForm.branch || ''} onValueChange={v => setEditForm(f => ({ ...f, branch: v, floor: v !== 'BH-Matriz' ? null : f.floor }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {ALL_BRANCHES.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
@@ -191,6 +191,17 @@ export default function InventoryList() {
                 </Select>
               </div>
             </div>
+            {editForm.branch === 'BH-Matriz' && (
+              <div className="grid gap-2">
+                <Label>Andar</Label>
+                <Select value={editForm.floor || ''} onValueChange={v => setEditForm(f => ({ ...f, floor: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o andar" /></SelectTrigger>
+                  <SelectContent>
+                    {BH_MATRIZ_FLOORS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-2">

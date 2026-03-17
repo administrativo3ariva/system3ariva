@@ -14,6 +14,7 @@ export type DbAsset = {
   branch: string;
   acquisition_date: string | null;
   image_url: string | null;
+  floor: string | null;
 };
 
 export function useAssets() {

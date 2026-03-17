@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAssets, useAddAsset } from '@/hooks/use-assets';
-import { ALL_BRANCHES, Branch } from '@/lib/types';
+import { ALL_BRANCHES, Branch, BH_MATRIZ_FLOORS } from '@/lib/types';
 import { ASSET_CATEGORIES } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ export default function InventoryRegister() {
   const addAsset = useAddAsset();
   const [form, setForm] = useState({
     name: '', description: '', category: '', quantity: '1',
-    unitPrice: '', branch: '' as string, acquisitionDate: '',
+    unitPrice: '', branch: '' as string, acquisitionDate: '', floor: '',
   });
 
   const generateCode = (branch: Branch) => {
@@ -45,9 +45,10 @@ export default function InventoryRegister() {
       branch,
       acquisition_date: form.acquisitionDate || new Date().toISOString().split('T')[0],
       image_url: null,
+      floor: branch === 'BH-Matriz' ? (form.floor || null) : null,
     }, {
       onSuccess: () => {
-        setForm({ name: '', description: '', category: '', quantity: '1', unitPrice: '', branch: '', acquisitionDate: '' });
+        setForm({ name: '', description: '', category: '', quantity: '1', unitPrice: '', branch: '', acquisitionDate: '', floor: '' });
       }
     });
   };
@@ -83,7 +84,7 @@ export default function InventoryRegister() {
             </div>
             <div className="grid gap-2">
               <Label>Filial *</Label>
-              <Select value={form.branch || undefined} onValueChange={v => setForm(f => ({ ...f, branch: v }))}>
+              <Select value={form.branch || undefined} onValueChange={v => setForm(f => ({ ...f, branch: v, floor: '' }))}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {ALL_BRANCHES.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
@@ -91,6 +92,17 @@ export default function InventoryRegister() {
               </Select>
             </div>
           </div>
+          {form.branch === 'BH-Matriz' && (
+            <div className="grid gap-2">
+              <Label>Andar</Label>
+              <Select value={form.floor || undefined} onValueChange={v => setForm(f => ({ ...f, floor: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecione o andar" /></SelectTrigger>
+                <SelectContent>
+                  {BH_MATRIZ_FLOORS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="grid gap-2">
