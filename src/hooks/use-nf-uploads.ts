@@ -41,7 +41,8 @@ export function useUploadAndProcessNf() {
   return useMutation({
     mutationFn: async (file: File) => {
       // 1. Upload file to storage
-      const fileName = `${Date.now()}-${file.name}`;
+      const sanitized = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const fileName = `${Date.now()}-${sanitized}`;
       const { error: uploadError } = await supabase.storage
         .from('nf-files')
         .upload(fileName, file);
@@ -109,9 +110,9 @@ export function useUploadAndProcessNf() {
       qc.invalidateQueries({ queryKey: ['nf_uploads'] });
       toast.success('NF enviada e processada!');
     },
-    onError: (err) => {
-      console.error(err);
-      toast.error('Erro ao enviar NF');
+    onError: (err: any) => {
+      console.error('Upload NF error:', err?.message || err);
+      toast.error(`Erro ao enviar NF: ${err?.message || 'erro desconhecido'}`);
     },
   });
 }
