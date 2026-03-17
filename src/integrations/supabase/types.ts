@@ -142,6 +142,7 @@ export type Database = {
           status: string
           supplier: string | null
           total_value: number | null
+          unit: string
           updated_at: string
           upload_date: string
         }
@@ -153,6 +154,7 @@ export type Database = {
           status?: string
           supplier?: string | null
           total_value?: number | null
+          unit?: string
           updated_at?: string
           upload_date?: string
         }
@@ -164,6 +166,7 @@ export type Database = {
           status?: string
           supplier?: string | null
           total_value?: number | null
+          unit?: string
           updated_at?: string
           upload_date?: string
         }

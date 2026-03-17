@@ -1,0 +1,1 @@
+ALTER TABLE public.nf_uploads ADD COLUMN unit text NOT NULL DEFAULT 'BH-Matriz';
