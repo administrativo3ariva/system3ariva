@@ -59,9 +59,10 @@ export default function StockMovements() {
       responsible: form.type === 'saida' ? form.responsible : null,
       notes: form.notes || null,
       unit: form.unit,
+      floor: form.unit === 'BH-Matriz' ? (form.floor || null) : null,
     }, {
       onSuccess: () => {
-        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', unit: 'BH-Matriz' });
+        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', unit: 'BH-Matriz', floor: '' });
         setDialogOpen(false);
       }
     });
