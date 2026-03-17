@@ -284,6 +284,7 @@ serve(async (req) => {
         file_name: originalFileName,
         file_url: fileUrl,
         status: "pendente",
+        unit,
       })
       .select()
       .single();
