@@ -22,7 +22,7 @@ export const BRANCH_LABELS: Record<string, string> = {
   'Vêneto-SP': 'Vêneto (SP)',
   'SP': 'São Paulo',
   'RJ': 'Rio de Janeiro',
-  'PAG': 'Poços de Caldas',
+  'PAG': 'Pouso Alegre',
   'VAG': 'Varginha',
   'FLO': 'Florianópolis',
   'JM': 'Juiz de Fora',
