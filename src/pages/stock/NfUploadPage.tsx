@@ -203,7 +203,7 @@ export default function NfUploadPage() {
                   <Button variant="outline" onClick={() => handleReject(previewNf.id)} className="text-destructive">
                     <X className="h-4 w-4 mr-2" /> Rejeitar
                   </Button>
-                  <Button onClick={() => handleApprove(previewNf.id)} className="bg-success text-success-foreground hover:bg-success/90">
+                  <Button onClick={() => handleApprove(previewNf)} className="bg-success text-success-foreground hover:bg-success/90">
                     <Check className="h-4 w-4 mr-2" /> Aprovar Entrada
                   </Button>
                 </div>
