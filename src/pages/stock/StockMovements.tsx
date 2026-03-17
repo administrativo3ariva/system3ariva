@@ -21,6 +21,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 
 export default function StockMovements() {
+  const { selectedBranch } = useApp();
   const { data: movements = [], isLoading } = useMovements();
   const { data: products = [] } = useProducts();
   const { data: collaborators = [] } = useCollaborators();
