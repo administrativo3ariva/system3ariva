@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAssets, useAddAsset } from '@/hooks/use-assets';
-import { ALL_BRANCHES, Branch } from '@/lib/types';
+import { ALL_BRANCHES, Branch, BH_MATRIZ_FLOORS } from '@/lib/types';
 import { ASSET_CATEGORIES } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
