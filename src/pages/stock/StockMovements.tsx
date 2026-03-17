@@ -100,8 +100,7 @@ export default function StockMovements() {
       quantity: qty,
       responsible: editForm.type === 'saida' ? editForm.responsible : null,
       notes: editForm.notes || null,
-      unit: editForm.unit,
-      floor: editForm.unit === 'BH-Matriz' ? (editForm.floor || null) : null,
+      floor: selectedBranch === 'BH-Matriz' ? (editForm.floor || null) : null,
     }, {
       onSuccess: () => setEditMovement(null),
     });
