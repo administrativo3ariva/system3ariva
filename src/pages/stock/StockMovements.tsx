@@ -42,7 +42,7 @@ export default function StockMovements() {
   // Edit state
   const [editMovement, setEditMovement] = useState<DbMovement | null>(null);
   const [editForm, setEditForm] = useState({
-    type: 'entrada' as string, quantity: '', responsible: '', notes: '', unit: 'BH-Matriz' as StockUnit, floor: '',
+    type: 'entrada' as string, quantity: '', responsible: '', notes: '', floor: '',
   });
 
   // Delete state
