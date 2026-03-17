@@ -94,15 +94,10 @@ export default function InventoryRegister() {
             </div>
           </div>
           {form.branch === 'BH-Matriz' && (
-            <div className="grid gap-2">
-              <Label>Andar</Label>
-              <Select value={form.floor || undefined} onValueChange={v => setForm(f => ({ ...f, floor: v }))}>
-                <SelectTrigger><SelectValue placeholder="Selecione o andar" /></SelectTrigger>
-                <SelectContent>
-                  {BH_MATRIZ_FLOORS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+            <FloorPicker
+              value={form.floor}
+              onChange={v => setForm(f => ({ ...f, floor: v }))}
+            />
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

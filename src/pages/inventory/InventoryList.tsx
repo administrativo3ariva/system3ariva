@@ -194,15 +194,10 @@ export default function InventoryList() {
               </div>
             </div>
             {editForm.branch === 'BH-Matriz' && (
-              <div className="grid gap-2">
-                <Label>Andar</Label>
-                <Select value={editForm.floor || ''} onValueChange={v => setEditForm(f => ({ ...f, floor: v }))}>
-                  <SelectTrigger><SelectValue placeholder="Selecione o andar" /></SelectTrigger>
-                  <SelectContent>
-                    {BH_MATRIZ_FLOORS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+              <FloorPicker
+                value={editForm.floor || ''}
+                onChange={v => setEditForm(f => ({ ...f, floor: v }))}
+              />
             )}
 
             <div className="grid grid-cols-3 gap-4">
