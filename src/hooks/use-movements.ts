@@ -13,6 +13,7 @@ export type DbMovement = {
   responsible: string | null;
   notes: string | null;
   unit: string;
+  floor: string | null;
 };
 
 export function useMovements() {
