@@ -45,7 +45,7 @@ export default function NfUploadPage() {
   };
 
   const handleApprove = (nf: DbNfUpload) => {
-    approveNf.mutate(nf);
+    approveNf.mutate({ ...nf, nf_items: editedItems });
     setPreviewNf(null);
   };
 
