@@ -282,7 +282,7 @@ serve(async (req) => {
       .insert({
         file_name: originalFileName,
         file_url: fileUrl,
-        status: "processando",
+        status: "pendente",
       })
       .select()
       .single();
