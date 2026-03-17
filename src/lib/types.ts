@@ -9,8 +9,9 @@ export type BhMatrizFloor = typeof BH_MATRIZ_FLOORS[number];
 export const ALL_BRANCHES: Branch[] = ['BH-Matriz', 'BH-Algar', 'Vêneto', 'SP', 'RJ', 'PAG', 'VAG', 'FLO', 'JM', 'ITA', 'CPN', 'LIM', 'JUN', 'SJC'];
 
 export const BRANCH_LABELS: Record<Branch, string> = {
-  'BH-Matriz': 'BH (Matriz / 9º andar)',
+  'BH-Matriz': 'BH (Matriz)',
   'BH-Algar': 'BH (Algar)',
+  'Vêneto': 'BH (Vêneto)',
   'SP': 'São Paulo',
   'RJ': 'Rio de Janeiro',
   'PAG': 'Poços de Caldas',
