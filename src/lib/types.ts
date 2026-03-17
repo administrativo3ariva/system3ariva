@@ -1,7 +1,10 @@
 export type Branch = 'BH-Matriz' | 'BH-Algar' | 'SP' | 'RJ' | 'PAG' | 'VAG' | 'FLO' | 'JM' | 'ITA' | 'CPN' | 'LIM' | 'JUN' | 'SJC';
 
-export const STOCK_UNITS = ['BH-Matriz', 'BH-Algar'] as const;
+export const STOCK_UNITS = ['BH-Matriz', 'BH-Algar', 'Vêneto'] as const;
 export type StockUnit = typeof STOCK_UNITS[number];
+
+export const BH_MATRIZ_FLOORS = ['3º andar', '8º andar', '9º andar'] as const;
+export type BhMatrizFloor = typeof BH_MATRIZ_FLOORS[number];
 
 export const ALL_BRANCHES: Branch[] = ['BH-Matriz', 'BH-Algar', 'SP', 'RJ', 'PAG', 'VAG', 'FLO', 'JM', 'ITA', 'CPN', 'LIM', 'JUN', 'SJC'];
 
