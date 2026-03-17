@@ -9,8 +9,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useApp } from '@/contexts/AppContext';
+import { BranchBadge } from '@/components/BranchBadge';
 
 export default function NfUploadPage() {
+  const { selectedBranch } = useApp();
   const { data: nfUploads = [], isLoading } = useNfUploads();
   const uploadNf = useUploadAndProcessNf();
   const updateNfUpload = useUpdateNfUpload();
@@ -24,7 +27,7 @@ export default function NfUploadPage() {
     if (!files) return;
     Array.from(files).forEach(file => {
       if (file.type === 'application/pdf' || file.type.startsWith('image/')) {
-        uploadNf.mutate(file);
+        uploadNf.mutate({ file, unit: selectedBranch });
       } else {
         import('sonner').then(({ toast }) => toast.error(`Formato não suportado: ${file.name}`));
       }
@@ -55,7 +58,9 @@ export default function NfUploadPage() {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="section-title text-xl">Upload de Notas Fiscais</h1>
-        <p className="text-sm text-muted-foreground">Faça upload de NFs (PDF ou imagem) para extração automática via IA</p>
+        <p className="text-sm text-muted-foreground">
+          Faça upload de NFs para <BranchBadge branch={selectedBranch} /> — extração automática via IA
+        </p>
       </div>
 
       <input
@@ -85,7 +90,7 @@ export default function NfUploadPage() {
           <>
             <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
             <p className="text-sm font-medium">Arraste uma NF aqui ou clique para selecionar</p>
-            <p className="text-xs text-muted-foreground mt-1">PDF ou imagem — extração automática via IA</p>
+            <p className="text-xs text-muted-foreground mt-1">PDF ou imagem — os itens serão adicionados ao estoque de <strong>{selectedBranch}</strong></p>
           </>
         )}
       </div>
@@ -106,7 +111,7 @@ export default function NfUploadPage() {
             {nfUploads.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  Nenhuma NF enviada ainda
+                  Nenhuma NF enviada para {selectedBranch}
                 </TableCell>
               </TableRow>
             )}
@@ -156,7 +161,7 @@ export default function NfUploadPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label className="text-muted-foreground text-xs">Fornecedor</Label>
                   <Input defaultValue={previewNf.supplier || ''} className="mt-1" readOnly />
@@ -164,6 +169,10 @@ export default function NfUploadPage() {
                 <div>
                   <Label className="text-muted-foreground text-xs">Data</Label>
                   <Input defaultValue={previewNf.upload_date} className="mt-1" readOnly />
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-xs">Filial destino</Label>
+                  <div className="mt-1"><BranchBadge branch={previewNf.unit} /></div>
                 </div>
               </div>
 
