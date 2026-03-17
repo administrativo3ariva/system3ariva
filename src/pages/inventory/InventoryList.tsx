@@ -129,7 +129,7 @@ export default function InventoryList() {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">{a.category}</TableCell>
-                    <TableCell><BranchBadge branch={a.branch} /></TableCell>
+                    <TableCell><BranchBadge branch={a.branch} />{a.floor && <span className="ml-1 text-xs text-muted-foreground">({a.floor})</span>}</TableCell>
                     <TableCell className="text-right">{a.quantity}</TableCell>
                     <TableCell className="text-right text-sm">R$ {Number(a.unit_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                     <TableCell className="text-right font-medium">R$ {Number(a.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
