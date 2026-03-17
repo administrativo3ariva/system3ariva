@@ -6,6 +6,7 @@ import { useMovements, useAddMovement, useUpdateMovement, useDeleteMovement, DbM
 import { useCollaborators } from '@/hooks/use-collaborators';
 import { BranchBadge } from '@/components/BranchBadge';
 import { STOCK_UNITS, StockUnit, BH_MATRIZ_FLOORS } from '@/lib/types';
+import { FloorPicker } from '@/components/FloorPicker';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
