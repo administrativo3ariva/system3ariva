@@ -131,29 +131,18 @@ export default function StockMovements() {
     isEdit = false,
   ) => (
     <>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <Label>Tipo</Label>
-          <Select value={formState.type} onValueChange={v => setFormState((f: any) => ({ ...f, type: v }))}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="entrada">Entrada</SelectItem>
-              <SelectItem value="saida">Saída</SelectItem>
-              <SelectItem value="ajuste">Ajuste</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="grid gap-2">
-          <Label>Unidade</Label>
-          <Select value={formState.unit} onValueChange={v => setFormState((f: any) => ({ ...f, unit: v, floor: '' }))}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {STOCK_UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="grid gap-2">
+        <Label>Tipo</Label>
+        <Select value={formState.type} onValueChange={v => setFormState((f: any) => ({ ...f, type: v }))}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="entrada">Entrada</SelectItem>
+            <SelectItem value="saida">Saída</SelectItem>
+            <SelectItem value="ajuste">Ajuste</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
-      {formState.unit === 'BH-Matriz' && (
+      {selectedBranch === 'BH-Matriz' && (
         <FloorPicker
           value={formState.floor || ''}
           onChange={v => setFormState((f: any) => ({ ...f, floor: v }))}
@@ -180,7 +169,7 @@ export default function StockMovements() {
           <Select value={formState.responsible || undefined} onValueChange={v => setFormState((f: any) => ({ ...f, responsible: v }))}>
             <SelectTrigger><SelectValue placeholder="Selecione o responsável" /></SelectTrigger>
             <SelectContent>
-              {activeCollabs.map(c => <SelectItem key={c.id} value={c.name}>{c.name} — {c.unit}</SelectItem>)}
+              {activeCollabs.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
