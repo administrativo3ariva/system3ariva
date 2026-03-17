@@ -102,7 +102,7 @@ export default function InventoryRegister() {
                 </SelectContent>
               </Select>
             </div>
-          )
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="grid gap-2">
