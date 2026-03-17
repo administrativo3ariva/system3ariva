@@ -310,6 +310,7 @@ export default function StockMovements() {
                 <div>
                   <p className="text-xs text-muted-foreground">Unidade</p>
                   <BranchBadge branch={viewMovement.unit} floor={viewMovement.floor} />
+                </div>
               </div>
               {viewMovement.responsible && (
                 <div>
