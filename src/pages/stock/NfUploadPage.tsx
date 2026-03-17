@@ -187,7 +187,9 @@ export default function NfUploadPage() {
               </div>
 
               <div>
-                <Label className="text-muted-foreground text-xs mb-2 block">Itens Extraídos via IA</Label>
+                <Label className="text-muted-foreground text-xs mb-2 block flex items-center gap-1">
+                  <Pencil className="h-3 w-3" /> Itens Extraídos via IA <span className="text-muted-foreground/60">(editável)</span>
+                </Label>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -198,19 +200,56 @@ export default function NfUploadPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(previewNf.nf_items || []).length === 0 && (
+                    {(editedItems || []).length === 0 && (
                       <TableRow>
                         <TableCell colSpan={4} className="text-center text-muted-foreground">
                           Nenhum item extraído
                         </TableCell>
                       </TableRow>
                     )}
-                    {(previewNf.nf_items || []).map((item, i) => (
+                    {(editedItems || []).map((item, i) => (
                       <TableRow key={i}>
-                        <TableCell className="text-sm">{item.name}</TableCell>
-                        <TableCell className="text-right text-sm">{item.quantity}</TableCell>
-                        <TableCell className="text-right text-sm">R$ {Number(item.unit_price).toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-medium text-sm">R$ {Number(item.total_price).toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Input
+                            value={item.name}
+                            onChange={e => {
+                              const updated = [...(editedItems || [])];
+                              updated[i] = { ...updated[i], name: e.target.value };
+                              setEditedItems(updated);
+                            }}
+                            className="h-8 text-sm"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={item.quantity}
+                            onChange={e => {
+                              const updated = [...(editedItems || [])];
+                              const qty = Number(e.target.value) || 0;
+                              updated[i] = { ...updated[i], quantity: qty, total_price: qty * updated[i].unit_price };
+                              setEditedItems(updated);
+                            }}
+                            className="h-8 text-sm text-right w-20 ml-auto"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={item.unit_price}
+                            onChange={e => {
+                              const updated = [...(editedItems || [])];
+                              const price = Number(e.target.value) || 0;
+                              updated[i] = { ...updated[i], unit_price: price, total_price: updated[i].quantity * price };
+                              setEditedItems(updated);
+                            }}
+                            className="h-8 text-sm text-right w-24 ml-auto"
+                          />
+                        </TableCell>
+                        <TableCell className="text-right font-medium text-sm">
+                          R$ {Number(item.total_price).toFixed(2)}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
