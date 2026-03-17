@@ -33,7 +33,7 @@ export default function StockMovements() {
   const [filterType, setFilterType] = useState<string>('all');
   const [form, setForm] = useState({
     productId: '', type: 'entrada' as 'entrada' | 'saida' | 'ajuste',
-    quantity: '', responsible: '', notes: '', unit: 'BH-Matriz' as StockUnit, floor: '',
+    quantity: '', responsible: '', notes: '', floor: '',
   });
 
   // View state
