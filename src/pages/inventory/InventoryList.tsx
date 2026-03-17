@@ -56,6 +56,7 @@ export default function InventoryList() {
       total_price: qty * price,
       acquisition_date: editForm.acquisition_date,
       image_url: editForm.image_url,
+      floor: editForm.branch === 'BH-Matriz' ? (editForm.floor || null) : null,
     }, {
       onSuccess: () => setEditingAsset(null),
     });
