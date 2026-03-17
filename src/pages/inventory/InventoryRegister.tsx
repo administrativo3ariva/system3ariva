@@ -14,7 +14,7 @@ export default function InventoryRegister() {
   const addAsset = useAddAsset();
   const [form, setForm] = useState({
     name: '', description: '', category: '', quantity: '1',
-    unitPrice: '', branch: '' as string, acquisitionDate: '',
+    unitPrice: '', branch: '' as string, acquisitionDate: '', floor: '',
   });
 
   const generateCode = (branch: Branch) => {
