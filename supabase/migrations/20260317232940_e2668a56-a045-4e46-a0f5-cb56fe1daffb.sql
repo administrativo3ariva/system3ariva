@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS trg_update_product_quantity ON public.stock_movements;
