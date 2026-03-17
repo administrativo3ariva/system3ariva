@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Upload, FileText, Check, X, Eye, Loader2, Trash2, ExternalLink } from 'lucide-react';
-import { useNfUploads, useUploadAndProcessNf, useUpdateNfUpload, useDeleteNfUpload } from '@/hooks/use-nf-uploads';
+import { useNfUploads, useUploadAndProcessNf, useUpdateNfUpload, useDeleteNfUpload, useApproveNf } from '@/hooks/use-nf-uploads';
 import type { DbNfUpload } from '@/hooks/use-nf-uploads';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,7 @@ export default function NfUploadPage() {
   const uploadNf = useUploadAndProcessNf();
   const updateNfUpload = useUpdateNfUpload();
   const deleteNfUpload = useDeleteNfUpload();
+  const approveNf = useApproveNf();
   const [previewNf, setPreviewNf] = useState<DbNfUpload | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -30,8 +31,8 @@ export default function NfUploadPage() {
     });
   };
 
-  const handleApprove = (id: string) => {
-    updateNfUpload.mutate({ id, status: 'aprovado' });
+  const handleApprove = (nf: DbNfUpload) => {
+    approveNf.mutate(nf);
     setPreviewNf(null);
   };
 
@@ -202,7 +203,7 @@ export default function NfUploadPage() {
                   <Button variant="outline" onClick={() => handleReject(previewNf.id)} className="text-destructive">
                     <X className="h-4 w-4 mr-2" /> Rejeitar
                   </Button>
-                  <Button onClick={() => handleApprove(previewNf.id)} className="bg-success text-success-foreground hover:bg-success/90">
+                  <Button onClick={() => handleApprove(previewNf)} className="bg-success text-success-foreground hover:bg-success/90">
                     <Check className="h-4 w-4 mr-2" /> Aprovar Entrada
                   </Button>
                 </div>
