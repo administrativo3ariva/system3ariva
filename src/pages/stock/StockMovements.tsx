@@ -311,7 +311,7 @@ export default function StockMovements() {
                   <p className="text-xs text-muted-foreground">Unidade</p>
                   <p className="text-sm font-medium">
                     {viewMovement.unit}
-                    {viewMovement.floor && ` — ${viewMovement.floor}`}
+                    {viewMovement.floor && `-${viewMovement.floor.replace('º andar', '')}`}
                   </p>
                 </div>
               </div>
