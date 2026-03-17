@@ -84,7 +84,7 @@ export default function InventoryRegister() {
             </div>
             <div className="grid gap-2">
               <Label>Filial *</Label>
-              <Select value={form.branch || undefined} onValueChange={v => setForm(f => ({ ...f, branch: v }))}>
+              <Select value={form.branch || undefined} onValueChange={v => setForm(f => ({ ...f, branch: v, floor: '' }))}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {ALL_BRANCHES.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
@@ -92,6 +92,17 @@ export default function InventoryRegister() {
               </Select>
             </div>
           </div>
+          {form.branch === 'BH-Matriz' && (
+            <div className="grid gap-2">
+              <Label>Andar</Label>
+              <Select value={form.floor || undefined} onValueChange={v => setForm(f => ({ ...f, floor: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecione o andar" /></SelectTrigger>
+                <SelectContent>
+                  {BH_MATRIZ_FLOORS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="grid gap-2">
