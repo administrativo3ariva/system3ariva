@@ -1,4 +1,4 @@
-export type Branch = 'BH-Matriz' | 'BH-Algar' | 'SP' | 'RJ' | 'PAG' | 'VAG' | 'FLO' | 'JM' | 'ITA' | 'CPN' | 'LIM' | 'JUN' | 'SJC';
+export type Branch = 'BH-Matriz' | 'BH-Algar' | 'Vêneto' | 'SP' | 'RJ' | 'PAG' | 'VAG' | 'FLO' | 'JM' | 'ITA' | 'CPN' | 'LIM' | 'JUN' | 'SJC';
 
 export const STOCK_UNITS = ['BH-Matriz', 'BH-Algar', 'Vêneto'] as const;
 export type StockUnit = typeof STOCK_UNITS[number];
