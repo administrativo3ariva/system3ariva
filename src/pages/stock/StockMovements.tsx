@@ -67,11 +67,11 @@ export default function StockMovements() {
       user: 'Admin',
       responsible: form.type === 'saida' ? form.responsible : null,
       notes: form.notes || null,
-      unit: form.unit,
-      floor: form.unit === 'BH-Matriz' ? (form.floor || null) : null,
+      unit: selectedBranch,
+      floor: selectedBranch === 'BH-Matriz' ? (form.floor || null) : null,
     }, {
       onSuccess: () => {
-        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', unit: 'BH-Matriz', floor: '' });
+        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', floor: '' });
         setDialogOpen(false);
       }
     });
