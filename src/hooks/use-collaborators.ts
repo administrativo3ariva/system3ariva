@@ -8,6 +8,7 @@ export type DbCollaborator = {
   unit: string;
   department: string;
   active: boolean;
+  floor: string | null;
 };
 
 export function useCollaborators() {

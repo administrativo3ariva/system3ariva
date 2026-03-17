@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BranchBadge } from '@/components/BranchBadge';
+import { FloorPicker } from '@/components/FloorPicker';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -19,22 +20,25 @@ export default function CollaboratorsPage() {
   const updateCollaborator = useUpdateCollaborator();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: '', unit: 'BH-Matriz' as StockUnit, department: '' });
+  const [form, setForm] = useState({ name: '', unit: 'BH-Matriz' as StockUnit, department: '', floor: '' });
+
+  const resetForm = () => setForm({ name: '', unit: 'BH-Matriz', department: '', floor: '' });
 
   const handleSave = () => {
+    const floorValue = form.unit === 'BH-Matriz' ? (form.floor || null) : null;
     if (editId) {
-      updateCollaborator.mutate({ id: editId, name: form.name, unit: form.unit, department: form.department }, {
-        onSuccess: () => { setForm({ name: '', unit: 'BH-Matriz', department: '' }); setEditId(null); setDialogOpen(false); }
+      updateCollaborator.mutate({ id: editId, name: form.name, unit: form.unit, department: form.department, floor: floorValue }, {
+        onSuccess: () => { resetForm(); setEditId(null); setDialogOpen(false); }
       });
     } else {
-      addCollaborator.mutate({ name: form.name, unit: form.unit, department: form.department, active: true }, {
-        onSuccess: () => { setForm({ name: '', unit: 'BH-Matriz', department: '' }); setDialogOpen(false); }
+      addCollaborator.mutate({ name: form.name, unit: form.unit, department: form.department, active: true, floor: floorValue }, {
+        onSuccess: () => { resetForm(); setDialogOpen(false); }
       });
     }
   };
 
   const startEdit = (c: typeof collaborators[0]) => {
-    setForm({ name: c.name, unit: c.unit as StockUnit, department: c.department });
+    setForm({ name: c.name, unit: c.unit as StockUnit, department: c.department, floor: c.floor || '' });
     setEditId(c.id);
     setDialogOpen(true);
   };
@@ -52,7 +56,7 @@ export default function CollaboratorsPage() {
           <h1 className="section-title text-xl">Colaboradores</h1>
           <p className="text-sm text-muted-foreground">Gerenciamento de responsáveis pelas retiradas</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) setEditId(null); }}>
+        <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) { setEditId(null); resetForm(); } }}>
           <DialogTrigger asChild>
             <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
               <Plus className="h-4 w-4 mr-2" /> Novo Colaborador
@@ -70,7 +74,7 @@ export default function CollaboratorsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Unidade</Label>
-                  <Select value={form.unit} onValueChange={v => setForm(f => ({ ...f, unit: v as StockUnit }))}>
+                  <Select value={form.unit} onValueChange={v => setForm(f => ({ ...f, unit: v as StockUnit, floor: '' }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {STOCK_UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
@@ -82,6 +86,12 @@ export default function CollaboratorsPage() {
                   <Input value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} />
                 </div>
               </div>
+              {form.unit === 'BH-Matriz' && (
+                <FloorPicker
+                  value={form.floor}
+                  onChange={v => setForm(f => ({ ...f, floor: v }))}
+                />
+              )}
               <Button onClick={handleSave} className="bg-accent text-accent-foreground hover:bg-accent/90">
                 {editId ? 'Salvar Alterações' : 'Cadastrar'}
               </Button>
@@ -106,7 +116,7 @@ export default function CollaboratorsPage() {
             {collaborators.map(c => (
               <TableRow key={c.id} className="table-row-hover">
                 <TableCell className="font-medium">{c.name}</TableCell>
-                <TableCell><BranchBadge branch={c.unit} /></TableCell>
+                <TableCell><BranchBadge branch={c.unit} floor={c.floor} /></TableCell>
                 <TableCell className="text-sm">{c.department}</TableCell>
                 <TableCell>
                   {c.active

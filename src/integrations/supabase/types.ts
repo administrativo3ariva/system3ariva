@@ -70,6 +70,7 @@ export type Database = {
           active: boolean
           created_at: string
           department: string
+          floor: string | null
           id: string
           name: string
           unit: string
@@ -79,6 +80,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           department: string
+          floor?: string | null
           id?: string
           name: string
           unit?: string
@@ -88,6 +90,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           department?: string
+          floor?: string | null
           id?: string
           name?: string
           unit?: string

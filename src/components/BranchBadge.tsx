@@ -8,7 +8,15 @@ const branchStyles: Record<string, string> = {
   'RJ': 'badge-rj',
 };
 
-export function BranchBadge({ branch }: { branch: Branch | string }) {
+interface BranchBadgeProps {
+  branch: Branch | string;
+  floor?: string | null;
+}
+
+export function BranchBadge({ branch, floor }: BranchBadgeProps) {
   const cls = branchStyles[branch] || 'badge-default';
-  return <span className={cls}>{branch}</span>;
+  const floorSuffix = branch === 'BH-Matriz' && floor
+    ? `-${floor.replace('º andar', '')}`
+    : '';
+  return <span className={cls}>{branch}{floorSuffix}</span>;
 }
