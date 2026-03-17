@@ -110,9 +110,9 @@ export function useUploadAndProcessNf() {
       qc.invalidateQueries({ queryKey: ['nf_uploads'] });
       toast.success('NF enviada e processada!');
     },
-    onError: (err) => {
-      console.error(err);
-      toast.error('Erro ao enviar NF');
+    onError: (err: any) => {
+      console.error('Upload NF error:', err?.message || err);
+      toast.error(`Erro ao enviar NF: ${err?.message || 'erro desconhecido'}`);
     },
   });
 }
