@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useApp } from '@/contexts/AppContext';
 
 export type DbMovement = {
   id: string;
@@ -17,10 +18,15 @@ export type DbMovement = {
 };
 
 export function useMovements() {
+  const { selectedBranch } = useApp();
   return useQuery({
-    queryKey: ['movements'],
+    queryKey: ['movements', selectedBranch],
     queryFn: async () => {
-      const { data, error } = await supabase.from('stock_movements').select('*').order('date', { ascending: false });
+      const { data, error } = await supabase
+        .from('stock_movements')
+        .select('*')
+        .eq('unit', selectedBranch)
+        .order('date', { ascending: false });
       if (error) throw error;
       return data as DbMovement[];
     },

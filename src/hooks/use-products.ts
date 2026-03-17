@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useApp } from '@/contexts/AppContext';
 
 export type DbProduct = {
   id: string;
@@ -14,10 +15,15 @@ export type DbProduct = {
 };
 
 export function useProducts() {
+  const { selectedBranch } = useApp();
   return useQuery({
-    queryKey: ['products'],
+    queryKey: ['products', selectedBranch],
     queryFn: async () => {
-      const { data, error } = await supabase.from('products').select('*').order('name');
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('unit', selectedBranch)
+        .order('name');
       if (error) throw error;
       return data as DbProduct[];
     },

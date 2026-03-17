@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useApp } from '@/contexts/AppContext';
 
 export type DbCollaborator = {
   id: string;
@@ -12,10 +13,15 @@ export type DbCollaborator = {
 };
 
 export function useCollaborators() {
+  const { selectedBranch } = useApp();
   return useQuery({
-    queryKey: ['collaborators'],
+    queryKey: ['collaborators', selectedBranch],
     queryFn: async () => {
-      const { data, error } = await supabase.from('collaborators').select('*').order('name');
+      const { data, error } = await supabase
+        .from('collaborators')
+        .select('*')
+        .eq('unit', selectedBranch)
+        .order('name');
       if (error) throw error;
       return data as DbCollaborator[];
     },

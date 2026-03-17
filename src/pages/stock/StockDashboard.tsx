@@ -1,13 +1,15 @@
 import { Package, AlertTriangle, ArrowLeftRight, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
 import { useProducts } from '@/hooks/use-products';
 import { useMovements } from '@/hooks/use-movements';
+import { useApp } from '@/contexts/AppContext';
+import { BRANCH_LABELS } from '@/lib/types';
 import { KpiCard } from '@/components/KpiCard';
-import { BranchBadge } from '@/components/BranchBadge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function StockDashboard() {
+  const { selectedBranch } = useApp();
   const { data: products = [], isLoading: loadingProducts } = useProducts();
   const { data: movements = [], isLoading: loadingMovements } = useMovements();
 
@@ -29,7 +31,7 @@ export default function StockDashboard() {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="section-title text-xl">Dashboard de Estoque</h1>
-        <p className="text-sm text-muted-foreground">Visão geral do estoque — Belo Horizonte</p>
+        <p className="text-sm text-muted-foreground">Visão geral — {BRANCH_LABELS[selectedBranch] || selectedBranch}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -97,10 +99,7 @@ export default function StockDashboard() {
               <div className="space-y-2">
                 {lowStock.map(p => (
                   <div key={p.id} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <span>{p.name}</span>
-                      <BranchBadge branch={p.unit} />
-                    </div>
+                    <span>{p.name}</span>
                     <span className="text-warning font-medium">{p.quantity} / {p.min_stock}</span>
                   </div>
                 ))}

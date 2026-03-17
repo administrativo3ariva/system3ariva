@@ -1,17 +1,25 @@
-export type Branch = 'BH-Matriz' | 'BH-Algar' | 'Vêneto' | 'SP' | 'RJ' | 'PAG' | 'VAG' | 'FLO' | 'JM' | 'ITA' | 'CPN' | 'LIM' | 'JUN' | 'SJC';
+export type Branch = 'BH-Matriz' | 'BH-Algar' | 'Vêneto-BH' | 'Vêneto-SP' | 'SP' | 'RJ' | 'PAG' | 'VAG' | 'FLO' | 'JM' | 'ITA' | 'CPN' | 'LIM' | 'JUN' | 'SJC';
 
-export const STOCK_UNITS = ['BH-Matriz', 'BH-Algar'] as const;
-export type StockUnit = typeof STOCK_UNITS[number];
+export const STOCK_BRANCHES = [
+  'BH-Matriz', 'BH-Algar', 'Vêneto-BH', 'Vêneto-SP',
+  'SP', 'FLO', 'ITA', 'PAG', 'VAG', 'CPN', 'JUN',
+] as const;
+export type StockBranch = typeof STOCK_BRANCHES[number];
+
+// Legacy alias — kept for compatibility
+export const STOCK_UNITS = STOCK_BRANCHES;
+export type StockUnit = StockBranch;
 
 export const BH_MATRIZ_FLOORS = ['3º andar', '8º andar', '9º andar'] as const;
 export type BhMatrizFloor = typeof BH_MATRIZ_FLOORS[number];
 
-export const ALL_BRANCHES: Branch[] = ['BH-Matriz', 'BH-Algar', 'Vêneto', 'SP', 'RJ', 'PAG', 'VAG', 'FLO', 'JM', 'ITA', 'CPN', 'LIM', 'JUN', 'SJC'];
+export const ALL_BRANCHES: Branch[] = ['BH-Matriz', 'BH-Algar', 'Vêneto-BH', 'Vêneto-SP', 'SP', 'RJ', 'PAG', 'VAG', 'FLO', 'JM', 'ITA', 'CPN', 'LIM', 'JUN', 'SJC'];
 
-export const BRANCH_LABELS: Record<Branch, string> = {
+export const BRANCH_LABELS: Record<string, string> = {
   'BH-Matriz': 'BH (Matriz)',
   'BH-Algar': 'BH (Algar)',
-  'Vêneto': 'BH (Vêneto)',
+  'Vêneto-BH': 'Vêneto (BH)',
+  'Vêneto-SP': 'Vêneto (SP)',
   'SP': 'São Paulo',
   'RJ': 'Rio de Janeiro',
   'PAG': 'Poços de Caldas',
@@ -24,6 +32,22 @@ export const BRANCH_LABELS: Record<Branch, string> = {
   'JUN': 'Jundiaí',
   'SJC': 'São José dos Campos',
 };
+
+/** Groups for the sidebar branch selector */
+export const STOCK_BRANCH_GROUPS = [
+  {
+    label: 'Belo Horizonte',
+    branches: ['BH-Matriz', 'BH-Algar'] as StockBranch[],
+  },
+  {
+    label: 'Vêneto',
+    branches: ['Vêneto-BH', 'Vêneto-SP'] as StockBranch[],
+  },
+  {
+    label: 'Filiais',
+    branches: ['SP', 'FLO', 'ITA', 'PAG', 'VAG', 'CPN', 'JUN'] as StockBranch[],
+  },
+];
 
 export interface Product {
   id: string;

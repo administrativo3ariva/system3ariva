@@ -1,44 +1,45 @@
 import { useState } from 'react';
 import { Plus, UserCheck, UserX, Pencil } from 'lucide-react';
 import { useCollaborators, useAddCollaborator, useUpdateCollaborator } from '@/hooks/use-collaborators';
-import { STOCK_UNITS, StockUnit } from '@/lib/types';
+import { useApp } from '@/contexts/AppContext';
+import { BRANCH_LABELS } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BranchBadge } from '@/components/BranchBadge';
 import { FloorPicker } from '@/components/FloorPicker';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CollaboratorsPage() {
+  const { selectedBranch } = useApp();
   const { data: collaborators = [], isLoading } = useCollaborators();
   const addCollaborator = useAddCollaborator();
   const updateCollaborator = useUpdateCollaborator();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: '', unit: 'BH-Matriz' as StockUnit, department: '', floor: '' });
+  const [form, setForm] = useState({ name: '', department: '', floor: '' });
 
-  const resetForm = () => setForm({ name: '', unit: 'BH-Matriz', department: '', floor: '' });
+  const resetForm = () => setForm({ name: '', department: '', floor: '' });
 
   const handleSave = () => {
-    const floorValue = form.unit === 'BH-Matriz' ? (form.floor || null) : null;
+    const floorValue = selectedBranch === 'BH-Matriz' ? (form.floor || null) : null;
     if (editId) {
-      updateCollaborator.mutate({ id: editId, name: form.name, unit: form.unit, department: form.department, floor: floorValue }, {
+      updateCollaborator.mutate({ id: editId, name: form.name, department: form.department, floor: floorValue }, {
         onSuccess: () => { resetForm(); setEditId(null); setDialogOpen(false); }
       });
     } else {
-      addCollaborator.mutate({ name: form.name, unit: form.unit, department: form.department, active: true, floor: floorValue }, {
+      addCollaborator.mutate({ name: form.name, unit: selectedBranch, department: form.department, active: true, floor: floorValue }, {
         onSuccess: () => { resetForm(); setDialogOpen(false); }
       });
     }
   };
 
   const startEdit = (c: typeof collaborators[0]) => {
-    setForm({ name: c.name, unit: c.unit as StockUnit, department: c.department, floor: c.floor || '' });
+    setForm({ name: c.name, department: c.department, floor: c.floor || '' });
     setEditId(c.id);
     setDialogOpen(true);
   };
@@ -54,7 +55,7 @@ export default function CollaboratorsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="section-title text-xl">Colaboradores</h1>
-          <p className="text-sm text-muted-foreground">Gerenciamento de responsáveis pelas retiradas</p>
+          <p className="text-sm text-muted-foreground">Responsáveis — {BRANCH_LABELS[selectedBranch] || selectedBranch}</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) { setEditId(null); resetForm(); } }}>
           <DialogTrigger asChild>
@@ -71,22 +72,11 @@ export default function CollaboratorsPage() {
                 <Label>Nome Completo</Label>
                 <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label>Unidade</Label>
-                  <Select value={form.unit} onValueChange={v => setForm(f => ({ ...f, unit: v as StockUnit, floor: '' }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {STOCK_UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label>Departamento</Label>
-                  <Input value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} />
-                </div>
+              <div className="grid gap-2">
+                <Label>Departamento</Label>
+                <Input value={form.department} onChange={e => setForm(f => ({ ...f, department: e.target.value }))} />
               </div>
-              {form.unit === 'BH-Matriz' && (
+              {selectedBranch === 'BH-Matriz' && (
                 <FloorPicker
                   value={form.floor}
                   onChange={v => setForm(f => ({ ...f, floor: v }))}

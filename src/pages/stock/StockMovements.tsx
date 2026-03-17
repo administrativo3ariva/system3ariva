@@ -4,8 +4,9 @@ import { toast } from 'sonner';
 import { useProducts } from '@/hooks/use-products';
 import { useMovements, useAddMovement, useUpdateMovement, useDeleteMovement, DbMovement } from '@/hooks/use-movements';
 import { useCollaborators } from '@/hooks/use-collaborators';
+import { useApp } from '@/contexts/AppContext';
 import { BranchBadge } from '@/components/BranchBadge';
-import { STOCK_UNITS, StockUnit, BH_MATRIZ_FLOORS } from '@/lib/types';
+import { BRANCH_LABELS } from '@/lib/types';
 import { FloorPicker } from '@/components/FloorPicker';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 
 export default function StockMovements() {
+  const { selectedBranch } = useApp();
   const { data: movements = [], isLoading } = useMovements();
   const { data: products = [] } = useProducts();
   const { data: collaborators = [] } = useCollaborators();
@@ -31,7 +33,7 @@ export default function StockMovements() {
   const [filterType, setFilterType] = useState<string>('all');
   const [form, setForm] = useState({
     productId: '', type: 'entrada' as 'entrada' | 'saida' | 'ajuste',
-    quantity: '', responsible: '', notes: '', unit: 'BH-Matriz' as StockUnit, floor: '',
+    quantity: '', responsible: '', notes: '', floor: '',
   });
 
   // View state
@@ -40,7 +42,7 @@ export default function StockMovements() {
   // Edit state
   const [editMovement, setEditMovement] = useState<DbMovement | null>(null);
   const [editForm, setEditForm] = useState({
-    type: 'entrada' as string, quantity: '', responsible: '', notes: '', unit: 'BH-Matriz' as StockUnit, floor: '',
+    type: 'entrada' as string, quantity: '', responsible: '', notes: '', floor: '',
   });
 
   // Delete state
@@ -65,11 +67,11 @@ export default function StockMovements() {
       user: 'Admin',
       responsible: form.type === 'saida' ? form.responsible : null,
       notes: form.notes || null,
-      unit: form.unit,
-      floor: form.unit === 'BH-Matriz' ? (form.floor || null) : null,
+      unit: selectedBranch,
+      floor: selectedBranch === 'BH-Matriz' ? (form.floor || null) : null,
     }, {
       onSuccess: () => {
-        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', unit: 'BH-Matriz', floor: '' });
+        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', floor: '' });
         setDialogOpen(false);
       }
     });
@@ -82,7 +84,6 @@ export default function StockMovements() {
       quantity: String(m.quantity),
       responsible: m.responsible || '',
       notes: m.notes || '',
-      unit: m.unit as StockUnit,
       floor: m.floor || '',
     });
   };
@@ -99,8 +100,7 @@ export default function StockMovements() {
       quantity: qty,
       responsible: editForm.type === 'saida' ? editForm.responsible : null,
       notes: editForm.notes || null,
-      unit: editForm.unit,
-      floor: editForm.unit === 'BH-Matriz' ? (editForm.floor || null) : null,
+      floor: selectedBranch === 'BH-Matriz' ? (editForm.floor || null) : null,
     }, {
       onSuccess: () => setEditMovement(null),
     });
@@ -131,29 +131,18 @@ export default function StockMovements() {
     isEdit = false,
   ) => (
     <>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <Label>Tipo</Label>
-          <Select value={formState.type} onValueChange={v => setFormState((f: any) => ({ ...f, type: v }))}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="entrada">Entrada</SelectItem>
-              <SelectItem value="saida">Saída</SelectItem>
-              <SelectItem value="ajuste">Ajuste</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="grid gap-2">
-          <Label>Unidade</Label>
-          <Select value={formState.unit} onValueChange={v => setFormState((f: any) => ({ ...f, unit: v, floor: '' }))}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {STOCK_UNITS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="grid gap-2">
+        <Label>Tipo</Label>
+        <Select value={formState.type} onValueChange={v => setFormState((f: any) => ({ ...f, type: v }))}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="entrada">Entrada</SelectItem>
+            <SelectItem value="saida">Saída</SelectItem>
+            <SelectItem value="ajuste">Ajuste</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
-      {formState.unit === 'BH-Matriz' && (
+      {selectedBranch === 'BH-Matriz' && (
         <FloorPicker
           value={formState.floor || ''}
           onChange={v => setFormState((f: any) => ({ ...f, floor: v }))}
@@ -180,7 +169,7 @@ export default function StockMovements() {
           <Select value={formState.responsible || undefined} onValueChange={v => setFormState((f: any) => ({ ...f, responsible: v }))}>
             <SelectTrigger><SelectValue placeholder="Selecione o responsável" /></SelectTrigger>
             <SelectContent>
-              {activeCollabs.map(c => <SelectItem key={c.id} value={c.name}>{c.name} — {c.unit}</SelectItem>)}
+              {activeCollabs.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
