@@ -3,6 +3,7 @@ import { Branch } from '@/lib/types';
 const branchStyles: Record<string, string> = {
   'BH-Matriz': 'badge-bh-matriz',
   'BH-Algar': 'badge-bh-algar',
+  'Vêneto': 'badge-bh-algar',
   'SP': 'badge-sp',
   'RJ': 'badge-rj',
 };

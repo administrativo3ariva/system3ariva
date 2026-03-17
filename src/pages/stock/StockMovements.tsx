@@ -197,7 +197,7 @@ export default function StockMovements() {
                     {typeIcon(m.type)}{m.type}
                   </Badge>
                 </TableCell>
-                <TableCell><BranchBadge branch={m.unit} /></TableCell>
+                <TableCell><BranchBadge branch={m.unit} />{m.floor && <span className="ml-1 text-xs text-muted-foreground">({m.floor})</span>}</TableCell>
                 <TableCell className="text-right font-medium">{m.quantity}</TableCell>
                 <TableCell className="text-sm">{m.responsible || '—'}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{m.user}</TableCell>
