@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Plus, Search, Filter, Pencil, AlertTriangle } from 'lucide-react';
-import { useProducts, useAddProduct, useUpdateProduct, DbProduct } from '@/hooks/use-products';
+import { Plus, Search, Filter, Pencil, AlertTriangle, Trash2 } from 'lucide-react';
+import { useProducts, useAddProduct, useUpdateProduct, useDeleteProduct, DbProduct } from '@/hooks/use-products';
 import { useApp } from '@/contexts/AppContext';
+import { useCategories } from '@/hooks/use-categories';
 import { BRANCH_LABELS } from '@/lib/types';
-import { PRODUCT_CATEGORIES } from '@/lib/mock-data';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
 export default function StockProducts() {
@@ -19,13 +20,19 @@ export default function StockProducts() {
   const { data: products = [], isLoading } = useProducts();
   const addProduct = useAddProduct();
   const updateProduct = useUpdateProduct();
+  const deleteProduct = useDeleteProduct();
+  const categories = useCategories();
+
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', category: '', quantity: '', unitPrice: '', minStock: '' });
-
+  const [form, setForm] = useState({ name: '', category: '', quantity: '', unitPrice: '', minStock: '', newCategory: '' });
   const [editingProduct, setEditingProduct] = useState<DbProduct | null>(null);
   const [editForm, setEditForm] = useState<Partial<DbProduct>>({});
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+
+  const allCategories = [...new Set([...categories, ...customCategories])].sort();
 
   const filtered = products.filter(p => {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
@@ -33,9 +40,21 @@ export default function StockProducts() {
     return true;
   });
 
+  const handleAddCategory = () => {
+    const cat = form.newCategory.trim();
+    if (cat && !allCategories.includes(cat)) {
+      setCustomCategories(prev => [...prev, cat]);
+      setForm(f => ({ ...f, category: cat, newCategory: '' }));
+    } else {
+      setForm(f => ({ ...f, newCategory: '' }));
+    }
+  };
+
   const handleAdd = () => {
     const qty = parseInt(form.quantity) || 0;
     const price = parseFloat(form.unitPrice) || 0;
+    if (!form.name.trim()) { toast.error('Informe o nome do produto'); return; }
+    if (!form.category) { toast.error('Selecione a categoria'); return; }
     addProduct.mutate({
       name: form.name,
       category: form.category,
@@ -46,7 +65,7 @@ export default function StockProducts() {
       min_stock: parseInt(form.minStock) || null,
     }, {
       onSuccess: () => {
-        setForm({ name: '', category: '', quantity: '', unitPrice: '', minStock: '' });
+        setForm({ name: '', category: '', quantity: '', unitPrice: '', minStock: '', newCategory: '' });
         setDialogOpen(false);
       }
     });
@@ -80,6 +99,11 @@ export default function StockProducts() {
     });
   };
 
+  const handleDelete = () => {
+    if (!deleteId) return;
+    deleteProduct.mutate(deleteId, { onSuccess: () => setDeleteId(null) });
+  };
+
   if (isLoading) return <div className="space-y-4 p-6">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>;
 
   return (
@@ -109,9 +133,21 @@ export default function StockProducts() {
                 <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
-                    {PRODUCT_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {allCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Nova categoria..."
+                    value={form.newCategory}
+                    onChange={e => setForm(f => ({ ...f, newCategory: e.target.value }))}
+                    className="text-xs h-8"
+                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddCategory())}
+                  />
+                  <Button type="button" variant="outline" size="sm" className="h-8 shrink-0" onClick={handleAddCategory}>
+                    Adicionar
+                  </Button>
+                </div>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="grid gap-2">
@@ -144,7 +180,7 @@ export default function StockProducts() {
           <SelectTrigger className="w-[170px]"><Filter className="h-4 w-4 mr-2" /><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas categorias</SelectItem>
-            {PRODUCT_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            {allCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
@@ -159,7 +195,7 @@ export default function StockProducts() {
               <TableHead className="text-right">Mín.</TableHead>
               <TableHead className="text-right">Valor Unit.</TableHead>
               <TableHead className="text-right">Valor Total</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
+              <TableHead className="w-[80px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -179,9 +215,14 @@ export default function StockProducts() {
                   <TableCell className="text-right text-sm">R$ {Number(p.unit_price).toFixed(2)}</TableCell>
                   <TableCell className="text-right font-medium">R$ {Number(p.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(p)} className="h-8 w-8">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => openEdit(p)} className="h-8 w-8">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteId(p.id)} className="h-8 w-8 text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               );
@@ -197,23 +238,20 @@ export default function StockProducts() {
             <SheetTitle>Editar Produto</SheetTitle>
             <SheetDescription>{editingProduct?.name}</SheetDescription>
           </SheetHeader>
-
           <div className="space-y-5 mt-6">
             <div className="grid gap-2">
               <Label>Nome *</Label>
               <Input value={editForm.name || ''} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} />
             </div>
-
             <div className="grid gap-2">
               <Label>Categoria</Label>
               <Select value={editForm.category || ''} onValueChange={v => setEditForm(f => ({ ...f, category: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {PRODUCT_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  {allCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-
             <div className="grid grid-cols-3 gap-4">
               <div className="grid gap-2">
                 <Label>Quantidade</Label>
@@ -228,14 +266,12 @@ export default function StockProducts() {
                 <Input type="number" value={editForm.min_stock ?? ''} onChange={e => setEditForm(f => ({ ...f, min_stock: e.target.value ? parseInt(e.target.value) : null }))} placeholder="Ex: 10" />
               </div>
             </div>
-
             {editForm.min_stock != null && editForm.quantity != null && editForm.quantity <= editForm.min_stock && (
               <div className="flex items-center gap-2 p-3 rounded-md bg-warning/10 border border-warning/30 text-warning text-sm">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 <span>Estoque atual ({editForm.quantity}) está abaixo ou igual ao mínimo ({editForm.min_stock})</span>
               </div>
             )}
-
             <div className="flex gap-3 pt-4">
               <Button onClick={handleSaveEdit} disabled={updateProduct.isPending} className="flex-1 bg-accent text-accent-foreground hover:bg-accent/90">
                 {updateProduct.isPending ? 'Salvando...' : 'Salvar Alterações'}
@@ -247,6 +283,24 @@ export default function StockProducts() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteId} onOpenChange={open => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ao excluir este produto, todas as movimentações relacionadas também serão removidas. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleteProduct.isPending ? 'Excluindo...' : 'Excluir'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -54,3 +54,22 @@ export function useUpdateProduct() {
     onError: () => toast.error('Erro ao atualizar produto'),
   });
 }
+
+export function useDeleteProduct() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Delete related movements first
+      const { error: movError } = await supabase.from('stock_movements').delete().eq('product_id', id);
+      if (movError) throw movError;
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['products'] });
+      qc.invalidateQueries({ queryKey: ['movements'] });
+      toast.success('Produto excluído');
+    },
+    onError: () => toast.error('Erro ao excluir produto'),
+  });
+}
