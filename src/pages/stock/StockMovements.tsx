@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { Plus, TrendingUp, TrendingDown, RefreshCw, Eye, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useProducts } from '@/hooks/use-products';
+import { useProducts, useAddProduct } from '@/hooks/use-products';
 import { useMovements, useAddMovement, useUpdateMovement, useDeleteMovement, DbMovement } from '@/hooks/use-movements';
 import { useCollaborators } from '@/hooks/use-collaborators';
 import { useApp } from '@/contexts/AppContext';
+import { useCategories } from '@/hooks/use-categories';
 import { BranchBadge } from '@/components/BranchBadge';
-import { BRANCH_LABELS } from '@/lib/types';
 import { FloorPicker } from '@/components/FloorPicker';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,42 +25,80 @@ export default function StockMovements() {
   const { data: movements = [], isLoading } = useMovements();
   const { data: products = [] } = useProducts();
   const { data: collaborators = [] } = useCollaborators();
+  const categories = useCategories();
   const addMovement = useAddMovement();
+  const addProduct = useAddProduct();
   const updateMovement = useUpdateMovement();
   const deleteMovement = useDeleteMovement();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [filterType, setFilterType] = useState<string>('all');
+  const [isNewProduct, setIsNewProduct] = useState(false);
+  const [newCategoryInput, setNewCategoryInput] = useState('');
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [form, setForm] = useState({
     productId: '', type: 'entrada' as 'entrada' | 'saida' | 'ajuste',
     quantity: '', responsible: '', notes: '', floor: '',
+    newProductName: '', newProductCategory: '', newProductPrice: '',
   });
 
-  // View state
   const [viewMovement, setViewMovement] = useState<DbMovement | null>(null);
-
-  // Edit state
   const [editMovement, setEditMovement] = useState<DbMovement | null>(null);
   const [editForm, setEditForm] = useState({
     type: 'entrada' as string, quantity: '', responsible: '', notes: '', floor: '',
   });
-
-  // Delete state
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const activeCollabs = collaborators.filter(c => c.active);
   const filtered = filterType === 'all' ? movements : movements.filter(m => m.type === filterType);
+  const allCategories = [...new Set([...categories, ...customCategories])].sort();
 
-  const handleAdd = () => {
-    const product = products.find(p => p.id === form.productId);
-    if (!product) { toast.error('Selecione um produto'); return; }
+  const handleAddNewCategory = () => {
+    const cat = newCategoryInput.trim();
+    if (cat && !allCategories.includes(cat)) {
+      setCustomCategories(prev => [...prev, cat]);
+      setForm(f => ({ ...f, newProductCategory: cat }));
+    }
+    setNewCategoryInput('');
+  };
+
+  const handleAdd = async () => {
     const qty = parseInt(form.quantity) || 0;
     if (qty <= 0) { toast.error('Informe uma quantidade válida'); return; }
     if (form.type === 'saida' && !form.responsible) { toast.error('Selecione o responsável pela retirada'); return; }
 
+    let productId = form.productId;
+    let productName = '';
+
+    if (isNewProduct) {
+      if (!form.newProductName.trim()) { toast.error('Informe o nome do produto'); return; }
+      if (!form.newProductCategory) { toast.error('Selecione a categoria'); return; }
+      const price = parseFloat(form.newProductPrice) || 0;
+
+      try {
+        const result = await addProduct.mutateAsync({
+          name: form.newProductName.trim(),
+          category: form.newProductCategory,
+          quantity: 0,
+          unit_price: price,
+          total_price: 0,
+          unit: selectedBranch,
+          min_stock: null,
+        });
+        productId = result.id;
+        productName = form.newProductName.trim();
+      } catch {
+        return;
+      }
+    } else {
+      const product = products.find(p => p.id === form.productId);
+      if (!product) { toast.error('Selecione um produto'); return; }
+      productName = product.name;
+    }
+
     addMovement.mutate({
-      product_id: form.productId,
-      product_name: product.name,
+      product_id: productId,
+      product_name: productName,
       type: form.type,
       quantity: qty,
       date: new Date().toISOString().split('T')[0],
@@ -71,7 +109,8 @@ export default function StockMovements() {
       floor: selectedBranch === 'BH-Matriz' ? (form.floor || null) : null,
     }, {
       onSuccess: () => {
-        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', floor: '' });
+        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', floor: '', newProductName: '', newProductCategory: '', newProductPrice: '' });
+        setIsNewProduct(false);
         setDialogOpen(false);
       }
     });
@@ -80,11 +119,8 @@ export default function StockMovements() {
   const openEdit = (m: DbMovement) => {
     setEditMovement(m);
     setEditForm({
-      type: m.type,
-      quantity: String(m.quantity),
-      responsible: m.responsible || '',
-      notes: m.notes || '',
-      floor: m.floor || '',
+      type: m.type, quantity: String(m.quantity),
+      responsible: m.responsible || '', notes: m.notes || '', floor: m.floor || '',
     });
   };
 
@@ -95,15 +131,11 @@ export default function StockMovements() {
     if (editForm.type === 'saida' && !editForm.responsible) { toast.error('Selecione o responsável'); return; }
 
     updateMovement.mutate({
-      id: editMovement.id,
-      type: editForm.type,
-      quantity: qty,
+      id: editMovement.id, type: editForm.type, quantity: qty,
       responsible: editForm.type === 'saida' ? editForm.responsible : null,
       notes: editForm.notes || null,
       floor: selectedBranch === 'BH-Matriz' ? (editForm.floor || null) : null,
-    }, {
-      onSuccess: () => setEditMovement(null),
-    });
+    }, { onSuccess: () => setEditMovement(null) });
   };
 
   const handleDelete = () => {
@@ -149,15 +181,70 @@ export default function StockMovements() {
         />
       )}
       {!isEdit && (
-        <div className="grid gap-2">
-          <Label>Produto</Label>
-          <Select value={(formState as typeof form).productId || undefined} onValueChange={v => setFormState((f: any) => ({ ...f, productId: v }))}>
-            <SelectTrigger><SelectValue placeholder="Selecione o produto" /></SelectTrigger>
-            <SelectContent>
-              {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+        <>
+          <div className="flex items-center gap-2">
+            <Label>Produto</Label>
+            <Button
+              type="button" variant="ghost" size="sm"
+              className="text-xs h-6 px-2"
+              onClick={() => setIsNewProduct(!isNewProduct)}
+            >
+              {isNewProduct ? 'Selecionar existente' : '+ Novo produto'}
+            </Button>
+          </div>
+          {isNewProduct ? (
+            <div className="space-y-3 rounded-md border p-3">
+              <div className="grid gap-2">
+                <Label className="text-xs">Nome do produto</Label>
+                <Input
+                  value={(formState as typeof form).newProductName}
+                  onChange={e => setFormState((f: any) => ({ ...f, newProductName: e.target.value }))}
+                  placeholder="Nome do novo produto"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-xs">Categoria</Label>
+                <Select
+                  value={(formState as typeof form).newProductCategory}
+                  onValueChange={v => setFormState((f: any) => ({ ...f, newProductCategory: v }))}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent>
+                    {allCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Nova categoria..."
+                    value={newCategoryInput}
+                    onChange={e => setNewCategoryInput(e.target.value)}
+                    className="text-xs h-8"
+                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddNewCategory())}
+                  />
+                  <Button type="button" variant="outline" size="sm" className="h-8 shrink-0" onClick={handleAddNewCategory}>
+                    Adicionar
+                  </Button>
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label className="text-xs">Valor Unitário</Label>
+                <Input
+                  type="number" step="0.01"
+                  value={(formState as typeof form).newProductPrice}
+                  onChange={e => setFormState((f: any) => ({ ...f, newProductPrice: e.target.value }))}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          ) : (
+            <Select value={(formState as typeof form).productId || undefined} onValueChange={v => setFormState((f: any) => ({ ...f, productId: v }))}>
+              <SelectTrigger><SelectValue placeholder="Selecione o produto" /></SelectTrigger>
+              <SelectContent>
+                {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+        </>
       )}
       <div className="grid gap-2">
         <Label>Quantidade</Label>
@@ -198,7 +285,7 @@ export default function StockMovements() {
               <SelectItem value="ajuste">Ajustes</SelectItem>
             </SelectContent>
           </Select>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) setIsNewProduct(false); }}>
             <DialogTrigger asChild>
               <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
                 <Plus className="h-4 w-4 mr-2" /> Nova Movimentação
@@ -210,8 +297,8 @@ export default function StockMovements() {
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 {renderFormFields(form, setForm)}
-                <Button onClick={handleAdd} disabled={addMovement.isPending} className="bg-accent text-accent-foreground hover:bg-accent/90">
-                  {addMovement.isPending ? 'Registrando...' : 'Registrar'}
+                <Button onClick={handleAdd} disabled={addMovement.isPending || addProduct.isPending} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                  {addMovement.isPending || addProduct.isPending ? 'Registrando...' : 'Registrar'}
                 </Button>
               </div>
             </DialogContent>
