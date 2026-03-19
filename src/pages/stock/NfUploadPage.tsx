@@ -1,17 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
-import { Pencil } from 'lucide-react';
+import { Pencil, Plus } from 'lucide-react';
 import { Upload, FileText, Check, X, Eye, Loader2, Trash2, ExternalLink } from 'lucide-react';
 import { useNfUploads, useUploadAndProcessNf, useUpdateNfUpload, useDeleteNfUpload, useApproveNf } from '@/hooks/use-nf-uploads';
-import type { DbNfUpload } from '@/hooks/use-nf-uploads';
+import type { DbNfUpload, DbNfItem } from '@/hooks/use-nf-uploads';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useApp } from '@/contexts/AppContext';
 import { BranchBadge } from '@/components/BranchBadge';
+import { PRODUCT_CATEGORIES } from '@/lib/mock-data';
 
 export default function NfUploadPage() {
   const { selectedBranch } = useApp();
@@ -21,14 +23,19 @@ export default function NfUploadPage() {
   const deleteNfUpload = useDeleteNfUpload();
   const approveNf = useApproveNf();
   const [previewNf, setPreviewNf] = useState<DbNfUpload | null>(null);
-  const [editedItems, setEditedItems] = useState<DbNfUpload['nf_items']>([]);
+  const [editedItems, setEditedItems] = useState<DbNfItem[]>([]);
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [newCategoryInput, setNewCategoryInput] = useState('');
+  const [addingCategoryForIndex, setAddingCategoryForIndex] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const allCategories = [...PRODUCT_CATEGORIES, ...customCategories.filter(c => !PRODUCT_CATEGORIES.includes(c))];
 
   useEffect(() => {
     if (previewNf) {
       setEditedItems(
-        (previewNf.nf_items || []).map(item => ({ ...item }))
+        (previewNf.nf_items || []).map(item => ({ ...item, category: item.category || '' }))
       );
     }
   }, [previewNf]);
@@ -52,6 +59,24 @@ export default function NfUploadPage() {
   const handleReject = (id: string) => {
     updateNfUpload.mutate({ id, status: 'rejeitado' });
     setPreviewNf(null);
+  };
+
+  const handleDeleteItem = (index: number) => {
+    setEditedItems(items => items.filter((_, i) => i !== index));
+  };
+
+  const handleAddCategory = (index: number) => {
+    if (newCategoryInput.trim()) {
+      const cat = newCategoryInput.trim();
+      if (!customCategories.includes(cat) && !PRODUCT_CATEGORIES.includes(cat)) {
+        setCustomCategories(prev => [...prev, cat]);
+      }
+      const updated = [...editedItems];
+      updated[index] = { ...updated[index], category: cat };
+      setEditedItems(updated);
+      setNewCategoryInput('');
+      setAddingCategoryForIndex(null);
+    }
   };
 
   const statusBadge = (s: string) => {
@@ -159,7 +184,7 @@ export default function NfUploadPage() {
       </div>
 
       <Dialog open={!!previewNf} onOpenChange={() => setPreviewNf(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display">Conferência — {previewNf?.file_name}</DialogTitle>
           </DialogHeader>
@@ -194,26 +219,28 @@ export default function NfUploadPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Item</TableHead>
+                      <TableHead>Categoria</TableHead>
                       <TableHead className="text-right">Qtd</TableHead>
                       <TableHead className="text-right">Valor Unit.</TableHead>
                       <TableHead className="text-right">Total</TableHead>
+                      <TableHead className="w-[40px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(editedItems || []).length === 0 && (
+                    {editedItems.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center text-muted-foreground">
                           Nenhum item extraído
                         </TableCell>
                       </TableRow>
                     )}
-                    {(editedItems || []).map((item, i) => (
+                    {editedItems.map((item, i) => (
                       <TableRow key={i}>
                         <TableCell>
                           <Input
                             value={item.name}
                             onChange={e => {
-                              const updated = [...(editedItems || [])];
+                              const updated = [...editedItems];
                               updated[i] = { ...updated[i], name: e.target.value };
                               setEditedItems(updated);
                             }}
@@ -221,11 +248,56 @@ export default function NfUploadPage() {
                           />
                         </TableCell>
                         <TableCell>
+                          {addingCategoryForIndex === i ? (
+                            <div className="flex gap-1">
+                              <Input
+                                value={newCategoryInput}
+                                onChange={e => setNewCategoryInput(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleAddCategory(i)}
+                                placeholder="Nova categoria"
+                                className="h-8 text-sm w-28"
+                                autoFocus
+                              />
+                              <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => handleAddCategory(i)}>
+                                <Check className="h-3 w-3" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="h-8 px-2" onClick={() => { setAddingCategoryForIndex(null); setNewCategoryInput(''); }}>
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <Select
+                              value={item.category || ''}
+                              onValueChange={v => {
+                                if (v === '__new__') {
+                                  setAddingCategoryForIndex(i);
+                                  return;
+                                }
+                                const updated = [...editedItems];
+                                updated[i] = { ...updated[i], category: v };
+                                setEditedItems(updated);
+                              }}
+                            >
+                              <SelectTrigger className="h-8 text-sm w-32">
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {allCategories.map(c => (
+                                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                                ))}
+                                <SelectItem value="__new__">
+                                  <span className="flex items-center gap-1"><Plus className="h-3 w-3" /> Nova categoria</span>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           <Input
                             type="number"
                             value={item.quantity}
                             onChange={e => {
-                              const updated = [...(editedItems || [])];
+                              const updated = [...editedItems];
                               const qty = Number(e.target.value) || 0;
                               updated[i] = { ...updated[i], quantity: qty, total_price: qty * updated[i].unit_price };
                               setEditedItems(updated);
@@ -239,7 +311,7 @@ export default function NfUploadPage() {
                             step="0.01"
                             value={item.unit_price}
                             onChange={e => {
-                              const updated = [...(editedItems || [])];
+                              const updated = [...editedItems];
                               const price = Number(e.target.value) || 0;
                               updated[i] = { ...updated[i], unit_price: price, total_price: updated[i].quantity * price };
                               setEditedItems(updated);
@@ -249,6 +321,16 @@ export default function NfUploadPage() {
                         </TableCell>
                         <TableCell className="text-right font-medium text-sm">
                           R$ {Number(item.total_price).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteItem(i)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
