@@ -10,6 +10,7 @@ export type DbNfItem = {
   quantity: number;
   unit_price: number;
   total_price: number;
+  category?: string;
 };
 
 export type DbNfUpload = {
@@ -157,7 +158,7 @@ export function useApproveNf() {
             .from('products')
             .insert({
               name: item.name,
-              category: 'NF Import',
+              category: item.category || 'Outros',
               quantity: 0,
               unit_price: item.unit_price,
               total_price: 0,
@@ -176,6 +177,7 @@ export function useApproveNf() {
           type: 'entrada',
           quantity: item.quantity,
           unit: targetUnit,
+          responsible: 'Sistema',
           notes: `NF: ${nf.file_name} — ${nf.supplier || 'Fornecedor não identificado'}`,
         });
         if (moveError) throw moveError;
