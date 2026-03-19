@@ -158,7 +158,7 @@ export function useApproveNf() {
             .from('products')
             .insert({
               name: item.name,
-              category: 'NF Import',
+              category: item.category || 'Outros',
               quantity: 0,
               unit_price: item.unit_price,
               total_price: 0,
