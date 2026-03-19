@@ -10,6 +10,7 @@ export type DbNfItem = {
   quantity: number;
   unit_price: number;
   total_price: number;
+  category?: string;
 };
 
 export type DbNfUpload = {
