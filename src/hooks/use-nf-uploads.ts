@@ -177,6 +177,7 @@ export function useApproveNf() {
           type: 'entrada',
           quantity: item.quantity,
           unit: targetUnit,
+          responsible: 'Sistema',
           notes: `NF: ${nf.file_name} — ${nf.supplier || 'Fornecedor não identificado'}`,
         });
         if (moveError) throw moveError;
