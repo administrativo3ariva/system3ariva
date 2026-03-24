@@ -25,6 +25,7 @@ export type Database = {
           floor: string | null
           id: string
           image_url: string | null
+          inventoried: boolean
           name: string
           quantity: number
           total_price: number
@@ -41,6 +42,7 @@ export type Database = {
           floor?: string | null
           id?: string
           image_url?: string | null
+          inventoried?: boolean
           name: string
           quantity?: number
           total_price?: number
@@ -57,6 +59,7 @@ export type Database = {
           floor?: string | null
           id?: string
           image_url?: string | null
+          inventoried?: boolean
           name?: string
           quantity?: number
           total_price?: number
