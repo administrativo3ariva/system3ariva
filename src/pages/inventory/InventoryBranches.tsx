@@ -159,7 +159,7 @@ export default function InventoryBranches() {
                 </TableRow>
               ))}
               {filteredAssets.length === 0 && (
-                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
