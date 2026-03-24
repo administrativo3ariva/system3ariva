@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useAssets, useAddAsset } from '@/hooks/use-assets';
 import { ALL_BRANCHES, Branch, BRANCH_LABELS } from '@/lib/types';
 import { FloorPicker } from '@/components/FloorPicker';
@@ -10,7 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { PackagePlus, Tag, MapPin, DollarSign, Hash, CalendarDays, FileText, Layers, ImageIcon } from 'lucide-react';
+import { PackagePlus, Tag, MapPin, DollarSign, Hash, CalendarDays, FileText, Layers, ImageIcon, Upload, Link, X } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function InventoryRegister() {
   const { data: assets = [] } = useAssets();
@@ -19,6 +20,11 @@ export default function InventoryRegister() {
     name: '', description: '', category: '', quantity: '1',
     unitPrice: '', branch: '' as string, acquisitionDate: '', floor: '', imageUrl: '',
   });
+  const [imageMode, setImageMode] = useState<'upload' | 'url'>('upload');
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewFile, setPreviewFile] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const generateCode = (branch: Branch) => {
     const branchAssets = assets.filter(a => a.branch === branch);
