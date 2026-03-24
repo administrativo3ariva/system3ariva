@@ -1,8 +1,9 @@
-import { DollarSign, Building2, Layers, Monitor } from 'lucide-react';
+import { DollarSign, Layers, Monitor, ClipboardCheck } from 'lucide-react';
 import { useAssets } from '@/hooks/use-assets';
 import { KpiCard } from '@/components/KpiCard';
 import { BranchBadge } from '@/components/BranchBadge';
-import { BRANCH_LABELS, Branch, ALL_BRANCHES } from '@/lib/types';
+import { BRANCH_LABELS, Branch } from '@/lib/types';
+import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function InventoryDashboard() {
@@ -12,6 +13,8 @@ export default function InventoryDashboard() {
 
   const totalValue = assets.reduce((s, a) => s + Number(a.total_price), 0);
   const totalItems = assets.length;
+  const inventoriedCount = assets.filter(a => a.inventoried).length;
+  const inventoryPercent = totalItems > 0 ? Math.round((inventoriedCount / totalItems) * 100) : 0;
 
   const byBranch = assets.reduce((acc, a) => {
     acc[a.branch] = (acc[a.branch] || 0) + Number(a.total_price);
@@ -23,8 +26,6 @@ export default function InventoryDashboard() {
     return acc;
   }, {} as Record<string, number>);
 
-  const branchCount = Object.keys(byBranch).length;
-
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -35,7 +36,15 @@ export default function InventoryDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard title="Patrimônio Total" value={`R$ ${totalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} icon={DollarSign} variant="accent" />
         <KpiCard title="Total de Bens" value={totalItems} icon={Monitor} />
-        <KpiCard title="Filiais Ativas" value={branchCount} subtitle={`de ${ALL_BRANCHES.length} filiais`} icon={Building2} />
+        <div className="bg-card rounded-lg border p-4 flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <ClipboardCheck className="h-4 w-4" />
+            <span className="text-xs font-medium">Progresso do Inventário</span>
+          </div>
+          <span className="text-2xl font-bold">{inventoryPercent}%</span>
+          <Progress value={inventoryPercent} className="h-2" />
+          <span className="text-xs text-muted-foreground">{inventoriedCount}/{totalItems} itens conferidos</span>
+        </div>
         <KpiCard title="Categorias" value={Object.keys(byCategory).length} icon={Layers} />
       </div>
 

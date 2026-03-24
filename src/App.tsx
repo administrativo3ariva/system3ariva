@@ -13,6 +13,7 @@ import CollaboratorsPage from "@/pages/stock/CollaboratorsPage";
 import InventoryDashboard from "@/pages/inventory/InventoryDashboard";
 import InventoryList from "@/pages/inventory/InventoryList";
 import InventoryRegister from "@/pages/inventory/InventoryRegister";
+import InventoryBranches from "@/pages/inventory/InventoryBranches";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
               <Route path="/inventory/dashboard" element={<InventoryDashboard />} />
               <Route path="/inventory/list" element={<InventoryList />} />
               <Route path="/inventory/register" element={<InventoryRegister />} />
+              <Route path="/inventory/branches" element={<InventoryBranches />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

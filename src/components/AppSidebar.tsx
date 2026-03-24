@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, BarChart3, ArrowLeftRight, FileUp, ClipboardList, PlusCircle, Users, LayoutDashboard, MapPin, ChevronDown } from 'lucide-react';
+import { Package, BarChart3, ArrowLeftRight, FileUp, ClipboardList, PlusCircle, Users, LayoutDashboard, MapPin, ChevronDown, Building2 } from 'lucide-react';
 import logo from '@/assets/Logo.png';
 import { useLocation } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
@@ -40,6 +40,7 @@ const inventoryItems = [
   { title: 'Dashboard', url: '/inventory/dashboard', icon: BarChart3 },
   { title: 'Inventário', url: '/inventory/list', icon: ClipboardList },
   { title: 'Cadastro', url: '/inventory/register', icon: PlusCircle },
+  { title: 'Filiais', url: '/inventory/branches', icon: Building2 },
 ];
 
 export function AppSidebar() {

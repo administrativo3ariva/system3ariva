@@ -15,6 +15,7 @@ export type DbAsset = {
   acquisition_date: string | null;
   image_url: string | null;
   floor: string | null;
+  inventoried: boolean;
 };
 
 export function useAssets() {
