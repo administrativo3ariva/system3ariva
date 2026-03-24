@@ -26,6 +26,47 @@ export default function InventoryRegister() {
   const [previewFile, setPreviewFile] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const uploadFile = useCallback(async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Apenas imagens são permitidas');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Imagem deve ter no máximo 5MB');
+      return;
+    }
+    setIsUploading(true);
+    const ext = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { data, error } = await supabase.storage.from('asset-images').upload(fileName, file);
+    setIsUploading(false);
+    if (error) {
+      toast.error('Erro ao enviar imagem');
+      return;
+    }
+    const { data: urlData } = supabase.storage.from('asset-images').getPublicUrl(data.path);
+    setForm(f => ({ ...f, imageUrl: urlData.publicUrl }));
+    setPreviewFile(URL.createObjectURL(file));
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) uploadFile(file);
+  }, [uploadFile]);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) uploadFile(file);
+  };
+
+  const clearImage = () => {
+    setForm(f => ({ ...f, imageUrl: '' }));
+    setPreviewFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const generateCode = (branch: Branch) => {
     const branchAssets = assets.filter(a => a.branch === branch);
     const nextNum = branchAssets.length + 1;
@@ -59,11 +100,13 @@ export default function InventoryRegister() {
     }, {
       onSuccess: () => {
         setForm({ name: '', description: '', category: '', quantity: '1', unitPrice: '', branch: '', acquisitionDate: '', floor: '', imageUrl: '' });
+        setPreviewFile(null);
       }
     });
   };
 
   const totalPrice = (parseFloat(form.unitPrice) || 0) * (parseInt(form.quantity) || 1);
+  const currentPreview = previewFile || form.imageUrl;
 
   return (
     <div className="animate-fade-in max-w-3xl mx-auto space-y-6">
