@@ -162,22 +162,68 @@ export default function InventoryRegister() {
               <ImageIcon className="h-4 w-4 text-muted-foreground" />
               Imagem do Bem
             </CardTitle>
-            <CardDescription>Cole a URL de uma foto do patrimônio</CardDescription>
+            <CardDescription>Envie uma foto ou cole o link da imagem</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-2">
-              <Label>URL da Imagem</Label>
-              <Input value={form.imageUrl} onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))} placeholder="https://exemplo.com/foto.jpg" />
+            {/* Mode toggle */}
+            <div className="flex gap-1 rounded-lg border border-border p-1 bg-secondary/30">
+              <button
+                type="button"
+                onClick={() => setImageMode('upload')}
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${imageMode === 'upload' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <Upload className="h-3.5 w-3.5" /> Enviar Imagem
+              </button>
+              <button
+                type="button"
+                onClick={() => setImageMode('url')}
+                className={`flex-1 flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${imageMode === 'url' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <Link className="h-3.5 w-3.5" /> URL da Imagem
+              </button>
             </div>
-            {form.imageUrl && (
-              <div className="flex items-center gap-4">
+
+            {currentPreview ? (
+              <div className="relative inline-block">
                 <img
-                  src={form.imageUrl}
+                  src={currentPreview}
                   alt="Preview"
-                  className="w-24 h-24 rounded-lg object-cover border border-border"
-                  onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  className="w-32 h-32 rounded-lg object-cover border border-border"
+                  onError={e => { (e.target as HTMLImageElement).src = ''; }}
                 />
-                <p className="text-xs text-muted-foreground">Pré-visualização da imagem</p>
+                <button
+                  type="button"
+                  onClick={clearImage}
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-md hover:bg-destructive/90 transition-colors"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : imageMode === 'upload' ? (
+              <div
+                onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 cursor-pointer transition-colors ${isDragging ? 'border-primary bg-primary/5' : 'border-border hover:border-muted-foreground/50 hover:bg-secondary/30'}`}
+              >
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+                <Upload className={`h-8 w-8 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
+                <div className="text-center">
+                  <p className="text-sm font-medium text-foreground">
+                    {isUploading ? 'Enviando...' : 'Arraste a imagem aqui'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">ou clique para selecionar (máx. 5MB)</p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-2">
+                <Label>URL da Imagem</Label>
+                <Input
+                  value={form.imageUrl}
+                  onChange={e => { setForm(f => ({ ...f, imageUrl: e.target.value })); setPreviewFile(null); }}
+                  placeholder="https://exemplo.com/foto.jpg"
+                />
               </div>
             )}
           </CardContent>
