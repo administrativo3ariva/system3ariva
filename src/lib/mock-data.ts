@@ -56,4 +56,4 @@ export const mockNfUploads: NfUpload[] = [
 ];
 
 export const PRODUCT_CATEGORIES = ['Papelaria', 'Informática', 'Copa', 'Limpeza', 'Escritório', 'Elétrica'];
-export const ASSET_CATEGORIES = ['Informática', 'Mobiliário', 'Climatização', 'Veículos', 'Equipamentos', 'Telecomunicações'];
+export const ASSET_CATEGORIES = ['Climatização', 'Móveis', 'Eletrodomésticos', 'Utensílios', 'Infraestrutura', 'Informática'];
