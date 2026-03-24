@@ -1,0 +1,1 @@
+ALTER TABLE public.assets ADD COLUMN inventoried boolean NOT NULL DEFAULT false;
