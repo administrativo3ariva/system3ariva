@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { CheckCircle2, Circle, MapPin, ImageIcon } from 'lucide-react';
 import { useAssets, useUpdateAsset, DbAsset } from '@/hooks/use-assets';
 import { BranchBadge } from '@/components/BranchBadge';
+import { AssetCard } from '@/components/AssetCard';
+import { ViewToggle } from '@/components/ViewToggle';
 import { ALL_BRANCHES, Branch, BRANCH_LABELS } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,6 +15,7 @@ export default function InventoryBranches() {
   const { data: assets = [], isLoading } = useAssets();
   const updateAsset = useUpdateAsset();
   const [selectedBranch, setSelectedBranch] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
   if (isLoading) return <div className="space-y-4 p-6">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>;
 
@@ -73,58 +76,90 @@ export default function InventoryBranches() {
             {branchesWithAssets.map(b => <SelectItem key={b} value={b}>{BRANCH_LABELS[b] || b}</SelectItem>)}
           </SelectContent>
         </Select>
+        <div className="ml-auto">
+          <ViewToggle view={viewMode} onChange={setViewMode} />
+        </div>
       </div>
 
-      <div className="bg-card rounded-lg border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">Status</TableHead>
-              <TableHead className="w-[60px]">Foto</TableHead>
-              <TableHead>Código</TableHead>
-              <TableHead>Nome</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Filial</TableHead>
-              <TableHead className="text-right">Valor Total</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredAssets.map(a => (
-              <TableRow key={a.id} className={a.inventoried ? 'bg-accent/5' : ''}>
-                <TableCell>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleInventoried(a)}>
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredAssets.map(a => (
+            <div key={a.id} className="relative">
+              <AssetCard
+                asset={a}
+                actions={
+                  <Button
+                    variant={a.inventoried ? 'default' : 'secondary'}
+                    size="icon"
+                    className="h-8 w-8 shadow-sm"
+                    onClick={() => toggleInventoried(a)}
+                  >
                     {a.inventoried ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      <CheckCircle2 className="h-4 w-4" />
                     ) : (
-                      <Circle className="h-5 w-5 text-muted-foreground" />
+                      <Circle className="h-4 w-4" />
                     )}
                   </Button>
-                </TableCell>
-                <TableCell>
-                  {a.image_url ? (
-                    <img src={a.image_url} alt={a.name} className="w-10 h-10 rounded-md object-cover border border-border" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center">
-                      <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell className="code-asset font-medium">{a.code}</TableCell>
-                <TableCell>
-                  <p className="font-medium text-sm">{a.name}</p>
-                  {a.description && <p className="text-xs text-muted-foreground">{a.description}</p>}
-                </TableCell>
-                <TableCell className="text-sm">{a.category}</TableCell>
-                <TableCell><BranchBadge branch={a.branch as Branch} floor={a.floor} /></TableCell>
-                <TableCell className="text-right font-medium">R$ {Number(a.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                }
+              />
+            </div>
+          ))}
+          {filteredAssets.length === 0 && (
+            <p className="col-span-full text-center py-12 text-muted-foreground">Nenhum item encontrado</p>
+          )}
+        </div>
+      ) : (
+        <div className="bg-card rounded-lg border overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px]">Status</TableHead>
+                <TableHead className="w-[60px]">Foto</TableHead>
+                <TableHead>Código</TableHead>
+                <TableHead>Nome</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Filial</TableHead>
+                <TableHead className="text-right">Valor Total</TableHead>
               </TableRow>
-            ))}
-            {filteredAssets.length === 0 && (
-              <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {filteredAssets.map(a => (
+                <TableRow key={a.id} className={a.inventoried ? 'bg-accent/5' : ''}>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleInventoried(a)}>
+                      {a.inventoried ? (
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      ) : (
+                        <Circle className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    {a.image_url ? (
+                      <img src={a.image_url} alt={a.name} className="w-10 h-10 rounded-md object-cover border border-border" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center">
+                        <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="code-asset font-medium">{a.code}</TableCell>
+                  <TableCell>
+                    <p className="font-medium text-sm">{a.name}</p>
+                    {a.description && <p className="text-xs text-muted-foreground">{a.description}</p>}
+                  </TableCell>
+                  <TableCell className="text-sm">{a.category}</TableCell>
+                  <TableCell><BranchBadge branch={a.branch as Branch} floor={a.floor} /></TableCell>
+                  <TableCell className="text-right font-medium">R$ {Number(a.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                </TableRow>
+              ))}
+              {filteredAssets.length === 0 && (
+                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }
