@@ -10,14 +10,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { PackagePlus, Tag, MapPin, DollarSign, Hash, CalendarDays, FileText, Layers } from 'lucide-react';
+import { PackagePlus, Tag, MapPin, DollarSign, Hash, CalendarDays, FileText, Layers, ImageIcon } from 'lucide-react';
 
 export default function InventoryRegister() {
   const { data: assets = [] } = useAssets();
   const addAsset = useAddAsset();
   const [form, setForm] = useState({
     name: '', description: '', category: '', quantity: '1',
-    unitPrice: '', branch: '' as string, acquisitionDate: '', floor: '',
+    unitPrice: '', branch: '' as string, acquisitionDate: '', floor: '', imageUrl: '',
   });
 
   const generateCode = (branch: Branch) => {
@@ -47,12 +47,12 @@ export default function InventoryRegister() {
       total_price: qty * price,
       branch,
       acquisition_date: form.acquisitionDate || new Date().toISOString().split('T')[0],
-      image_url: null,
+      image_url: form.imageUrl || null,
       floor: branch === 'BH-Matriz' ? (form.floor || null) : null,
       inventoried: false,
     }, {
       onSuccess: () => {
-        setForm({ name: '', description: '', category: '', quantity: '1', unitPrice: '', branch: '', acquisitionDate: '', floor: '' });
+        setForm({ name: '', description: '', category: '', quantity: '1', unitPrice: '', branch: '', acquisitionDate: '', floor: '', imageUrl: '' });
       }
     });
   };
@@ -103,6 +103,34 @@ export default function InventoryRegister() {
                 </SelectContent>
               </Select>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Imagem */}
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ImageIcon className="h-4 w-4 text-muted-foreground" />
+              Imagem do Bem
+            </CardTitle>
+            <CardDescription>Cole a URL de uma foto do patrimônio</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-2">
+              <Label>URL da Imagem</Label>
+              <Input value={form.imageUrl} onChange={e => setForm(f => ({ ...f, imageUrl: e.target.value }))} placeholder="https://exemplo.com/foto.jpg" />
+            </div>
+            {form.imageUrl && (
+              <div className="flex items-center gap-4">
+                <img
+                  src={form.imageUrl}
+                  alt="Preview"
+                  className="w-24 h-24 rounded-lg object-cover border border-border"
+                  onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+                <p className="text-xs text-muted-foreground">Pré-visualização da imagem</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
