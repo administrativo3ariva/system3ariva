@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Search, Filter, Pencil, ImageIcon } from 'lucide-react';
+import { Search, Filter, Pencil, Eye, ImageIcon } from 'lucide-react';
 import { AssetCard } from '@/components/AssetCard';
+import { AssetDetailDialog } from '@/components/AssetDetailDialog';
 import { ViewToggle } from '@/components/ViewToggle';
 import { useAssets, useUpdateAsset, DbAsset } from '@/hooks/use-assets';
 import { BranchBadge } from '@/components/BranchBadge';
@@ -130,7 +131,7 @@ export default function InventoryList() {
                     <TableHead className="text-right">Valor Unit.</TableHead>
                     <TableHead className="text-right">Valor Total</TableHead>
                     <TableHead>Aquisição</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
+                    <TableHead className="w-[80px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -159,9 +160,12 @@ export default function InventoryList() {
                       <TableCell className="text-right font-medium">R$ {Number(a.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{a.acquisition_date ? new Date(a.acquisition_date).toLocaleDateString('pt-BR') : '—'}</TableCell>
                       <TableCell>
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(a)} className="h-8 w-8">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <AssetDetailDialog asset={a} />
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(a)} className="h-8 w-8">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

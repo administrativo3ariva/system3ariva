@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { CheckCircle2, Circle, MapPin, ImageIcon } from 'lucide-react';
+import { CheckCircle2, Circle, MapPin, ImageIcon, Eye } from 'lucide-react';
+import { AssetDetailDialog } from '@/components/AssetDetailDialog';
 import { useAssets, useUpdateAsset, DbAsset } from '@/hooks/use-assets';
 import { BranchBadge } from '@/components/BranchBadge';
 import { AssetCard } from '@/components/AssetCard';
@@ -120,6 +121,7 @@ export default function InventoryBranches() {
                 <TableHead>Categoria</TableHead>
                 <TableHead>Filial</TableHead>
                 <TableHead className="text-right">Valor Total</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -151,6 +153,9 @@ export default function InventoryBranches() {
                   <TableCell className="text-sm">{a.category}</TableCell>
                   <TableCell><BranchBadge branch={a.branch as Branch} floor={a.floor} /></TableCell>
                   <TableCell className="text-right font-medium">R$ {Number(a.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell>
+                    <AssetDetailDialog asset={a} />
+                  </TableCell>
                 </TableRow>
               ))}
               {filteredAssets.length === 0 && (
