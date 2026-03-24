@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Search, Filter, Pencil, ImageIcon } from 'lucide-react';
+import { AssetCard } from '@/components/AssetCard';
+import { ViewToggle } from '@/components/ViewToggle';
 import { useAssets, useUpdateAsset, DbAsset } from '@/hooks/use-assets';
 import { BranchBadge } from '@/components/BranchBadge';
 import { ALL_BRANCHES, Branch, BH_MATRIZ_FLOORS } from '@/lib/types';
@@ -24,6 +26,7 @@ export default function InventoryList() {
   const [activeBranch, setActiveBranch] = useState<string>('all');
   const [editingAsset, setEditingAsset] = useState<DbAsset | null>(null);
   const [editForm, setEditForm] = useState<Partial<DbAsset>>({});
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
   const branchesWithAssets = [...new Set(assets.map(a => a.branch))].sort();
 
@@ -84,6 +87,7 @@ export default function InventoryList() {
             {ASSET_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
           </SelectContent>
         </Select>
+        <ViewToggle view={viewMode} onChange={setViewMode} />
       </div>
 
       <Tabs value={activeBranch} onValueChange={setActiveBranch}>
@@ -95,57 +99,76 @@ export default function InventoryList() {
         </TabsList>
 
         <TabsContent value={activeBranch} className="mt-4">
-          <div className="bg-card rounded-lg border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[60px]">Foto</TableHead>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Filial</TableHead>
-                  <TableHead className="text-right">Qtd</TableHead>
-                  <TableHead className="text-right">Valor Unit.</TableHead>
-                  <TableHead className="text-right">Valor Total</TableHead>
-                  <TableHead>Aquisição</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map(a => (
-                  <TableRow key={a.id} className="table-row-hover">
-                    <TableCell>
-                      {a.image_url ? (
-                        <img src={a.image_url} alt={a.name} className="w-10 h-10 rounded-md object-cover border border-border" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center">
-                          <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="code-asset font-medium">{a.code}</TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium text-sm">{a.name}</p>
-                        <p className="text-xs text-muted-foreground">{a.description}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-sm">{a.category}</TableCell>
-                    <TableCell><BranchBadge branch={a.branch} floor={a.floor} /></TableCell>
-                    <TableCell className="text-right">{a.quantity}</TableCell>
-                    <TableCell className="text-right text-sm">R$ {Number(a.unit_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="text-right font-medium">R$ {Number(a.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{a.acquisition_date ? new Date(a.acquisition_date).toLocaleDateString('pt-BR') : '—'}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(a)} className="h-8 w-8">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filtered.map(a => (
+                <AssetCard
+                  key={a.id}
+                  asset={a}
+                  actions={
+                    <Button variant="secondary" size="icon" onClick={() => openEdit(a)} className="h-8 w-8 shadow-sm">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  }
+                />
+              ))}
+              {filtered.length === 0 && (
+                <p className="col-span-full text-center py-12 text-muted-foreground">Nenhum item encontrado</p>
+              )}
+            </div>
+          ) : (
+            <div className="bg-card rounded-lg border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[60px]">Foto</TableHead>
+                    <TableHead>Código</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Filial</TableHead>
+                    <TableHead className="text-right">Qtd</TableHead>
+                    <TableHead className="text-right">Valor Unit.</TableHead>
+                    <TableHead className="text-right">Valor Total</TableHead>
+                    <TableHead>Aquisição</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map(a => (
+                    <TableRow key={a.id} className="table-row-hover">
+                      <TableCell>
+                        {a.image_url ? (
+                          <img src={a.image_url} alt={a.name} className="w-10 h-10 rounded-md object-cover border border-border" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-md bg-muted flex items-center justify-center">
+                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="code-asset font-medium">{a.code}</TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-sm">{a.name}</p>
+                          <p className="text-xs text-muted-foreground">{a.description}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm">{a.category}</TableCell>
+                      <TableCell><BranchBadge branch={a.branch} floor={a.floor} /></TableCell>
+                      <TableCell className="text-right">{a.quantity}</TableCell>
+                      <TableCell className="text-right text-sm">R$ {Number(a.unit_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                      <TableCell className="text-right font-medium">R$ {Number(a.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{a.acquisition_date ? new Date(a.acquisition_date).toLocaleDateString('pt-BR') : '—'}</TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(a)} className="h-8 w-8">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 
