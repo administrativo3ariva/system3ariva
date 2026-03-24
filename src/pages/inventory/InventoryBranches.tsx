@@ -90,7 +90,7 @@ export default function InventoryBranches() {
           </TableHeader>
           <TableBody>
             {filteredAssets.map(a => (
-              <TableRow key={a.id} className={a.inventoried ? 'bg-green-500/5' : ''}>
+              <TableRow key={a.id} className={a.inventoried ? 'bg-accent/5' : ''}>
                 <TableCell>
                   <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleInventoried(a)}>
                     {a.inventoried ? (

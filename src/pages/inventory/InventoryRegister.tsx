@@ -47,6 +47,7 @@ export default function InventoryRegister() {
       acquisition_date: form.acquisitionDate || new Date().toISOString().split('T')[0],
       image_url: null,
       floor: branch === 'BH-Matriz' ? (form.floor || null) : null,
+      inventoried: false,
     }, {
       onSuccess: () => {
         setForm({ name: '', description: '', category: '', quantity: '1', unitPrice: '', branch: '', acquisitionDate: '', floor: '' });
