@@ -45,6 +45,7 @@ type FormData = {
   due_date: string;
   supplier: string;
   estimated_cost: string;
+  actual_cost: string;
   notes: string;
   recurrence_months: string;
 };
@@ -59,6 +60,7 @@ const emptyForm: FormData = {
   due_date: '',
   supplier: '',
   estimated_cost: '',
+  actual_cost: '',
   notes: '',
   recurrence_months: '',
 };
