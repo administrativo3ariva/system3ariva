@@ -4,7 +4,8 @@ import { useProducts, useAddProduct, useUpdateProduct, useDeleteProduct, DbProdu
 import { useApp } from '@/contexts/AppContext';
 import { useCategories } from '@/hooks/use-categories';
 import { BRANCH_LABELS } from '@/lib/types';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
+import { SortableTableHead, SortConfig, toggleSort, sortData } from '@/components/SortableTableHead';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -31,6 +32,7 @@ export default function StockProducts() {
   const [editForm, setEditForm] = useState<Partial<DbProduct>>({});
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [sort, setSort] = useState<SortConfig>({ key: '', direction: null });
 
   const allCategories = [...new Set([...categories, ...customCategories])].sort();
 
@@ -38,6 +40,18 @@ export default function StockProducts() {
     if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
     if (filterCat !== 'all' && p.category !== filterCat) return false;
     return true;
+  });
+
+  const sorted = sortData(filtered, sort, (item, key) => {
+    switch (key) {
+      case 'name': return item.name;
+      case 'category': return item.category;
+      case 'quantity': return item.quantity;
+      case 'min_stock': return item.min_stock;
+      case 'unit_price': return Number(item.unit_price);
+      case 'total_price': return Number(item.total_price);
+      default: return null;
+    }
   });
 
   const handleAddCategory = () => {
@@ -189,17 +203,17 @@ export default function StockProducts() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Produto</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead className="text-right">Qtd</TableHead>
-              <TableHead className="text-right">Mín.</TableHead>
-              <TableHead className="text-right">Valor Unit.</TableHead>
-              <TableHead className="text-right">Valor Total</TableHead>
-              <TableHead className="w-[80px]"></TableHead>
+              <SortableTableHead sortKey="name" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))}>Produto</SortableTableHead>
+              <SortableTableHead sortKey="category" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))}>Categoria</SortableTableHead>
+              <SortableTableHead sortKey="quantity" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))} className="text-right">Qtd</SortableTableHead>
+              <SortableTableHead sortKey="min_stock" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))} className="text-right">Mín.</SortableTableHead>
+              <SortableTableHead sortKey="unit_price" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))} className="text-right">Valor Unit.</SortableTableHead>
+              <SortableTableHead sortKey="total_price" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))} className="text-right">Valor Total</SortableTableHead>
+              <SortableTableHead sortKey="" currentSort={{ key: '', direction: null }} onSort={() => {}} className="w-[80px]"> </SortableTableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map(p => {
+            {sorted.map(p => {
               const isLow = p.min_stock != null && p.quantity <= p.min_stock;
               return (
                 <TableRow key={p.id} className="table-row-hover">
