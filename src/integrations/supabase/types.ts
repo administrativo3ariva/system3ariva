@@ -101,6 +101,66 @@ export type Database = {
         }
         Relationships: []
       }
+      maintenance_tasks: {
+        Row: {
+          actual_cost: number | null
+          branch: string
+          category: string
+          completed_date: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          estimated_cost: number | null
+          floor: string | null
+          id: string
+          notes: string | null
+          priority: string
+          recurrence_months: number | null
+          status: string
+          supplier: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          branch?: string
+          category: string
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          estimated_cost?: number | null
+          floor?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          recurrence_months?: number | null
+          status?: string
+          supplier?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          actual_cost?: number | null
+          branch?: string
+          category?: string
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          estimated_cost?: number | null
+          floor?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string
+          recurrence_months?: number | null
+          status?: string
+          supplier?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       nf_items: {
         Row: {
           id: string
