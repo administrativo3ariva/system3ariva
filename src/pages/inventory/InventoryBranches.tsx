@@ -119,6 +119,7 @@ export default function InventoryBranches() {
                 <TableHead>Código</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Categoria</TableHead>
+                <TableHead>Condição</TableHead>
                 <TableHead>Filial</TableHead>
                 <TableHead className="text-right">Valor Total</TableHead>
                 <TableHead className="w-[50px]"></TableHead>
@@ -151,6 +152,16 @@ export default function InventoryBranches() {
                     {a.description && <p className="text-xs text-muted-foreground">{a.description}</p>}
                   </TableCell>
                   <TableCell className="text-sm">{a.category}</TableCell>
+                  <TableCell>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      a.condition === 'Novo' ? 'bg-green-500/10 text-green-600' :
+                      a.condition === 'Bom' ? 'bg-blue-500/10 text-blue-600' :
+                      a.condition === 'Regular' ? 'bg-yellow-500/10 text-yellow-600' :
+                      a.condition === 'Ruim' ? 'bg-orange-500/10 text-orange-600' :
+                      a.condition === 'Inservível' ? 'bg-red-500/10 text-red-600' :
+                      'bg-muted text-muted-foreground'
+                    }`}>{a.condition || 'Bom'}</span>
+                  </TableCell>
                   <TableCell><BranchBadge branch={a.branch as Branch} floor={a.floor} /></TableCell>
                   <TableCell className="text-right font-medium">R$ {Number(a.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                   <TableCell>
@@ -159,7 +170,7 @@ export default function InventoryBranches() {
                 </TableRow>
               ))}
               {filteredAssets.length === 0 && (
-                <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
               )}
             </TableBody>
           </Table>

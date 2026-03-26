@@ -20,6 +20,7 @@ export type Database = {
           branch: string
           category: string
           code: string
+          condition: string
           created_at: string
           description: string | null
           floor: string | null
@@ -37,6 +38,7 @@ export type Database = {
           branch: string
           category: string
           code: string
+          condition?: string
           created_at?: string
           description?: string | null
           floor?: string | null
@@ -54,6 +56,7 @@ export type Database = {
           branch?: string
           category?: string
           code?: string
+          condition?: string
           created_at?: string
           description?: string | null
           floor?: string | null

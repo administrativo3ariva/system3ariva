@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { useAssets, useAddAsset } from '@/hooks/use-assets';
 import { ALL_BRANCHES, Branch, BRANCH_LABELS } from '@/lib/types';
 import { FloorPicker } from '@/components/FloorPicker';
-import { ASSET_CATEGORIES } from '@/lib/mock-data';
+import { ASSET_CATEGORIES, ASSET_CONDITIONS } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,7 @@ export default function InventoryRegister() {
   const [form, setForm] = useState({
     name: '', description: '', category: '', quantity: '1',
     unitPrice: '', branch: '' as string, acquisitionDate: '', floor: '', imageUrl: '',
+    condition: 'Bom',
   });
   const [imageMode, setImageMode] = useState<'upload' | 'url'>('upload');
   const [isDragging, setIsDragging] = useState(false);
@@ -97,9 +98,10 @@ export default function InventoryRegister() {
       image_url: form.imageUrl || null,
       floor: branch === 'BH-Matriz' ? (form.floor || null) : null,
       inventoried: false,
+      condition: form.condition || 'Bom',
     }, {
       onSuccess: () => {
-        setForm({ name: '', description: '', category: '', quantity: '1', unitPrice: '', branch: '', acquisitionDate: '', floor: '', imageUrl: '' });
+        setForm({ name: '', description: '', category: '', quantity: '1', unitPrice: '', branch: '', acquisitionDate: '', floor: '', imageUrl: '', condition: 'Bom' });
         setPreviewFile(null);
       }
     });
@@ -149,6 +151,17 @@ export default function InventoryRegister() {
                 <SelectTrigger><SelectValue placeholder="Selecione a categoria" /></SelectTrigger>
                 <SelectContent>
                   {ASSET_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label className="flex items-center gap-1.5">
+                Condição <span className="text-destructive">*</span>
+              </Label>
+              <Select value={form.condition} onValueChange={v => setForm(f => ({ ...f, condition: v }))}>
+                <SelectTrigger><SelectValue placeholder="Selecione a condição" /></SelectTrigger>
+                <SelectContent>
+                  {ASSET_CONDITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

@@ -48,6 +48,32 @@ export default function InventoryDashboard() {
         <KpiCard title="Categorias" value={Object.keys(byCategory).length} icon={Layers} />
       </div>
 
+      {/* Condition distribution */}
+      {(() => {
+        const byCondition = assets.reduce((acc, a) => {
+          const c = a.condition || 'Bom';
+          acc[c] = (acc[c] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+        const conditionColors: Record<string, string> = {
+          'Novo': 'bg-green-500', 'Bom': 'bg-blue-500', 'Regular': 'bg-yellow-500', 'Ruim': 'bg-orange-500', 'Inservível': 'bg-red-500',
+        };
+        return (
+          <div className="bg-card rounded-lg border p-5">
+            <h2 className="section-title text-base mb-4">Condição dos Bens</h2>
+            <div className="flex gap-2 mb-4">
+              {Object.entries(byCondition).sort((a, b) => b[1] - a[1]).map(([cond, count]) => (
+                <div key={cond} className="flex-1 text-center">
+                  <div className={`h-2 rounded-full ${conditionColors[cond] || 'bg-muted'} mb-1.5`} style={{ opacity: 0.7 + (count / totalItems) * 0.3 }} />
+                  <p className="text-sm font-medium">{count}</p>
+                  <p className="text-xs text-muted-foreground">{cond}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card rounded-lg border p-5">
           <h2 className="section-title text-base mb-4">Patrimônio por Filial</h2>

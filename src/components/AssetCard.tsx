@@ -45,6 +45,14 @@ export function AssetCard({ asset, actions }: AssetCardProps) {
             <Tag className="h-3 w-3" />{asset.category}
           </span>
           <BranchBadge branch={asset.branch as Branch} floor={asset.floor} />
+          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+            asset.condition === 'Novo' ? 'bg-green-500/10 text-green-600' :
+            asset.condition === 'Bom' ? 'bg-blue-500/10 text-blue-600' :
+            asset.condition === 'Regular' ? 'bg-yellow-500/10 text-yellow-600' :
+            asset.condition === 'Ruim' ? 'bg-orange-500/10 text-orange-600' :
+            asset.condition === 'Inservível' ? 'bg-red-500/10 text-red-600' :
+            'bg-muted text-muted-foreground'
+          }`}>{asset.condition || 'Bom'}</span>
         </div>
 
         <div className="flex items-center justify-between pt-2 border-t border-border">

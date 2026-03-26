@@ -1,0 +1,1 @@
+ALTER TABLE public.assets ADD COLUMN condition text NOT NULL DEFAULT 'bom';
