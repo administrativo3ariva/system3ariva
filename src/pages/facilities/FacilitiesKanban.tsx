@@ -120,6 +120,7 @@ export default function FacilitiesKanban() {
       due_date: form.due_date || null,
       supplier: form.supplier || null,
       estimated_cost: form.estimated_cost ? parseFloat(form.estimated_cost) : 0,
+      actual_cost: form.actual_cost ? parseFloat(form.actual_cost) : null,
       notes: form.notes || null,
       recurrence_months: form.recurrence_months ? parseInt(form.recurrence_months) : null,
     };
@@ -294,7 +295,7 @@ export default function FacilitiesKanban() {
                 <Input type="date" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label>Recorrência (meses)</Label>
                 <Input type="number" min="0" value={form.recurrence_months} onChange={e => setForm(f => ({ ...f, recurrence_months: e.target.value }))} placeholder="Ex: 3" />
@@ -302,6 +303,10 @@ export default function FacilitiesKanban() {
               <div>
                 <Label>Custo Estimado (R$)</Label>
                 <Input type="number" min="0" step="0.01" value={form.estimated_cost} onChange={e => setForm(f => ({ ...f, estimated_cost: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Custo Real (R$)</Label>
+                <Input type="number" min="0" step="0.01" value={form.actual_cost} onChange={e => setForm(f => ({ ...f, actual_cost: e.target.value }))} placeholder="Preencha ao concluir" />
               </div>
             </div>
             <div>
