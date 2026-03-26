@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { addMonths, format } from 'date-fns';
+import { addMonths } from 'date-fns';
 import { useMaintenanceTasks, useUpdateMaintenanceTask, useCreateMaintenanceTask, useDeleteMaintenanceTask } from '@/hooks/use-maintenance';
 import { useApp } from '@/contexts/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
