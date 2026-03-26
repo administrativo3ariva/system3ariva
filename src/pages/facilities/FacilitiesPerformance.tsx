@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BRANCH_LABELS, MAINTENANCE_CATEGORIES } from '@/lib/types';
 import { parseISO, differenceInDays, isBefore } from 'date-fns';
-import { AlertTriangle, CheckCircle2, Clock, TrendingDown, TrendingUp, BarChart3, Hammer, Shield } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, TrendingDown, TrendingUp, BarChart3, Hammer, Shield, DollarSign } from 'lucide-react';
 
 export default function FacilitiesPerformance() {
   const { selectedFacilitiesBranch } = useApp();
@@ -64,6 +64,38 @@ export default function FacilitiesPerformance() {
       }, {} as Record<string, { total: number; overdue: number; corrective: number; late: number }>)
     ).map(([branch, stats]) => ({ branch, ...stats })).sort((a, b) => (b.overdue + b.corrective) - (a.overdue + a.corrective));
 
+    // Cost escalation: group done tasks by category+branch, compare costs chronologically
+    const costAlerts: { category: string; branch: string; previous: number; latest: number; increase: number }[] = [];
+    const doneWithCost = completed.filter(t => t.actual_cost != null && t.actual_cost > 0 && t.completed_date);
+    const groupedByCatBranch: Record<string, typeof doneWithCost> = {};
+    doneWithCost.forEach(t => {
+      const key = `${t.category}|||${t.branch}`;
+      if (!groupedByCatBranch[key]) groupedByCatBranch[key] = [];
+      groupedByCatBranch[key].push(t);
+    });
+    Object.entries(groupedByCatBranch).forEach(([key, group]) => {
+      if (group.length < 2) return;
+      const sorted = [...group].sort((a, b) => parseISO(a.completed_date!).getTime() - parseISO(b.completed_date!).getTime());
+      const latest = sorted[sorted.length - 1];
+      const previous = sorted[sorted.length - 2];
+      if (latest.actual_cost! > previous.actual_cost!) {
+        const increase = Math.round(((latest.actual_cost! - previous.actual_cost!) / previous.actual_cost!) * 100);
+        if (increase >= 10) {
+          const [cat, br] = key.split('|||');
+          costAlerts.push({ category: cat, branch: br, previous: previous.actual_cost!, latest: latest.actual_cost!, increase });
+        }
+      }
+    });
+    costAlerts.sort((a, b) => b.increase - a.increase);
+
+    // Also check estimated vs actual cost overruns on individual tasks
+    const costOverruns = completed.filter(t =>
+      t.estimated_cost && t.estimated_cost > 0 && t.actual_cost != null && t.actual_cost > t.estimated_cost
+    ).map(t => ({
+      ...t,
+      overrun: Math.round(((t.actual_cost! - t.estimated_cost!) / t.estimated_cost!) * 100),
+    })).sort((a, b) => b.overrun - a.overrun);
+
     return {
       completed: completed.length,
       completedLate: completedLate.length,
@@ -76,6 +108,8 @@ export default function FacilitiesPerformance() {
       preventive: preventive.length,
       categoryCorrectiveCount,
       branchStats,
+      costAlerts,
+      costOverruns,
       total: tasks.length,
     };
   }, [tasks]);
