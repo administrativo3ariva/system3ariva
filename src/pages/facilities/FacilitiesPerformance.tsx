@@ -210,7 +210,69 @@ export default function FacilitiesPerformance() {
         </Card>
       </div>
 
-      {/* Branch Performance */}
+      {/* Cost Escalation Alerts */}
+      {metrics.costAlerts.length > 0 && (
+        <Card className="border-orange-500/30">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-orange-400" />
+              Alerta de Custos Crescentes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground mb-3">Manutenções do mesmo tipo/filial cujo custo real aumentou em relação à execução anterior.</p>
+            <div className="space-y-2">
+              {metrics.costAlerts.map((alert, i) => (
+                <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-orange-500/20 bg-orange-500/5">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium block truncate">{alert.category}</span>
+                    <span className="text-xs text-muted-foreground">{BRANCH_LABELS[alert.branch] || alert.branch}</span>
+                  </div>
+                  <div className="text-right shrink-0 ml-3">
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-muted-foreground">R$ {alert.previous.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      <span className="text-muted-foreground">→</span>
+                      <span className="font-semibold">R$ {alert.latest.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <Badge variant="destructive" className="text-[10px] mt-0.5">+{alert.increase}%</Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Cost Overruns */}
+      {metrics.costOverruns.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-destructive" />
+              Custos Acima do Estimado
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {metrics.costOverruns.slice(0, 8).map(t => (
+                <div key={t.id} className="flex items-center justify-between p-2.5 rounded-lg border">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium truncate block">{t.title}</span>
+                    <span className="text-xs text-muted-foreground">{t.category} • {BRANCH_LABELS[t.branch] || t.branch}</span>
+                  </div>
+                  <div className="text-right shrink-0 ml-3">
+                    <div className="text-xs text-muted-foreground">
+                      Est. R$ {t.estimated_cost!.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} → Real R$ {t.actual_cost!.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </div>
+                    <Badge variant="destructive" className="text-[10px]">+{t.overrun}%</Badge>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
