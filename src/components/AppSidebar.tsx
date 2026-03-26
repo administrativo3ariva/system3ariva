@@ -4,7 +4,7 @@ import logo from '@/assets/Logo.png';
 import { useLocation } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import { useApp } from '@/contexts/AppContext';
-import { STOCK_BRANCH_GROUPS, BRANCH_LABELS, StockBranch } from '@/lib/types';
+import { STOCK_BRANCH_GROUPS, BRANCH_LABELS, StockBranch, ALL_BRANCHES } from '@/lib/types';
 import {
   Sidebar,
   SidebarContent,
@@ -50,7 +50,7 @@ const facilitiesItems = [
 ];
 
 export function AppSidebar() {
-  const { activeModule, setActiveModule, selectedBranch, setSelectedBranch } = useApp();
+  const { activeModule, setActiveModule, selectedBranch, setSelectedBranch, selectedFacilitiesBranch, setSelectedFacilitiesBranch } = useApp();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const location = useLocation();
@@ -133,6 +133,39 @@ export function AppSidebar() {
                       ))}
                     </DropdownMenuGroup>
                   </React.Fragment>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
+
+        {/* Branch Selector — Facilities */}
+        {activeModule === 'facilities' && !collapsed && (
+          <div className="px-3 pb-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-full flex items-center gap-2 rounded-lg border border-sidebar-border bg-sidebar-accent/50 px-3 py-2 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent transition-colors">
+                  <MapPin className="h-3.5 w-3.5 text-sidebar-primary shrink-0" />
+                  <span className="truncate flex-1 text-left">{selectedFacilitiesBranch ? (BRANCH_LABELS[selectedFacilitiesBranch] || selectedFacilitiesBranch) : 'Todas as Filiais'}</span>
+                  <ChevronDown className="h-3.5 w-3.5 text-sidebar-foreground/50 shrink-0" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuItem
+                  onClick={() => setSelectedFacilitiesBranch(null)}
+                  className={selectedFacilitiesBranch === null ? 'bg-accent/10 text-accent font-medium' : ''}
+                >
+                  Todas as Filiais
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {ALL_BRANCHES.map(branch => (
+                  <DropdownMenuItem
+                    key={branch}
+                    onClick={() => setSelectedFacilitiesBranch(branch)}
+                    className={selectedFacilitiesBranch === branch ? 'bg-accent/10 text-accent font-medium' : ''}
+                  >
+                    {BRANCH_LABELS[branch] || branch}
+                  </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>

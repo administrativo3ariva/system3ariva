@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useMaintenanceTasks } from '@/hooks/use-maintenance';
+import { useApp } from '@/contexts/AppContext';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,7 +23,8 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function FacilitiesCalendar() {
-  const { data: tasks = [], isLoading } = useMaintenanceTasks();
+  const { selectedFacilitiesBranch } = useApp();
+  const { data: tasks = [], isLoading } = useMaintenanceTasks(selectedFacilitiesBranch || undefined);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
   const tasksWithDates = useMemo(() => tasks.filter(t => t.due_date), [tasks]);
