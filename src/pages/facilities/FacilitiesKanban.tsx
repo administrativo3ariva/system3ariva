@@ -229,6 +229,18 @@ export default function FacilitiesKanban() {
                 </Select>
               </div>
               <div>
+                <Label>Tipo</Label>
+                <Select value={form.maintenance_type} onValueChange={v => setForm(f => ({ ...f, maintenance_type: v as MaintenanceType }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="preventiva">Preventiva</SelectItem>
+                    <SelectItem value="corretiva">Corretiva</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
                 <Label>Filial</Label>
                 <Select value={form.branch} onValueChange={v => setForm(f => ({ ...f, branch: v }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
