@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useMaintenanceTasks, useUpdateMaintenanceTask, useCreateMaintenanceTask, useDeleteMaintenanceTask } from '@/hooks/use-maintenance';
+import { useApp } from '@/contexts/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -60,7 +61,8 @@ const emptyForm: FormData = {
 };
 
 export default function FacilitiesKanban() {
-  const { data: tasks = [], isLoading } = useMaintenanceTasks();
+  const { selectedFacilitiesBranch } = useApp();
+  const { data: tasks = [], isLoading } = useMaintenanceTasks(selectedFacilitiesBranch || undefined);
   const updateTask = useUpdateMaintenanceTask();
   const createTask = useCreateMaintenanceTask();
   const deleteTask = useDeleteMaintenanceTask();
