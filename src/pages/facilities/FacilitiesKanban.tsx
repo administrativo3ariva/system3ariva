@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Plus, GripVertical, Trash2, ChevronRight, Calendar } from 'lucide-react';
-import { BRANCH_LABELS, ALL_BRANCHES, MAINTENANCE_CATEGORIES, MAINTENANCE_RECURRENCE, MaintenanceTask, MaintenanceStatus, MaintenancePriority } from '@/lib/types';
+import { BRANCH_LABELS, ALL_BRANCHES, MAINTENANCE_CATEGORIES, MAINTENANCE_RECURRENCE, MaintenanceTask, MaintenanceStatus, MaintenancePriority, MaintenanceType } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 
 const COLUMNS: { key: MaintenanceStatus; label: string; color: string }[] = [
@@ -40,6 +40,7 @@ type FormData = {
   branch: string;
   description: string;
   priority: MaintenancePriority;
+  maintenance_type: 'preventiva' | 'corretiva';
   due_date: string;
   supplier: string;
   estimated_cost: string;
@@ -53,6 +54,7 @@ const emptyForm: FormData = {
   branch: 'BH-Matriz',
   description: '',
   priority: 'media',
+  maintenance_type: 'preventiva',
   due_date: '',
   supplier: '',
   estimated_cost: '',
@@ -84,6 +86,7 @@ export default function FacilitiesKanban() {
       branch: task.branch,
       description: task.description || '',
       priority: task.priority,
+      maintenance_type: task.maintenance_type || 'preventiva',
       due_date: task.due_date || '',
       supplier: task.supplier || '',
       estimated_cost: task.estimated_cost?.toString() || '',
@@ -109,6 +112,7 @@ export default function FacilitiesKanban() {
       branch: form.branch,
       description: form.description || null,
       priority: form.priority,
+      maintenance_type: form.maintenance_type,
       due_date: form.due_date || null,
       supplier: form.supplier || null,
       estimated_cost: form.estimated_cost ? parseFloat(form.estimated_cost) : 0,
