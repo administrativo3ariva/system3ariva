@@ -17,6 +17,7 @@ import InventoryBranches from "@/pages/inventory/InventoryBranches";
 import FacilitiesDashboard from "@/pages/facilities/FacilitiesDashboard";
 import FacilitiesCalendar from "@/pages/facilities/FacilitiesCalendar";
 import FacilitiesKanban from "@/pages/facilities/FacilitiesKanban";
+import FacilitiesPerformance from "@/pages/facilities/FacilitiesPerformance";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/facilities/dashboard" element={<FacilitiesDashboard />} />
               <Route path="/facilities/calendar" element={<FacilitiesCalendar />} />
               <Route path="/facilities/kanban" element={<FacilitiesKanban />} />
+              <Route path="/facilities/performance" element={<FacilitiesPerformance />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

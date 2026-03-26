@@ -113,6 +113,7 @@ export type Database = {
           estimated_cost: number | null
           floor: string | null
           id: string
+          maintenance_type: string
           notes: string | null
           priority: string
           recurrence_months: number | null
@@ -132,6 +133,7 @@ export type Database = {
           estimated_cost?: number | null
           floor?: string | null
           id?: string
+          maintenance_type?: string
           notes?: string | null
           priority?: string
           recurrence_months?: number | null
@@ -151,6 +153,7 @@ export type Database = {
           estimated_cost?: number | null
           floor?: string | null
           id?: string
+          maintenance_type?: string
           notes?: string | null
           priority?: string
           recurrence_months?: number | null

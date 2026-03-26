@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, BarChart3, ArrowLeftRight, FileUp, ClipboardList, PlusCircle, Users, LayoutDashboard, MapPin, ChevronDown, Building2, Wrench, CalendarDays, Kanban } from 'lucide-react';
+import { Package, BarChart3, ArrowLeftRight, FileUp, ClipboardList, PlusCircle, Users, LayoutDashboard, MapPin, ChevronDown, Building2, Wrench, CalendarDays, Kanban, TrendingUp } from 'lucide-react';
 import logo from '@/assets/Logo.png';
 import { useLocation } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
@@ -47,6 +47,7 @@ const facilitiesItems = [
   { title: 'Dashboard', url: '/facilities/dashboard', icon: LayoutDashboard },
   { title: 'Calendário', url: '/facilities/calendar', icon: CalendarDays },
   { title: 'Kanban', url: '/facilities/kanban', icon: Kanban },
+  { title: 'Desempenho', url: '/facilities/performance', icon: TrendingUp },
 ];
 
 export function AppSidebar() {

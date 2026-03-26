@@ -141,6 +141,7 @@ export const MAINTENANCE_RECURRENCE: Record<MaintenanceCategory, { months: numbe
 
 export type MaintenanceStatus = 'todo' | 'approval' | 'in_progress' | 'done';
 export type MaintenancePriority = 'baixa' | 'media' | 'alta' | 'urgente';
+export type MaintenanceType = 'preventiva' | 'corretiva';
 
 export interface MaintenanceTask {
   id: string;
@@ -158,6 +159,7 @@ export interface MaintenanceTask {
   estimated_cost?: number;
   actual_cost?: number | null;
   notes?: string | null;
+  maintenance_type: MaintenanceType;
   created_at: string;
   updated_at: string;
 }

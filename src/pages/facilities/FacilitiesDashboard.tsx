@@ -1,7 +1,7 @@
 import { useMaintenanceTasks } from '@/hooks/use-maintenance';
 import { useApp } from '@/contexts/AppContext';
 import { KpiCard } from '@/components/KpiCard';
-import { AlertTriangle, CheckCircle2, Clock, Wrench, CalendarClock } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, Wrench, CalendarClock, Shield, Hammer } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BRANCH_LABELS, MAINTENANCE_CATEGORIES, MAINTENANCE_RECURRENCE } from '@/lib/types';
@@ -31,7 +31,9 @@ export default function FacilitiesDashboard() {
   const upcoming = tasks.filter(t => t.status !== 'done' && t.due_date && isAfter(parseISO(t.due_date), today) && isBefore(parseISO(t.due_date), addDays(today, 15)));
   const inProgress = tasks.filter(t => t.status === 'in_progress');
   const completed = tasks.filter(t => t.status === 'done');
-  const pending = tasks.filter(t => t.status !== 'done');
+
+  const preventivas = tasks.filter(t => t.maintenance_type === 'preventiva');
+  const corretivas = tasks.filter(t => t.maintenance_type === 'corretiva');
 
   const alerts = [...overdue, ...upcoming].sort((a, b) => {
     if (!a.due_date) return 1;
@@ -39,7 +41,6 @@ export default function FacilitiesDashboard() {
     return parseISO(a.due_date).getTime() - parseISO(b.due_date).getTime();
   });
 
-  // Category summary
   const categorySummary = MAINTENANCE_CATEGORIES.map(cat => {
     const catTasks = tasks.filter(t => t.category === cat);
     const pendingCount = catTasks.filter(t => t.status !== 'done').length;
@@ -60,6 +61,95 @@ export default function FacilitiesDashboard() {
         <KpiCard title="Próximas (15 dias)" value={upcoming.length} icon={Clock} variant="warning" />
         <KpiCard title="Em Execução" value={inProgress.length} icon={Wrench} variant="default" />
         <KpiCard title="Finalizadas" value={completed.length} icon={CheckCircle2} variant="success" />
+      </div>
+
+      {/* Maintenance Type Breakdown */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Shield className="h-4 w-4 text-primary" />
+              Preventivas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold">{preventivas.length}</span>
+                <Badge variant="secondary" className="text-xs">
+                  {preventivas.filter(t => t.status === 'done').length} finalizadas
+                </Badge>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                <div className="p-2 rounded-lg bg-muted/50 text-center">
+                  <p className="font-semibold text-foreground">{preventivas.filter(t => t.status === 'todo').length}</p>
+                  <p>Para Fazer</p>
+                </div>
+                <div className="p-2 rounded-lg bg-muted/50 text-center">
+                  <p className="font-semibold text-foreground">{preventivas.filter(t => t.status === 'in_progress').length}</p>
+                  <p>Em Execução</p>
+                </div>
+                <div className="p-2 rounded-lg bg-destructive/10 text-center">
+                  <p className="font-semibold text-destructive">{preventivas.filter(t => t.status !== 'done' && t.due_date && isBefore(parseISO(t.due_date), today)).length}</p>
+                  <p>Atrasadas</p>
+                </div>
+              </div>
+              {preventivas.length > 0 && (
+                <div className="space-y-1 max-h-[150px] overflow-y-auto">
+                  {preventivas.filter(t => t.status !== 'done').slice(0, 5).map(t => (
+                    <div key={t.id} className="flex items-center justify-between text-xs p-2 rounded bg-muted/30">
+                      <span className="truncate">{t.title}</span>
+                      <Badge variant="outline" className="text-[9px] shrink-0">{t.category}</Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Hammer className="h-4 w-4 text-orange-400" />
+              Corretivas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold">{corretivas.length}</span>
+                <Badge variant="secondary" className="text-xs">
+                  {corretivas.filter(t => t.status === 'done').length} finalizadas
+                </Badge>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+                <div className="p-2 rounded-lg bg-muted/50 text-center">
+                  <p className="font-semibold text-foreground">{corretivas.filter(t => t.status === 'todo').length}</p>
+                  <p>Para Fazer</p>
+                </div>
+                <div className="p-2 rounded-lg bg-muted/50 text-center">
+                  <p className="font-semibold text-foreground">{corretivas.filter(t => t.status === 'in_progress').length}</p>
+                  <p>Em Execução</p>
+                </div>
+                <div className="p-2 rounded-lg bg-destructive/10 text-center">
+                  <p className="font-semibold text-destructive">{corretivas.filter(t => t.status !== 'done' && t.due_date && isBefore(parseISO(t.due_date), today)).length}</p>
+                  <p>Atrasadas</p>
+                </div>
+              </div>
+              {corretivas.length > 0 && (
+                <div className="space-y-1 max-h-[150px] overflow-y-auto">
+                  {corretivas.filter(t => t.status !== 'done').slice(0, 5).map(t => (
+                    <div key={t.id} className="flex items-center justify-between text-xs p-2 rounded bg-muted/30">
+                      <span className="truncate">{t.title}</span>
+                      <Badge variant="outline" className="text-[9px] shrink-0">{t.category}</Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Alerts */}
@@ -84,6 +174,9 @@ export default function FacilitiesDashboard() {
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium truncate">{task.title}</span>
                         <Badge variant="outline" className="text-[10px] shrink-0">{task.category}</Badge>
+                        <Badge variant={task.maintenance_type === 'preventiva' ? 'default' : 'secondary'} className="text-[9px] shrink-0">
+                          {task.maintenance_type === 'preventiva' ? 'Preventiva' : 'Corretiva'}
+                        </Badge>
                       </div>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-muted-foreground">{BRANCH_LABELS[task.branch] || task.branch}</span>
