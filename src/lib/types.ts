@@ -111,4 +111,53 @@ export interface NfItem {
   totalPrice: number;
 }
 
-export type AppModule = 'stock' | 'inventory';
+export type AppModule = 'stock' | 'inventory' | 'facilities';
+
+export const MAINTENANCE_CATEGORIES = [
+  'Ar-condicionado',
+  'Filtro Purificadores de Água',
+  'Persianas',
+  'Detetização',
+  'Cafeteiras',
+  'Mobiliário',
+  'Reparos Gerais',
+  'Reparos (Drywall, Divisórias e Hidráulica)',
+  'Carpete',
+] as const;
+
+export type MaintenanceCategory = typeof MAINTENANCE_CATEGORIES[number];
+
+export const MAINTENANCE_RECURRENCE: Record<MaintenanceCategory, { months: number | null; label: string }> = {
+  'Ar-condicionado': { months: 3, label: 'Trimestral' },
+  'Filtro Purificadores de Água': { months: 6, label: 'Semestral' },
+  'Persianas': { months: 6, label: 'Semestral' },
+  'Detetização': { months: 3, label: 'Trimestral' },
+  'Cafeteiras': { months: 1, label: 'Mensal' },
+  'Mobiliário': { months: 12, label: 'Anual' },
+  'Reparos Gerais': { months: null, label: 'Sob demanda' },
+  'Reparos (Drywall, Divisórias e Hidráulica)': { months: null, label: 'Sob demanda' },
+  'Carpete': { months: 12, label: 'Anual' },
+};
+
+export type MaintenanceStatus = 'todo' | 'approval' | 'in_progress' | 'done';
+export type MaintenancePriority = 'baixa' | 'media' | 'alta' | 'urgente';
+
+export interface MaintenanceTask {
+  id: string;
+  title: string;
+  category: MaintenanceCategory;
+  branch: string;
+  floor?: string | null;
+  description?: string | null;
+  status: MaintenanceStatus;
+  priority: MaintenancePriority;
+  due_date?: string | null;
+  completed_date?: string | null;
+  recurrence_months?: number | null;
+  supplier?: string | null;
+  estimated_cost?: number;
+  actual_cost?: number | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}

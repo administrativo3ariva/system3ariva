@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, BarChart3, ArrowLeftRight, FileUp, ClipboardList, PlusCircle, Users, LayoutDashboard, MapPin, ChevronDown, Building2 } from 'lucide-react';
+import { Package, BarChart3, ArrowLeftRight, FileUp, ClipboardList, PlusCircle, Users, LayoutDashboard, MapPin, ChevronDown, Building2, Wrench, CalendarDays, Kanban } from 'lucide-react';
 import logo from '@/assets/Logo.png';
 import { useLocation } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
@@ -43,6 +43,12 @@ const inventoryItems = [
   { title: 'Filiais', url: '/inventory/branches', icon: Building2 },
 ];
 
+const facilitiesItems = [
+  { title: 'Dashboard', url: '/facilities/dashboard', icon: LayoutDashboard },
+  { title: 'Calendário', url: '/facilities/calendar', icon: CalendarDays },
+  { title: 'Kanban', url: '/facilities/kanban', icon: Kanban },
+];
+
 export function AppSidebar() {
   const { activeModule, setActiveModule, selectedBranch, setSelectedBranch } = useApp();
   const { state } = useSidebar();
@@ -67,7 +73,7 @@ export function AppSidebar() {
             <div className="flex rounded-md bg-sidebar-accent p-1">
               <button
                 onClick={() => setActiveModule('stock')}
-                className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                className={`flex-1 rounded px-2 py-1.5 text-xs font-medium transition-colors ${
                   activeModule === 'stock'
                     ? 'bg-sidebar-primary text-sidebar-primary-foreground'
                     : 'text-sidebar-foreground/70 hover:text-sidebar-foreground'
@@ -77,13 +83,23 @@ export function AppSidebar() {
               </button>
               <button
                 onClick={() => setActiveModule('inventory')}
-                className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                className={`flex-1 rounded px-2 py-1.5 text-xs font-medium transition-colors ${
                   activeModule === 'inventory'
                     ? 'bg-sidebar-primary text-sidebar-primary-foreground'
                     : 'text-sidebar-foreground/70 hover:text-sidebar-foreground'
                 }`}
               >
                 Patrimônio
+              </button>
+              <button
+                onClick={() => setActiveModule('facilities')}
+                className={`flex-1 rounded px-2 py-1.5 text-xs font-medium transition-colors ${
+                  activeModule === 'facilities'
+                    ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                    : 'text-sidebar-foreground/70 hover:text-sidebar-foreground'
+                }`}
+              >
+                Facilities
               </button>
             </div>
           </div>
@@ -154,6 +170,31 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {inventoryItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        end
+                        className="hover:bg-sidebar-accent/50"
+                        activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                      >
+                        <item.icon className="mr-2 h-4 w-4" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {activeModule === 'facilities' && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-sidebar-foreground/50">Gestão de Facilities</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {facilitiesItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <NavLink

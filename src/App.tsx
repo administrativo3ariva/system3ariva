@@ -14,6 +14,9 @@ import InventoryDashboard from "@/pages/inventory/InventoryDashboard";
 import InventoryList from "@/pages/inventory/InventoryList";
 import InventoryRegister from "@/pages/inventory/InventoryRegister";
 import InventoryBranches from "@/pages/inventory/InventoryBranches";
+import FacilitiesDashboard from "@/pages/facilities/FacilitiesDashboard";
+import FacilitiesCalendar from "@/pages/facilities/FacilitiesCalendar";
+import FacilitiesKanban from "@/pages/facilities/FacilitiesKanban";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -37,6 +40,9 @@ const App = () => (
               <Route path="/inventory/list" element={<InventoryList />} />
               <Route path="/inventory/register" element={<InventoryRegister />} />
               <Route path="/inventory/branches" element={<InventoryBranches />} />
+              <Route path="/facilities/dashboard" element={<FacilitiesDashboard />} />
+              <Route path="/facilities/calendar" element={<FacilitiesCalendar />} />
+              <Route path="/facilities/kanban" element={<FacilitiesKanban />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
