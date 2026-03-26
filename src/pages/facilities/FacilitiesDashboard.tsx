@@ -1,4 +1,5 @@
 import { useMaintenanceTasks } from '@/hooks/use-maintenance';
+import { useApp } from '@/contexts/AppContext';
 import { KpiCard } from '@/components/KpiCard';
 import { AlertTriangle, CheckCircle2, Clock, Wrench, CalendarClock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +23,8 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function FacilitiesDashboard() {
-  const { data: tasks = [], isLoading } = useMaintenanceTasks();
+  const { selectedFacilitiesBranch } = useApp();
+  const { data: tasks = [], isLoading } = useMaintenanceTasks(selectedFacilitiesBranch || undefined);
 
   const today = new Date();
   const overdue = tasks.filter(t => t.status !== 'done' && t.due_date && isBefore(parseISO(t.due_date), today));
