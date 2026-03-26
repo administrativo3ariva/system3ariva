@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { addMonths } from 'date-fns';
+import { addMonths, format, parseISO } from 'date-fns';
 import { useMaintenanceTasks, useUpdateMaintenanceTask, useCreateMaintenanceTask, useDeleteMaintenanceTask } from '@/hooks/use-maintenance';
 import { useApp } from '@/contexts/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,9 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Plus, GripVertical, Trash2, ChevronRight, Calendar } from 'lucide-react';
+import { Plus, Trash2, ChevronRight, Calendar } from 'lucide-react';
 import { BRANCH_LABELS, ALL_BRANCHES, MAINTENANCE_CATEGORIES, MAINTENANCE_RECURRENCE, MaintenanceTask, MaintenanceStatus, MaintenancePriority, MaintenanceType } from '@/lib/types';
-import { format, parseISO } from 'date-fns';
 
 const COLUMNS: { key: MaintenanceStatus; label: string; color: string }[] = [
   { key: 'todo', label: 'Para Fazer', color: 'border-t-muted-foreground' },
