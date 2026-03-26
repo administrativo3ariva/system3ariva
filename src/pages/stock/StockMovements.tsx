@@ -8,7 +8,8 @@ import { useApp } from '@/contexts/AppContext';
 import { useCategories } from '@/hooks/use-categories';
 import { BranchBadge } from '@/components/BranchBadge';
 import { FloorPicker } from '@/components/FloorPicker';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
+import { SortableTableHead, SortConfig, toggleSort, sortData } from '@/components/SortableTableHead';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -48,9 +49,22 @@ export default function StockMovements() {
     type: 'entrada' as string, quantity: '', responsible: '', notes: '', floor: '',
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [sort, setSort] = useState<SortConfig>({ key: '', direction: null });
 
   const activeCollabs = collaborators.filter(c => c.active);
   const filtered = filterType === 'all' ? movements : movements.filter(m => m.type === filterType);
+  const sorted = sortData(filtered, sort, (item, key) => {
+    switch (key) {
+      case 'date': return item.date;
+      case 'product_name': return item.product_name;
+      case 'type': return item.type;
+      case 'unit': return item.unit;
+      case 'quantity': return item.quantity;
+      case 'responsible': return item.responsible || '';
+      case 'notes': return item.notes || '';
+      default: return null;
+    }
+  });
   const allCategories = [...new Set([...categories, ...customCategories])].sort();
 
   const handleAddNewCategory = () => {
@@ -310,18 +324,18 @@ export default function StockMovements() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Data</TableHead>
-              <TableHead>Produto</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Unidade</TableHead>
-              <TableHead className="text-right">Qtd</TableHead>
-              <TableHead>Responsável</TableHead>
-              <TableHead>Observações</TableHead>
-              <TableHead className="w-[100px]">Ações</TableHead>
+              <SortableTableHead sortKey="date" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))}>Data</SortableTableHead>
+              <SortableTableHead sortKey="product_name" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))}>Produto</SortableTableHead>
+              <SortableTableHead sortKey="type" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))}>Tipo</SortableTableHead>
+              <SortableTableHead sortKey="unit" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))}>Unidade</SortableTableHead>
+              <SortableTableHead sortKey="quantity" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))} className="text-right">Qtd</SortableTableHead>
+              <SortableTableHead sortKey="responsible" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))}>Responsável</SortableTableHead>
+              <SortableTableHead sortKey="notes" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))}>Observações</SortableTableHead>
+              <SortableTableHead sortKey="" currentSort={{ key: '', direction: null }} onSort={() => {}} className="w-[100px]">Ações</SortableTableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.map(m => (
+            {sorted.map(m => (
               <TableRow key={m.id} className="table-row-hover">
                 <TableCell className="text-sm">{new Date(m.date).toLocaleDateString('pt-BR')}</TableCell>
                 <TableCell className="font-medium text-sm">{m.product_name}</TableCell>
