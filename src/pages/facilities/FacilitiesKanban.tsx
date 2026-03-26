@@ -44,8 +44,6 @@ type FormData = {
   maintenance_type: 'preventiva' | 'corretiva';
   due_date: string;
   supplier: string;
-  estimated_cost: string;
-  actual_cost: string;
   notes: string;
   recurrence_months: string;
 };
@@ -59,8 +57,6 @@ const emptyForm: FormData = {
   maintenance_type: 'preventiva',
   due_date: '',
   supplier: '',
-  estimated_cost: '',
-  actual_cost: '',
   notes: '',
   recurrence_months: '',
 };
@@ -92,8 +88,6 @@ export default function FacilitiesKanban() {
       maintenance_type: task.maintenance_type || 'preventiva',
       due_date: task.due_date || '',
       supplier: task.supplier || '',
-      estimated_cost: task.estimated_cost?.toString() || '',
-      actual_cost: task.actual_cost?.toString() || '',
       notes: task.notes || '',
       recurrence_months: task.recurrence_months?.toString() || '',
     });
@@ -119,8 +113,6 @@ export default function FacilitiesKanban() {
       maintenance_type: form.maintenance_type,
       due_date: form.due_date || null,
       supplier: form.supplier || null,
-      estimated_cost: form.estimated_cost ? parseFloat(form.estimated_cost) : 0,
-      actual_cost: form.actual_cost ? parseFloat(form.actual_cost) : null,
       notes: form.notes || null,
       recurrence_months: form.recurrence_months ? parseInt(form.recurrence_months) : null,
     };
@@ -295,19 +287,9 @@ export default function FacilitiesKanban() {
                 <Input type="date" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label>Recorrência (meses)</Label>
-                <Input type="number" min="0" value={form.recurrence_months} onChange={e => setForm(f => ({ ...f, recurrence_months: e.target.value }))} placeholder="Ex: 3" />
-              </div>
-              <div>
-                <Label>Custo Estimado (R$)</Label>
-                <Input type="number" min="0" step="0.01" value={form.estimated_cost} onChange={e => setForm(f => ({ ...f, estimated_cost: e.target.value }))} />
-              </div>
-              <div>
-                <Label>Custo Real (R$)</Label>
-                <Input type="number" min="0" step="0.01" value={form.actual_cost} onChange={e => setForm(f => ({ ...f, actual_cost: e.target.value }))} placeholder="Preencha ao concluir" />
-              </div>
+            <div>
+              <Label>Recorrência (meses)</Label>
+              <Input type="number" min="0" value={form.recurrence_months} onChange={e => setForm(f => ({ ...f, recurrence_months: e.target.value }))} placeholder="Ex: 3" />
             </div>
             <div>
               <Label>Fornecedor</Label>
