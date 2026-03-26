@@ -1,7 +1,7 @@
 export type Branch = 'BH-Matriz' | 'BH-Algar' | 'Vêneto-BH' | 'Vêneto-SP' | 'SP' | 'RJ' | 'PAG' | 'VAG' | 'FLO' | 'JM' | 'ITA' | 'CPN' | 'LIM' | 'JUN' | 'SJC';
 
 export const STOCK_BRANCHES = [
-  'BH-Matriz', 'BH-Algar', 'Vêneto-BH', 'Vêneto-SP',
+  'BH-Matriz', 'Vêneto-BH', 'Vêneto-SP',
   'SP', 'FLO', 'ITA', 'PAG', 'VAG', 'CPN', 'JUN',
 ] as const;
 export type StockBranch = typeof STOCK_BRANCHES[number];
@@ -10,7 +10,7 @@ export type StockBranch = typeof STOCK_BRANCHES[number];
 export const STOCK_UNITS = STOCK_BRANCHES;
 export type StockUnit = StockBranch;
 
-export const BH_MATRIZ_FLOORS = ['3º andar', '8º andar', '9º andar'] as const;
+export const BH_MATRIZ_FLOORS = ['3º andar', '8º andar', '9º andar', 'Algar'] as const;
 export type BhMatrizFloor = typeof BH_MATRIZ_FLOORS[number];
 
 export const ALL_BRANCHES: Branch[] = ['BH-Matriz', 'BH-Algar', 'Vêneto-BH', 'Vêneto-SP', 'SP', 'RJ', 'PAG', 'VAG', 'FLO', 'JM', 'ITA', 'CPN', 'LIM', 'JUN', 'SJC'];
@@ -37,7 +37,7 @@ export const BRANCH_LABELS: Record<string, string> = {
 export const STOCK_BRANCH_GROUPS = [
   {
     label: 'Belo Horizonte',
-    branches: ['BH-Matriz', 'BH-Algar'] as StockBranch[],
+    branches: ['BH-Matriz'] as StockBranch[],
   },
   {
     label: 'Vêneto',
