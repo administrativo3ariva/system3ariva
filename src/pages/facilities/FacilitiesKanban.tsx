@@ -93,6 +93,7 @@ export default function FacilitiesKanban() {
       due_date: task.due_date || '',
       supplier: task.supplier || '',
       estimated_cost: task.estimated_cost?.toString() || '',
+      actual_cost: task.actual_cost?.toString() || '',
       notes: task.notes || '',
       recurrence_months: task.recurrence_months?.toString() || '',
     });
