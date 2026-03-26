@@ -54,10 +54,10 @@ export default function FacilitiesDashboard() {
       <h1 className="section-title text-xl">Dashboard de Facilities</h1>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KpiCard title="Atrasadas" value={overdue.length} icon={<AlertTriangle className="h-5 w-5 text-destructive" />} />
-        <KpiCard title="Próximas (15 dias)" value={upcoming.length} icon={<Clock className="h-5 w-5 text-primary" />} />
-        <KpiCard title="Em Execução" value={inProgress.length} icon={<Wrench className="h-5 w-5 text-blue-400" />} />
-        <KpiCard title="Finalizadas" value={completed.length} icon={<CheckCircle2 className="h-5 w-5 text-green-400" />} />
+        <KpiCard title="Atrasadas" value={overdue.length} icon={AlertTriangle} variant="destructive" />
+        <KpiCard title="Próximas (15 dias)" value={upcoming.length} icon={Clock} variant="warning" />
+        <KpiCard title="Em Execução" value={inProgress.length} icon={Wrench} variant="default" />
+        <KpiCard title="Finalizadas" value={completed.length} icon={CheckCircle2} variant="success" />
       </div>
 
       {/* Alerts */}
