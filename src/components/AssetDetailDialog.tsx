@@ -71,6 +71,16 @@ export function AssetDetailDialog({ asset, trigger }: AssetDetailDialogProps) {
                 <span className="font-semibold text-foreground">R$ {Number(asset.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
               } />
               <DetailRow icon={Calendar} label="Aquisição" value={asset.acquisition_date ? new Date(asset.acquisition_date).toLocaleDateString('pt-BR') : '—'} />
+              <DetailRow icon={Tag} label="Condição" value={
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                  asset.condition === 'Novo' ? 'bg-green-500/10 text-green-600' :
+                  asset.condition === 'Bom' ? 'bg-blue-500/10 text-blue-600' :
+                  asset.condition === 'Regular' ? 'bg-yellow-500/10 text-yellow-600' :
+                  asset.condition === 'Ruim' ? 'bg-orange-500/10 text-orange-600' :
+                  asset.condition === 'Inservível' ? 'bg-red-500/10 text-red-600' :
+                  'bg-muted text-muted-foreground'
+                }`}>{asset.condition || 'Bom'}</span>
+              } />
             </div>
 
             <Separator />

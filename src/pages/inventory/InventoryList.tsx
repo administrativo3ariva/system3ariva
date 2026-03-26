@@ -7,7 +7,7 @@ import { useAssets, useUpdateAsset, DbAsset } from '@/hooks/use-assets';
 import { BranchBadge } from '@/components/BranchBadge';
 import { ALL_BRANCHES, Branch, BH_MATRIZ_FLOORS } from '@/lib/types';
 import { FloorPicker } from '@/components/FloorPicker';
-import { ASSET_CATEGORIES } from '@/lib/mock-data';
+import { ASSET_CATEGORIES, ASSET_CONDITIONS } from '@/lib/mock-data';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -62,6 +62,7 @@ export default function InventoryList() {
       acquisition_date: editForm.acquisition_date,
       image_url: editForm.image_url,
       floor: editForm.branch === 'BH-Matriz' ? (editForm.floor || null) : null,
+      condition: editForm.condition || 'Bom',
     }, {
       onSuccess: () => setEditingAsset(null),
     });
@@ -130,6 +131,7 @@ export default function InventoryList() {
                     <TableHead className="text-right">Qtd</TableHead>
                     <TableHead className="text-right">Valor Unit.</TableHead>
                     <TableHead className="text-right">Valor Total</TableHead>
+                    <TableHead>Condição</TableHead>
                     <TableHead>Aquisição</TableHead>
                     <TableHead className="w-[80px]"></TableHead>
                   </TableRow>
@@ -158,6 +160,16 @@ export default function InventoryList() {
                       <TableCell className="text-right">{a.quantity}</TableCell>
                       <TableCell className="text-right text-sm">R$ {Number(a.unit_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                       <TableCell className="text-right font-medium">R$ {Number(a.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          a.condition === 'Novo' ? 'bg-green-500/10 text-green-600' :
+                          a.condition === 'Bom' ? 'bg-blue-500/10 text-blue-600' :
+                          a.condition === 'Regular' ? 'bg-yellow-500/10 text-yellow-600' :
+                          a.condition === 'Ruim' ? 'bg-orange-500/10 text-orange-600' :
+                          a.condition === 'Inservível' ? 'bg-red-500/10 text-red-600' :
+                          'bg-muted text-muted-foreground'
+                        }`}>{a.condition || 'Bom'}</span>
+                      </TableCell>
                       <TableCell className="text-sm text-muted-foreground">{a.acquisition_date ? new Date(a.acquisition_date).toLocaleDateString('pt-BR') : '—'}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
@@ -219,6 +231,15 @@ export default function InventoryList() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Condição</Label>
+              <Select value={editForm.condition || 'Bom'} onValueChange={v => setEditForm(f => ({ ...f, condition: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {ASSET_CONDITIONS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             {editForm.branch === 'BH-Matriz' && (
               <FloorPicker
