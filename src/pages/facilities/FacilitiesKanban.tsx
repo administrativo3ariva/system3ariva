@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { addMonths, format } from 'date-fns';
 import { useMaintenanceTasks, useUpdateMaintenanceTask, useCreateMaintenanceTask, useDeleteMaintenanceTask } from '@/hooks/use-maintenance';
 import { useApp } from '@/contexts/AppContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -134,6 +135,28 @@ export default function FacilitiesKanban() {
       id: task.id,
       status: newStatus,
       ...(newStatus === 'done' ? { completed_date: new Date().toISOString().split('T')[0] } : {}),
+    }, {
+      onSuccess: () => {
+        // Auto-generate next recurrent task
+        if (newStatus === 'done' && task.recurrence_months && task.recurrence_months > 0) {
+          const baseDate = task.due_date ? new Date(task.due_date) : new Date();
+          const nextDue = addMonths(baseDate, task.recurrence_months);
+          createTask.mutate({
+            title: task.title,
+            category: task.category,
+            branch: task.branch,
+            description: task.description,
+            priority: task.priority,
+            maintenance_type: task.maintenance_type,
+            due_date: format(nextDue, 'yyyy-MM-dd'),
+            supplier: task.supplier,
+            estimated_cost: task.estimated_cost,
+            notes: null,
+            recurrence_months: task.recurrence_months,
+            status: 'todo',
+          } as any);
+        }
+      },
     });
   };
 
