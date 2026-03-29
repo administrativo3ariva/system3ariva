@@ -34,6 +34,7 @@ const stockItems = [
   { title: 'Movimentações', url: '/stock/movements', icon: ArrowLeftRight },
   { title: 'Upload NFs', url: '/stock/nf-upload', icon: FileUp },
   { title: 'Colaboradores', url: '/stock/collaborators', icon: Users },
+  { title: 'Indicadores', url: '/stock/indicators', icon: BarChart3 },
 ];
 
 const inventoryItems = [

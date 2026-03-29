@@ -10,6 +10,7 @@ import StockProducts from "@/pages/stock/StockProducts";
 import StockMovements from "@/pages/stock/StockMovements";
 import NfUploadPage from "@/pages/stock/NfUploadPage";
 import CollaboratorsPage from "@/pages/stock/CollaboratorsPage";
+import StockIndicators from "@/pages/stock/StockIndicators";
 import InventoryDashboard from "@/pages/inventory/InventoryDashboard";
 import InventoryList from "@/pages/inventory/InventoryList";
 import InventoryRegister from "@/pages/inventory/InventoryRegister";
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/stock/movements" element={<StockMovements />} />
               <Route path="/stock/nf-upload" element={<NfUploadPage />} />
               <Route path="/stock/collaborators" element={<CollaboratorsPage />} />
+              <Route path="/stock/indicators" element={<StockIndicators />} />
               <Route path="/inventory/dashboard" element={<InventoryDashboard />} />
               <Route path="/inventory/list" element={<InventoryList />} />
               <Route path="/inventory/register" element={<InventoryRegister />} />
