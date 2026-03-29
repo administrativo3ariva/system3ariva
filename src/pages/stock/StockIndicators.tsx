@@ -102,7 +102,7 @@ export default function StockIndicators() {
   const [customTo, setCustomTo] = useState<Date | undefined>();
   const [selBranches, setSelBranches] = useState<string[]>([]);
   const [selCategories, setSelCategories] = useState<string[]>([]);
-  const [selItem, setSelItem] = useState<string>('');
+  const [selItem, setSelItem] = useState<string>('__all__');
   const [viewMode, setViewMode] = useState<'value' | 'qty' | 'perCapita'>('value');
 
   const loading = lm || lp || lc;
@@ -518,8 +518,8 @@ export default function StockIndicators() {
               </SelectContent>
             </Select>
           </div>
-          {(selBranches.length > 0 || selCategories.length > 0 || selItem) && (
-            <Button variant="ghost" size="sm" className="mt-2 text-xs" onClick={() => { setSelBranches([]); setSelCategories([]); setSelItem(''); }}>
+          {(selBranches.length > 0 || selCategories.length > 0 || selItem !== '__all__') && (
+            <Button variant="ghost" size="sm" className="mt-2 text-xs" onClick={() => { setSelBranches([]); setSelCategories([]); setSelItem('__all__'); }}>
               <X className="h-3 w-3 mr-1" /> Limpar filtros
             </Button>
           )}
