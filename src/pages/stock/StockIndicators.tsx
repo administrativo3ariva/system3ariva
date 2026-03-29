@@ -511,7 +511,7 @@ export default function StockIndicators() {
             <Select value={selItem} onValueChange={setSelItem}>
               <SelectTrigger className="text-xs"><SelectValue placeholder="Todos os itens" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os itens</SelectItem>
+                <SelectItem value="__all__">Todos os itens</SelectItem>
                 {allProducts.map(p => (
                   <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                 ))}
