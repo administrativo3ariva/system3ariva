@@ -113,16 +113,16 @@ export default function StockIndicators() {
   const prevRange = useMemo(() => getPreviousPeriodRange(range), [range]);
   const yrRange = useMemo(() => getSameRangeLastYear(range), [range]);
 
-  const filtered = useMemo(() => filterMovements(allMovements, range, selBranches, selCategories, productMap, selItem || undefined), [allMovements, range, selBranches, selCategories, productMap, selItem]);
-  const prevFiltered = useMemo(() => filterMovements(allMovements, prevRange, selBranches, selCategories, productMap, selItem || undefined), [allMovements, prevRange, selBranches, selCategories, productMap, selItem]);
-  const yrFiltered = useMemo(() => filterMovements(allMovements, yrRange, selBranches, selCategories, productMap, selItem || undefined), [allMovements, yrRange, selBranches, selCategories, productMap, selItem]);
+  const filtered = useMemo(() => filterMovements(allMovements, range, selBranches, selCategories, productMap, selItem !== '__all__' ? selItem : undefined), [allMovements, range, selBranches, selCategories, productMap, selItem]);
+  const prevFiltered = useMemo(() => filterMovements(allMovements, prevRange, selBranches, selCategories, productMap, selItem !== '__all__' ? selItem : undefined), [allMovements, prevRange, selBranches, selCategories, productMap, selItem]);
+  const yrFiltered = useMemo(() => filterMovements(allMovements, yrRange, selBranches, selCategories, productMap, selItem !== '__all__' ? selItem : undefined), [allMovements, yrRange, selBranches, selCategories, productMap, selItem]);
 
   /* YTD */
   const now = new Date();
   const ytdRange = useMemo(() => ({ from: startOfYear(now), to: endOfMonth(now) }), []);
   const ytdPrevRange = useMemo(() => ({ from: subMonths(startOfYear(now), 12), to: subMonths(endOfMonth(now), 12) }), []);
-  const ytdFiltered = useMemo(() => filterMovements(allMovements, ytdRange, selBranches, selCategories, productMap, selItem || undefined), [allMovements, ytdRange, selBranches, selCategories, productMap, selItem]);
-  const ytdPrevFiltered = useMemo(() => filterMovements(allMovements, ytdPrevRange, selBranches, selCategories, productMap, selItem || undefined), [allMovements, ytdPrevRange, selBranches, selCategories, productMap, selItem]);
+  const ytdFiltered = useMemo(() => filterMovements(allMovements, ytdRange, selBranches, selCategories, productMap, selItem !== '__all__' ? selItem : undefined), [allMovements, ytdRange, selBranches, selCategories, productMap, selItem]);
+  const ytdPrevFiltered = useMemo(() => filterMovements(allMovements, ytdPrevRange, selBranches, selCategories, productMap, selItem !== '__all__' ? selItem : undefined), [allMovements, ytdPrevRange, selBranches, selCategories, productMap, selItem]);
 
   /* ─── KPIs ─── */
   const gastoAtual = useMemo(() => totalGasto(filtered, productMap), [filtered, productMap]);
@@ -161,7 +161,7 @@ export default function StockIndicators() {
 
   // 1) Evolução mensal (all movements in broader range for trend)
   const monthlyData = useMemo(() => {
-    const broader = filterMovements(allMovements, { from: subMonths(range.from, 5), to: range.to }, selBranches, selCategories, productMap, selItem || undefined);
+    const broader = filterMovements(allMovements, { from: subMonths(range.from, 5), to: range.to }, selBranches, selCategories, productMap, selItem !== '__all__' ? selItem : undefined);
     return monthlyBreakdown(broader, productMap).map(d => ({
       ...d,
       label: format(parseISO(d.month + '-01'), 'MMM/yy', { locale: ptBR }),
@@ -237,7 +237,7 @@ export default function StockIndicators() {
     }).filter(Boolean);
     // simpler: use product_name
     const topNames = topGasto.slice(0, 5).map(t => t.name);
-    const broader = filterMovements(allMovements, { from: subMonths(range.from, 5), to: range.to }, selBranches, selCategories, productMap, selItem || undefined);
+    const broader = filterMovements(allMovements, { from: subMonths(range.from, 5), to: range.to }, selBranches, selCategories, productMap, selItem !== '__all__' ? selItem : undefined);
     const monthMap = new Map<string, Map<string, { totalVal: number; totalQty: number }>>();
     broader.filter(m => m.type === 'entrada' && topNames.includes(m.product_name)).forEach(m => {
       const mon = format(parseISO(m.date), 'yyyy-MM');
