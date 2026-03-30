@@ -433,96 +433,142 @@ export default function StockIndicators() {
       </div>
 
       {/* ─── FILTERS ─── */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Filtros</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            {/* Period */}
-            <Select value={period} onValueChange={v => setPeriod(v as PeriodPreset)}>
-              <SelectTrigger className="text-xs"><CalendarDays className="h-3 w-3 mr-1" /><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="month">Mês atual</SelectItem>
-                <SelectItem value="3m">Últimos 3 meses</SelectItem>
-                <SelectItem value="6m">Últimos 6 meses</SelectItem>
-                <SelectItem value="ytd">Ano atual</SelectItem>
-                <SelectItem value="custom">Personalizado</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {period === 'custom' && (
-              <div className="flex gap-2 col-span-1 sm:col-span-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="text-xs flex-1">
-                      {customFrom ? format(customFrom, 'dd/MM/yy') : 'De'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} className="p-3 pointer-events-auto" /></PopoverContent>
-                </Popover>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="text-xs flex-1">
-                      {customTo ? format(customTo, 'dd/MM/yy') : 'Até'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={customTo} onSelect={setCustomTo} className="p-3 pointer-events-auto" /></PopoverContent>
-                </Popover>
+      <Card className="border-border/60">
+        <CardContent className="p-0">
+          {/* Filter header */}
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border/40">
+            <div className="flex items-center gap-2">
+              <div className="rounded-md p-1.5 bg-primary/10">
+                <Filter className="h-3.5 w-3.5 text-primary" />
               </div>
+              <span className="text-sm font-semibold">Filtros</span>
+              {(selBranches.length > 0 || selCategories.length > 0 || selItem !== '__all__') && (
+                <Badge variant="secondary" className="text-[10px] ml-1">
+                  {selBranches.length + selCategories.length + (selItem !== '__all__' ? 1 : 0)} ativos
+                </Badge>
+              )}
+            </div>
+            {(selBranches.length > 0 || selCategories.length > 0 || selItem !== '__all__') && (
+              <Button variant="ghost" size="sm" className="text-xs h-7 text-muted-foreground hover:text-foreground" onClick={() => { setSelBranches([]); setSelCategories([]); setSelItem('__all__'); }}>
+                <X className="h-3 w-3 mr-1" /> Limpar
+              </Button>
             )}
+          </div>
+
+          {/* Filter body */}
+          <div className="px-5 py-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+            {/* Period */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Período</label>
+              <Select value={period} onValueChange={v => setPeriod(v as PeriodPreset)}>
+                <SelectTrigger className="h-9 text-xs">
+                  <CalendarDays className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="month">Mês atual</SelectItem>
+                  <SelectItem value="3m">Últimos 3 meses</SelectItem>
+                  <SelectItem value="6m">Últimos 6 meses</SelectItem>
+                  <SelectItem value="ytd">Ano atual</SelectItem>
+                  <SelectItem value="custom">Personalizado</SelectItem>
+                </SelectContent>
+              </Select>
+              {period === 'custom' && (
+                <div className="flex gap-2 mt-1.5">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="text-xs flex-1 h-8 font-normal">
+                        {customFrom ? format(customFrom, 'dd/MM/yy') : 'Data inicial'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} className="p-3 pointer-events-auto" /></PopoverContent>
+                  </Popover>
+                  <span className="text-muted-foreground self-center text-xs">→</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="text-xs flex-1 h-8 font-normal">
+                        {customTo ? format(customTo, 'dd/MM/yy') : 'Data final'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={customTo} onSelect={setCustomTo} className="p-3 pointer-events-auto" /></PopoverContent>
+                  </Popover>
+                </div>
+              )}
+            </div>
 
             {/* Branches */}
-            <div className="space-y-1">
-              <p className="text-[10px] text-muted-foreground">Filiais</p>
-              <div className="flex flex-wrap gap-1">
-                {STOCK_BRANCHES.map(b => (
-                  <Badge
-                    key={b}
-                    variant={selBranches.includes(b) ? 'default' : 'outline'}
-                    className="text-[10px] cursor-pointer hover:opacity-80"
-                    onClick={() => toggleBranch(b)}
-                  >
-                    {BRANCH_LABELS[b]?.split(' ')[0] || b}
-                  </Badge>
-                ))}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Filiais</label>
+              <div className="flex flex-wrap gap-1.5 pt-0.5">
+                {STOCK_BRANCHES.map(b => {
+                  const active = selBranches.includes(b);
+                  return (
+                    <Badge
+                      key={b}
+                      variant={active ? 'default' : 'outline'}
+                      className={cn(
+                        "text-[11px] cursor-pointer transition-all h-7 px-2.5",
+                        active
+                          ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                          : "hover:bg-accent/50 hover:border-primary/30"
+                      )}
+                      onClick={() => toggleBranch(b)}
+                    >
+                      {BRANCH_LABELS[b]?.split(' ')[0] || b}
+                    </Badge>
+                  );
+                })}
               </div>
+              {selBranches.length === 0 && (
+                <p className="text-[10px] text-muted-foreground/60 italic">Todas selecionadas</p>
+              )}
             </div>
 
             {/* Categories */}
-            <div className="space-y-1">
-              <p className="text-[10px] text-muted-foreground">Categorias</p>
-              <div className="flex flex-wrap gap-1">
-                {categories.map(c => (
-                  <Badge
-                    key={c}
-                    variant={selCategories.includes(c) ? 'default' : 'outline'}
-                    className="text-[10px] cursor-pointer hover:opacity-80"
-                    onClick={() => toggleCat(c)}
-                  >
-                    {c}
-                  </Badge>
-                ))}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Categorias</label>
+              <div className="flex flex-wrap gap-1.5 pt-0.5">
+                {categories.map(c => {
+                  const active = selCategories.includes(c);
+                  return (
+                    <Badge
+                      key={c}
+                      variant={active ? 'default' : 'outline'}
+                      className={cn(
+                        "text-[11px] cursor-pointer transition-all h-7 px-2.5",
+                        active
+                          ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                          : "hover:bg-accent/50 hover:border-primary/30"
+                      )}
+                      onClick={() => toggleCat(c)}
+                    >
+                      {c}
+                    </Badge>
+                  );
+                })}
               </div>
+              {selCategories.length === 0 && (
+                <p className="text-[10px] text-muted-foreground/60 italic">Todas selecionadas</p>
+              )}
             </div>
 
             {/* Item select */}
-            <Select value={selItem} onValueChange={setSelItem}>
-              <SelectTrigger className="text-xs"><SelectValue placeholder="Todos os itens" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__all__">Todos os itens</SelectItem>
-                {allProducts.map(p => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Item</label>
+              <Select value={selItem} onValueChange={setSelItem}>
+                <SelectTrigger className="h-9 text-xs">
+                  <Package className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                  <SelectValue placeholder="Todos os itens" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Todos os itens</SelectItem>
+                  {allProducts.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          {(selBranches.length > 0 || selCategories.length > 0 || selItem !== '__all__') && (
-            <Button variant="ghost" size="sm" className="mt-2 text-xs" onClick={() => { setSelBranches([]); setSelCategories([]); setSelItem('__all__'); }}>
-              <X className="h-3 w-3 mr-1" /> Limpar filtros
-            </Button>
-          )}
         </CardContent>
       </Card>
 
