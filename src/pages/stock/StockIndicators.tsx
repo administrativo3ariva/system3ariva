@@ -514,7 +514,7 @@ export default function StockIndicators() {
                       )}
                       onClick={() => toggleBranch(b)}
                     >
-                      {BRANCH_LABELS[b]?.split(' ')[0] || b}
+                      {BRANCH_LABELS[b] || b}
                     </Badge>
                   );
                 })}
