@@ -1,22 +1,31 @@
 import { useState } from 'react';
-import { CheckCircle2, Circle, MapPin, ImageIcon, Eye } from 'lucide-react';
+import { CheckCircle2, Circle, MapPin, ImageIcon, Trash2 } from 'lucide-react';
 import { AssetDetailDialog } from '@/components/AssetDetailDialog';
-import { useAssets, useUpdateAsset, DbAsset } from '@/hooks/use-assets';
+import { useAssets, useUpdateAsset, useDeleteAsset, DbAsset } from '@/hooks/use-assets';
 import { BranchBadge } from '@/components/BranchBadge';
 import { AssetCard } from '@/components/AssetCard';
 import { ViewToggle } from '@/components/ViewToggle';
 import { ALL_BRANCHES, Branch, BRANCH_LABELS } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SortableTableHead, SortConfig, toggleSort, sortData } from '@/components/SortableTableHead';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+
+type AssetSortKey = 'code' | 'name' | 'category' | 'condition' | 'branch' | 'total_price';
 
 export default function InventoryBranches() {
   const { data: assets = [], isLoading } = useAssets();
   const updateAsset = useUpdateAsset();
+  const deleteAsset = useDeleteAsset();
   const [selectedBranch, setSelectedBranch] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [sort, setSort] = useState<SortConfig<AssetSortKey>>({ key: '' as AssetSortKey, direction: null });
 
   if (isLoading) return <div className="space-y-4 p-6">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>;
 
@@ -34,9 +43,18 @@ export default function InventoryBranches() {
 
   const filteredAssets = selectedBranch === 'all' ? assets : assets.filter(a => a.branch === selectedBranch);
 
+  const sortedAssets = sortData(filteredAssets, sort, (item, key) => {
+    switch (key) {
+      case 'total_price': return Number(item.total_price);
+      default: return (item as any)[key] ?? '';
+    }
+  });
+
   const toggleInventoried = (asset: DbAsset) => {
     updateAsset.mutate({ id: asset.id, inventoried: !asset.inventoried });
   };
+
+  const handleSort = (key: string) => setSort(prev => toggleSort(prev, key as AssetSortKey));
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -84,28 +102,27 @@ export default function InventoryBranches() {
 
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredAssets.map(a => (
+          {sortedAssets.map(a => (
             <div key={a.id} className="relative">
               <AssetCard
                 asset={a}
                 actions={
-                  <Button
-                    variant={a.inventoried ? 'default' : 'secondary'}
-                    size="icon"
-                    className="h-8 w-8 shadow-sm"
-                    onClick={() => toggleInventoried(a)}
-                  >
-                    {a.inventoried ? (
-                      <CheckCircle2 className="h-4 w-4" />
-                    ) : (
-                      <Circle className="h-4 w-4" />
-                    )}
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant={a.inventoried ? 'default' : 'secondary'}
+                      size="icon"
+                      className="h-8 w-8 shadow-sm"
+                      onClick={() => toggleInventoried(a)}
+                    >
+                      {a.inventoried ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+                    </Button>
+                    <DeleteAssetButton assetName={a.name} onConfirm={() => deleteAsset.mutate(a.id)} />
+                  </div>
                 }
               />
             </div>
           ))}
-          {filteredAssets.length === 0 && (
+          {sortedAssets.length === 0 && (
             <p className="col-span-full text-center py-12 text-muted-foreground">Nenhum item encontrado</p>
           )}
         </div>
@@ -114,19 +131,19 @@ export default function InventoryBranches() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[50px]">Status</TableHead>
-                <TableHead className="w-[60px]">Foto</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Condição</TableHead>
-                <TableHead>Filial</TableHead>
-                <TableHead className="text-right">Valor Total</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
+                <SortableTableHead sortKey="" currentSort={{ key: '', direction: null }} onSort={() => {}} className="w-[50px]">Status</SortableTableHead>
+                <SortableTableHead sortKey="" currentSort={{ key: '', direction: null }} onSort={() => {}} className="w-[60px]">Foto</SortableTableHead>
+                <SortableTableHead sortKey="code" currentSort={sort} onSort={handleSort}>Código</SortableTableHead>
+                <SortableTableHead sortKey="name" currentSort={sort} onSort={handleSort}>Nome</SortableTableHead>
+                <SortableTableHead sortKey="category" currentSort={sort} onSort={handleSort}>Categoria</SortableTableHead>
+                <SortableTableHead sortKey="condition" currentSort={sort} onSort={handleSort}>Condição</SortableTableHead>
+                <SortableTableHead sortKey="branch" currentSort={sort} onSort={handleSort}>Filial</SortableTableHead>
+                <SortableTableHead sortKey="total_price" currentSort={sort} onSort={handleSort} className="text-right">Valor Total</SortableTableHead>
+                <SortableTableHead sortKey="" currentSort={{ key: '', direction: null }} onSort={() => {}} className="w-[80px]">Ações</SortableTableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAssets.map(a => (
+              {sortedAssets.map(a => (
                 <TableRow key={a.id} className={a.inventoried ? 'bg-accent/5' : ''}>
                   <TableCell>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleInventoried(a)}>
@@ -165,11 +182,14 @@ export default function InventoryBranches() {
                   <TableCell><BranchBadge branch={a.branch as Branch} floor={a.floor} /></TableCell>
                   <TableCell className="text-right font-medium">R$ {Number(a.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                   <TableCell>
-                    <AssetDetailDialog asset={a} />
+                    <div className="flex items-center gap-1">
+                      <AssetDetailDialog asset={a} />
+                      <DeleteAssetButton assetName={a.name} onConfirm={() => deleteAsset.mutate(a.id)} />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
-              {filteredAssets.length === 0 && (
+              {sortedAssets.length === 0 && (
                 <TableRow><TableCell colSpan={9} className="text-center py-8 text-muted-foreground">Nenhum item encontrado</TableCell></TableRow>
               )}
             </TableBody>
@@ -177,5 +197,31 @@ export default function InventoryBranches() {
         </div>
       )}
     </div>
+  );
+}
+
+function DeleteAssetButton({ assetName, onConfirm }: { assetName: string; onConfirm: () => void }) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir patrimônio</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja excluir <strong>{assetName}</strong>? Esta ação não pode ser desfeita.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            Excluir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

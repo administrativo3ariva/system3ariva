@@ -54,3 +54,15 @@ export function useUpdateAsset() {
     onError: () => toast.error('Erro ao atualizar patrimônio'),
   });
 }
+
+export function useDeleteAsset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('assets').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['assets'] }); toast.success('Patrimônio excluído'); },
+    onError: () => toast.error('Erro ao excluir patrimônio'),
+  });
+}
