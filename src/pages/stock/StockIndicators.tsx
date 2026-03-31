@@ -514,7 +514,7 @@ export default function StockIndicators() {
                       )}
                       onClick={() => toggleBranch(b)}
                     >
-                      {BRANCH_LABELS[b]?.split(' ')[0] || b}
+                      {BRANCH_LABELS[b] || b}
                     </Badge>
                   );
                 })}
@@ -562,9 +562,11 @@ export default function StockIndicators() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all__">Todos os itens</SelectItem>
-                  {allProducts.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                  ))}
+                  {allProducts
+                    .filter(p => allMovements.some(m => m.product_id === p.id))
+                    .map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name} ({BRANCH_LABELS[p.unit] || p.unit})</SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
