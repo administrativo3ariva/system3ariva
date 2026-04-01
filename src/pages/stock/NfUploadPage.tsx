@@ -275,12 +275,12 @@ export default function NfUploadPage() {
                 <Table>
                   <TableHeader>
                      <TableRow>
-                      <TableHead>Item</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Und.</TableHead>
-                      <TableHead className="text-right">Qtd</TableHead>
-                      <TableHead className="text-right">Valor Unit.</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead className="min-w-[250px]">Item</TableHead>
+                      <TableHead className="min-w-[130px]">Categoria</TableHead>
+                      <TableHead className="min-w-[70px]">Und.</TableHead>
+                      <TableHead className="text-right min-w-[80px]">Qtd</TableHead>
+                      <TableHead className="text-right min-w-[100px]">Valor Unit.</TableHead>
+                      <TableHead className="text-right min-w-[80px]">Total</TableHead>
                       <TableHead className="w-[40px]"></TableHead>
                     </TableRow>
                   </TableHeader>
