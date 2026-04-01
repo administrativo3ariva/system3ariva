@@ -267,17 +267,42 @@ export default function NfUploadPage() {
                 const nfTotal = Number(previewNf.total_value) || 0;
                 const diff = Math.abs(calculatedTotal - nfTotal);
                 return (
-                  <div className={`p-3 rounded-md border text-sm ${diff > 0.05 ? 'bg-warning/10 border-warning/30 text-warning' : 'bg-success/10 border-success/30 text-success'}`}>
-                    <div className="flex justify-between">
-                      <span>Produtos: R$ {itemsTotal.toFixed(2)}</span>
-                      <span>Frete: R$ {freight.toFixed(2)}</span>
-                      <span>Outras: R$ {otherExp.toFixed(2)}</span>
-                      <span>Descontos: -R$ {discount.toFixed(2)}</span>
+                  <div className={`p-4 rounded-lg border text-sm ${diff > 0.05 ? 'bg-warning/10 border-warning/30' : 'bg-success/10 border-success/30'}`}>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                      <div className="flex flex-col">
+                        <span className="text-muted-foreground text-xs">Produtos</span>
+                        <span className="font-medium">R$ {itemsTotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-muted-foreground text-xs">Frete</span>
+                        <span className="font-medium">R$ {freight.toFixed(2)}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-muted-foreground text-xs">Outras Despesas</span>
+                        <span className="font-medium">R$ {otherExp.toFixed(2)}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-muted-foreground text-xs">Descontos</span>
+                        <span className="font-medium text-destructive">- R$ {discount.toFixed(2)}</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between font-medium mt-1">
-                      <span>Calculado: R$ {calculatedTotal.toFixed(2)}</span>
-                      <span>NF: R$ {nfTotal.toFixed(2)}</span>
-                      {diff > 0.05 && <span>Diferença: R$ {diff.toFixed(2)}</span>}
+                    <div className={`flex items-center justify-between pt-3 border-t ${diff > 0.05 ? 'border-warning/20' : 'border-success/20'}`}>
+                      <div className="flex gap-6">
+                        <div className="flex flex-col">
+                          <span className="text-muted-foreground text-xs">Total Calculado</span>
+                          <span className="font-semibold text-base">R$ {calculatedTotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-muted-foreground text-xs">Total NF</span>
+                          <span className="font-semibold text-base">R$ {nfTotal.toFixed(2)}</span>
+                        </div>
+                      </div>
+                      {diff > 0.05 && (
+                        <div className="flex flex-col items-end">
+                          <span className="text-muted-foreground text-xs">Diferença</span>
+                          <span className="font-semibold text-base text-warning">R$ {diff.toFixed(2)}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
