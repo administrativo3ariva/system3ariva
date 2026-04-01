@@ -136,7 +136,7 @@ export default function NfUploadPage() {
             <TableRow>
               <TableHead>Arquivo</TableHead>
               <TableHead>Fornecedor</TableHead>
-              <TableHead>Data</TableHead>
+              <TableHead>Data Emissão</TableHead>
               <TableHead className="text-right">Produtos</TableHead>
               <TableHead className="text-right">Frete</TableHead>
               <TableHead className="text-right">Outras Desp.</TableHead>
