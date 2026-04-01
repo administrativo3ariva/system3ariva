@@ -174,6 +174,7 @@ export type Database = {
           nf_upload_id: string
           quantity: number
           total_price: number
+          unit_of_measure: string | null
           unit_price: number
         }
         Insert: {
@@ -182,6 +183,7 @@ export type Database = {
           nf_upload_id: string
           quantity: number
           total_price?: number
+          unit_of_measure?: string | null
           unit_price?: number
         }
         Update: {
@@ -190,6 +192,7 @@ export type Database = {
           nf_upload_id?: string
           quantity?: number
           total_price?: number
+          unit_of_measure?: string | null
           unit_price?: number
         }
         Relationships: [
@@ -207,7 +210,9 @@ export type Database = {
           created_at: string
           file_name: string
           file_url: string | null
+          freight_value: number | null
           id: string
+          other_expenses: number | null
           status: string
           supplier: string | null
           total_value: number | null
@@ -219,7 +224,9 @@ export type Database = {
           created_at?: string
           file_name: string
           file_url?: string | null
+          freight_value?: number | null
           id?: string
+          other_expenses?: number | null
           status?: string
           supplier?: string | null
           total_value?: number | null
@@ -231,7 +238,9 @@ export type Database = {
           created_at?: string
           file_name?: string
           file_url?: string | null
+          freight_value?: number | null
           id?: string
+          other_expenses?: number | null
           status?: string
           supplier?: string | null
           total_value?: number | null
@@ -251,6 +260,7 @@ export type Database = {
           quantity: number
           total_price: number
           unit: string
+          unit_of_measure: string | null
           unit_price: number
           updated_at: string
         }
@@ -263,6 +273,7 @@ export type Database = {
           quantity?: number
           total_price?: number
           unit?: string
+          unit_of_measure?: string | null
           unit_price?: number
           updated_at?: string
         }
@@ -275,6 +286,7 @@ export type Database = {
           quantity?: number
           total_price?: number
           unit?: string
+          unit_of_measure?: string | null
           unit_price?: number
           updated_at?: string
         }
@@ -293,6 +305,7 @@ export type Database = {
           responsible: string | null
           type: string
           unit: string
+          unit_of_measure: string | null
           user: string
         }
         Insert: {
@@ -307,6 +320,7 @@ export type Database = {
           responsible?: string | null
           type: string
           unit?: string
+          unit_of_measure?: string | null
           user?: string
         }
         Update: {
@@ -321,6 +335,7 @@ export type Database = {
           responsible?: string | null
           type?: string
           unit?: string
+          unit_of_measure?: string | null
           user?: string
         }
         Relationships: [
