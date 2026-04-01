@@ -142,7 +142,7 @@ async function callLovableAi(messages: any[]) {
                   },
                 },
               },
-              required: ["supplier", "total_value", "freight_value", "other_expenses", "discount_value", "items"],
+              required: ["supplier", "issue_date", "total_value", "freight_value", "other_expenses", "discount_value", "items"],
               additionalProperties: false,
             },
           },
