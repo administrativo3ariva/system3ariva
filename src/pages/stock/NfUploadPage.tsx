@@ -211,7 +211,7 @@ export default function NfUploadPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
                 <div>
                   <Label className="text-muted-foreground text-xs">Fornecedor</Label>
                   <Input defaultValue={previewNf.supplier || ''} className="mt-1" readOnly />
@@ -239,6 +239,15 @@ export default function NfUploadPage() {
                     type="number" step="0.01"
                     defaultValue={previewNf.other_expenses ?? 0}
                     onChange={e => updateNfUpload.mutate({ id: previewNf.id, other_expenses: Number(e.target.value) || 0 })}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-xs">Descontos</Label>
+                  <Input
+                    type="number" step="0.01"
+                    defaultValue={previewNf.discount_value ?? 0}
+                    onChange={e => updateNfUpload.mutate({ id: previewNf.id, discount_value: Number(e.target.value) || 0 })}
                     className="mt-1"
                   />
                 </div>
