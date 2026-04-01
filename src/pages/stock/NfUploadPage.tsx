@@ -136,7 +136,7 @@ export default function NfUploadPage() {
             <TableRow>
               <TableHead>Arquivo</TableHead>
               <TableHead>Fornecedor</TableHead>
-              <TableHead>Data</TableHead>
+              <TableHead>Data Emissão</TableHead>
               <TableHead className="text-right">Produtos</TableHead>
               <TableHead className="text-right">Frete</TableHead>
               <TableHead className="text-right">Outras Desp.</TableHead>
@@ -166,7 +166,7 @@ export default function NfUploadPage() {
                   )}
                 </TableCell>
                 <TableCell className="text-sm">{nf.supplier || '—'}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">{new Date(nf.upload_date).toLocaleDateString('pt-BR')}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">{nf.issue_date ? new Date(nf.issue_date + 'T00:00:00').toLocaleDateString('pt-BR') : new Date(nf.upload_date).toLocaleDateString('pt-BR')}</TableCell>
                 <TableCell className="text-right text-sm">
                   {(() => {
                     const itemsTotal = (nf.nf_items || []).reduce((s, i) => s + Number(i.total_price), 0);
@@ -221,8 +221,13 @@ export default function NfUploadPage() {
                   <Input defaultValue={previewNf.supplier || ''} className="mt-1" readOnly />
                 </div>
                 <div>
-                  <Label className="text-muted-foreground text-xs">Data</Label>
-                  <Input defaultValue={previewNf.upload_date} className="mt-1" readOnly />
+                  <Label className="text-muted-foreground text-xs">Data Emissão</Label>
+                  <Input
+                    type="date"
+                    defaultValue={previewNf.issue_date || previewNf.upload_date}
+                    onChange={e => updateNfUpload.mutate({ id: previewNf.id, issue_date: e.target.value })}
+                    className="mt-1"
+                  />
                 </div>
                 <div>
                   <Label className="text-muted-foreground text-xs">Filial destino</Label>

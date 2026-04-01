@@ -17,6 +17,7 @@ type ExtractedItem = {
 
 type ExtractedNF = {
   supplier: string;
+  issue_date: string | null;
   total_value: number;
   freight_value: number;
   other_expenses: number;
@@ -88,6 +89,7 @@ function normalizeExtractedResult(input: any): ExtractedNF {
 
   return {
     supplier: String(input?.supplier || "Não identificado").trim() || "Não identificado",
+    issue_date: input?.issue_date ? String(input.issue_date).trim() : null,
     total_value: Number.isFinite(Number(input?.total_value)) ? Number(input.total_value) : 0,
     freight_value: Number.isFinite(Number(input?.freight_value)) ? Number(input.freight_value) : 0,
     other_expenses: Number.isFinite(Number(input?.other_expenses)) ? Number(input.other_expenses) : 0,
@@ -119,6 +121,7 @@ async function callLovableAi(messages: any[]) {
               type: "object",
               properties: {
                 supplier: { type: "string" },
+                issue_date: { type: "string", description: "Data de emissão da nota fiscal no formato YYYY-MM-DD. Extraia do campo 'Data de Emissão', 'Data da Emissão' ou similar." },
                 total_value: { type: "number", description: "Valor total da nota fiscal (incluindo frete e outras despesas)" },
                 freight_value: { type: "number", description: "Valor do frete da nota fiscal. 0 se não houver." },
                 other_expenses: { type: "number", description: "Valor de outras despesas acessórias da nota fiscal. 0 se não houver." },
@@ -139,7 +142,7 @@ async function callLovableAi(messages: any[]) {
                   },
                 },
               },
-              required: ["supplier", "total_value", "freight_value", "other_expenses", "discount_value", "items"],
+              required: ["supplier", "issue_date", "total_value", "freight_value", "other_expenses", "discount_value", "items"],
               additionalProperties: false,
             },
           },
@@ -206,7 +209,7 @@ async function extractFromPdf(pdfBytes: Uint8Array, fileName: string) {
     {
       role: "system",
       content:
-        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
+        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor, data de emissão, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
     },
     {
       role: "user",
@@ -220,7 +223,7 @@ async function extractFromImage(fileUrl: string) {
     {
       role: "system",
       content:
-        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
+        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor, data de emissão, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
     },
     {
       role: "user",
@@ -231,7 +234,7 @@ async function extractFromImage(fileUrl: string) {
         },
         {
           type: "text",
-          text: "Extraia o fornecedor, valor total, frete, outras despesas e itens (com unidade de medida) desta nota fiscal brasileira.",
+          text: "Extraia o fornecedor, data de emissão, valor total, frete, descontos, outras despesas e itens (com unidade de medida) desta nota fiscal brasileira.",
         },
       ],
     },
@@ -324,6 +327,7 @@ serve(async (req) => {
         .from("nf_uploads")
         .update({
           supplier: extracted.supplier || null,
+          issue_date: extracted.issue_date || null,
           total_value: extracted.total_value || null,
           freight_value: extracted.freight_value || 0,
           other_expenses: extracted.other_expenses || 0,
@@ -359,6 +363,7 @@ serve(async (req) => {
           file_url: fileUrl,
           status: "pendente",
           supplier: extracted.supplier,
+          issue_date: extracted.issue_date,
           total_value: extracted.total_value,
           freight_value: extracted.freight_value,
           other_expenses: extracted.other_expenses,
