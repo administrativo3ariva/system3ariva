@@ -98,6 +98,7 @@ export default function StockMovements() {
           total_price: 0,
           unit: selectedBranch,
           min_stock: null,
+          unit_of_measure: 'UN',
         });
         productId = result.id;
         productName = form.newProductName.trim();
