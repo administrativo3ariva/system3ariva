@@ -66,7 +66,7 @@ export default function StockProducts() {
   };
 
   const handleAdd = () => {
-    const qty = parseInt(form.quantity) || 0;
+    const qty = form.unitOfMeasure === 'KG' ? (parseFloat(form.quantity) || 0) : (parseInt(form.quantity) || 0);
     const price = parseFloat(form.unitPrice) || 0;
     if (!form.name.trim()) { toast.error('Informe o nome do produto'); return; }
     if (!form.category) { toast.error('Selecione a categoria'); return; }
