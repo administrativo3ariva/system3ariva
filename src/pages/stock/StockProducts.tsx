@@ -27,7 +27,7 @@ export default function StockProducts() {
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', category: '', quantity: '', unitPrice: '', minStock: '', newCategory: '' });
+  const [form, setForm] = useState({ name: '', category: '', quantity: '', unitPrice: '', minStock: '', newCategory: '', unitOfMeasure: 'UN' });
   const [editingProduct, setEditingProduct] = useState<DbProduct | null>(null);
   const [editForm, setEditForm] = useState<Partial<DbProduct>>({});
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -46,6 +46,7 @@ export default function StockProducts() {
     switch (key) {
       case 'name': return item.name;
       case 'category': return item.category;
+      case 'unit_of_measure': return item.unit_of_measure || 'UN';
       case 'quantity': return item.quantity;
       case 'min_stock': return item.min_stock;
       case 'unit_price': return Number(item.unit_price);
@@ -65,7 +66,7 @@ export default function StockProducts() {
   };
 
   const handleAdd = () => {
-    const qty = parseInt(form.quantity) || 0;
+    const qty = form.unitOfMeasure === 'KG' ? (parseFloat(form.quantity) || 0) : (parseInt(form.quantity) || 0);
     const price = parseFloat(form.unitPrice) || 0;
     if (!form.name.trim()) { toast.error('Informe o nome do produto'); return; }
     if (!form.category) { toast.error('Selecione a categoria'); return; }
@@ -77,9 +78,10 @@ export default function StockProducts() {
       total_price: qty * price,
       unit: selectedBranch,
       min_stock: parseInt(form.minStock) || null,
+      unit_of_measure: form.unitOfMeasure || 'UN',
     }, {
       onSuccess: () => {
-        setForm({ name: '', category: '', quantity: '', unitPrice: '', minStock: '', newCategory: '' });
+        setForm({ name: '', category: '', quantity: '', unitPrice: '', minStock: '', newCategory: '', unitOfMeasure: 'UN' });
         setDialogOpen(false);
       }
     });
@@ -163,10 +165,19 @@ export default function StockProducts() {
                   </Button>
                 </div>
               </div>
+              <div className="grid gap-2">
+                <Label>Unidade de Medida</Label>
+                <Select value={form.unitOfMeasure} onValueChange={v => setForm(f => ({ ...f, unitOfMeasure: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {['UN', 'CX', 'KG', 'PCT', 'PC', 'FR', 'LT', 'ML', 'G'].map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="grid gap-2">
                   <Label>Quantidade</Label>
-                  <Input type="number" value={form.quantity} onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))} />
+                  <Input type="number" step={form.unitOfMeasure === 'KG' ? '0.001' : '1'} value={form.quantity} onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))} />
                 </div>
                 <div className="grid gap-2">
                   <Label>Valor Unit.</Label>
@@ -205,6 +216,7 @@ export default function StockProducts() {
             <TableRow>
               <SortableTableHead sortKey="name" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))}>Produto</SortableTableHead>
               <SortableTableHead sortKey="category" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))}>Categoria</SortableTableHead>
+              <SortableTableHead sortKey="unit_of_measure" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))}>Und.</SortableTableHead>
               <SortableTableHead sortKey="quantity" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))} className="text-right">Qtd</SortableTableHead>
               <SortableTableHead sortKey="min_stock" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))} className="text-right">Mín.</SortableTableHead>
               <SortableTableHead sortKey="unit_price" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))} className="text-right">Valor Unit.</SortableTableHead>
@@ -224,7 +236,10 @@ export default function StockProducts() {
                     </div>
                   </TableCell>
                   <TableCell className="text-sm">{p.category}</TableCell>
-                  <TableCell className={`text-right font-medium ${isLow ? 'text-warning' : ''}`}>{p.quantity}</TableCell>
+                  <TableCell className="text-sm">{p.unit_of_measure || 'UN'}</TableCell>
+                  <TableCell className={`text-right font-medium ${isLow ? 'text-warning' : ''}`}>
+                    {p.unit_of_measure === 'KG' ? Number(p.quantity).toFixed(3) : p.quantity}
+                  </TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">{p.min_stock ?? '—'}</TableCell>
                   <TableCell className="text-right text-sm">R$ {Number(p.unit_price).toFixed(2)}</TableCell>
                   <TableCell className="text-right font-medium">R$ {Number(p.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>

@@ -15,6 +15,7 @@ export type DbMovement = {
   notes: string | null;
   unit: string;
   floor: string | null;
+  unit_of_measure: string;
 };
 
 export function useMovements() {

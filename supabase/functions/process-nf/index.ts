@@ -12,11 +12,14 @@ type ExtractedItem = {
   quantity: number;
   unit_price: number;
   total_price: number;
+  unit_of_measure: string;
 };
 
 type ExtractedNF = {
   supplier: string;
   total_value: number;
+  freight_value: number;
+  other_expenses: number;
   items: ExtractedItem[];
 };
 
@@ -63,21 +66,30 @@ function normalizeExtractedResult(input: any): ExtractedNF {
           quantity: Number(item?.quantity || 0),
           unit_price: Number(item?.unit_price || 0),
           total_price: Number(item?.total_price || 0),
+          unit_of_measure: String(item?.unit_of_measure || "UN").trim().toUpperCase(),
         }))
         .filter((item: ExtractedItem) => item.name)
-        .map((item: ExtractedItem) => ({
-          ...item,
-          quantity: Number.isFinite(item.quantity) && item.quantity > 0 ? Math.round(item.quantity) : 1,
-          unit_price: Number.isFinite(item.unit_price) ? item.unit_price : 0,
-          total_price: Number.isFinite(item.total_price)
-            ? item.total_price
-            : (Number.isFinite(item.unit_price) ? item.unit_price : 0) * (Number.isFinite(item.quantity) && item.quantity > 0 ? Math.round(item.quantity) : 1),
-        }))
+        .map((item: ExtractedItem) => {
+          const isKg = item.unit_of_measure === "KG";
+          const qty = Number.isFinite(item.quantity) && item.quantity > 0
+            ? (isKg ? item.quantity : Math.round(item.quantity))
+            : 1;
+          return {
+            ...item,
+            quantity: qty,
+            unit_price: Number.isFinite(item.unit_price) ? item.unit_price : 0,
+            total_price: Number.isFinite(item.total_price)
+              ? item.total_price
+              : (Number.isFinite(item.unit_price) ? item.unit_price : 0) * qty,
+          };
+        })
     : [];
 
   return {
     supplier: String(input?.supplier || "Não identificado").trim() || "Não identificado",
     total_value: Number.isFinite(Number(input?.total_value)) ? Number(input.total_value) : 0,
+    freight_value: Number.isFinite(Number(input?.freight_value)) ? Number(input.freight_value) : 0,
+    other_expenses: Number.isFinite(Number(input?.other_expenses)) ? Number(input.other_expenses) : 0,
     items,
   };
 }
@@ -100,28 +112,31 @@ async function callLovableAi(messages: any[]) {
           type: "function",
           function: {
             name: "extract_nf_data",
-            description: "Extrai fornecedor, valor total e itens de uma nota fiscal brasileira.",
+            description: "Extrai fornecedor, valor total, frete, outras despesas e itens de uma nota fiscal brasileira.",
             parameters: {
               type: "object",
               properties: {
                 supplier: { type: "string" },
-                total_value: { type: "number" },
+                total_value: { type: "number", description: "Valor total da nota fiscal (incluindo frete e outras despesas)" },
+                freight_value: { type: "number", description: "Valor do frete da nota fiscal. 0 se não houver." },
+                other_expenses: { type: "number", description: "Valor de outras despesas acessórias da nota fiscal. 0 se não houver." },
                 items: {
                   type: "array",
                   items: {
                     type: "object",
                     properties: {
                       name: { type: "string" },
-                      quantity: { type: "number" },
+                      quantity: { type: "number", description: "Quantidade do item. IMPORTANTE: para itens em KG, manter o valor fracionado exato (ex: 1.350, 0.500). NÃO arredondar." },
                       unit_price: { type: "number" },
                       total_price: { type: "number" },
+                      unit_of_measure: { type: "string", description: "Unidade de medida do item conforme aparece na NF: UN (unidade), CX (caixa), KG (quilograma), PCT (pacote), PC (peça), FR (frasco), LT (litro), ML (mililitro), G (grama), etc." },
                     },
-                    required: ["name", "quantity", "unit_price", "total_price"],
+                    required: ["name", "quantity", "unit_price", "total_price", "unit_of_measure"],
                     additionalProperties: false,
                   },
                 },
               },
-              required: ["supplier", "total_value", "items"],
+              required: ["supplier", "total_value", "freight_value", "other_expenses", "items"],
               additionalProperties: false,
             },
           },
@@ -188,7 +203,7 @@ async function extractFromPdf(pdfBytes: Uint8Array, fileName: string) {
     {
       role: "system",
       content:
-        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor, valor total da nota e todos os itens listados com quantidade, valor unitário e valor total.",
+        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor, valor total da nota, valor do frete, outras despesas acessórias e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
     },
     {
       role: "user",
@@ -202,7 +217,7 @@ async function extractFromImage(fileUrl: string) {
     {
       role: "system",
       content:
-        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor, valor total da nota e todos os itens listados com quantidade, valor unitário e valor total.",
+        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor, valor total da nota, valor do frete, outras despesas acessórias e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
     },
     {
       role: "user",
@@ -213,7 +228,7 @@ async function extractFromImage(fileUrl: string) {
         },
         {
           type: "text",
-          text: "Extraia o fornecedor, valor total e itens desta nota fiscal brasileira.",
+          text: "Extraia o fornecedor, valor total, frete, outras despesas e itens (com unidade de medida) desta nota fiscal brasileira.",
         },
       ],
     },
@@ -307,6 +322,8 @@ serve(async (req) => {
         .update({
           supplier: extracted.supplier || null,
           total_value: extracted.total_value || null,
+          freight_value: extracted.freight_value || 0,
+          other_expenses: extracted.other_expenses || 0,
           status: "pendente",
         })
         .eq("id", nfRecord.id);
@@ -323,6 +340,7 @@ serve(async (req) => {
             quantity: item.quantity || 1,
             unit_price: item.unit_price || 0,
             total_price: item.total_price || 0,
+            unit_of_measure: item.unit_of_measure || "UN",
           })),
         );
 
@@ -338,6 +356,8 @@ serve(async (req) => {
           status: "pendente",
           supplier: extracted.supplier,
           total_value: extracted.total_value,
+          freight_value: extracted.freight_value,
+          other_expenses: extracted.other_expenses,
           items: extracted.items,
         }),
         {

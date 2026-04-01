@@ -11,6 +11,7 @@ export type DbNfItem = {
   unit_price: number;
   total_price: number;
   category?: string;
+  unit_of_measure?: string;
 };
 
 export type DbNfUpload = {
@@ -22,27 +23,25 @@ export type DbNfUpload = {
   supplier: string | null;
   total_value: number | null;
   unit: string;
+  freight_value?: number | null;
+  other_expenses?: number | null;
   nf_items?: DbNfItem[];
 };
 
 function fileToBase64(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
-
     reader.onload = () => {
       if (typeof reader.result !== 'string') {
         reject(new Error('Falha ao ler o arquivo selecionado.'));
         return;
       }
-
       const [, base64 = ''] = reader.result.split(',');
       resolve(base64);
     };
-
     reader.onerror = () => {
       reject(reader.error ?? new Error('Falha ao ler o arquivo selecionado.'));
     };
-
     reader.readAsDataURL(file);
   });
 }
@@ -65,11 +64,9 @@ export function useNfUploads() {
 
 export function useUploadAndProcessNf() {
   const qc = useQueryClient();
-
   return useMutation({
     mutationFn: async ({ file, unit }: { file: File; unit: string }) => {
       const fileDataBase64 = await fileToBase64(file);
-
       const { data, error } = await supabase.functions.invoke('process-nf', {
         body: {
           fileName: file.name,
@@ -78,32 +75,24 @@ export function useUploadAndProcessNf() {
           unit,
         },
       });
-
       if (error) {
         let message = error.message || 'Erro ao enviar NF';
-
         if (error.context instanceof Response) {
           try {
             const payload = await error.context.json();
             message = payload?.error || message;
-          } catch {
-            // ignore response parsing errors
-          }
+          } catch { /* ignore */ }
         }
-
         throw new Error(message);
       }
-
       return data as { status?: string; error?: string };
     },
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ['nf_uploads'] });
-
       if (data?.error) {
         toast.warning(data.error || 'NF enviada para conferência, mas houve falha na extração automática.');
         return;
       }
-
       toast.success('NF enviada e processada!');
     },
     onError: (err: any) => {
@@ -116,7 +105,7 @@ export function useUploadAndProcessNf() {
 export function useUpdateNfUpload() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; status?: string; supplier?: string; total_value?: number }) => {
+    mutationFn: async ({ id, ...updates }: { id: string; status?: string; supplier?: string; total_value?: number; freight_value?: number; other_expenses?: number }) => {
       const { error } = await supabase.from('nf_uploads').update(updates).eq('id', id);
       if (error) throw error;
     },
@@ -163,6 +152,7 @@ export function useApproveNf() {
               unit_price: item.unit_price,
               total_price: 0,
               unit: targetUnit,
+              unit_of_measure: item.unit_of_measure || 'UN',
             })
             .select()
             .single();
@@ -179,6 +169,7 @@ export function useApproveNf() {
           unit: targetUnit,
           responsible: 'Sistema',
           notes: `NF: ${nf.file_name} — ${nf.supplier || 'Fornecedor não identificado'}`,
+          unit_of_measure: item.unit_of_measure || 'UN',
         });
         if (moveError) throw moveError;
       }

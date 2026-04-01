@@ -98,6 +98,7 @@ export default function StockMovements() {
           total_price: 0,
           unit: selectedBranch,
           min_stock: null,
+          unit_of_measure: 'UN',
         });
         productId = result.id;
         productName = form.newProductName.trim();
@@ -121,6 +122,7 @@ export default function StockMovements() {
       notes: form.notes || null,
       unit: selectedBranch,
       floor: selectedBranch === 'BH-Matriz' ? (form.floor || null) : null,
+      unit_of_measure: 'UN',
     }, {
       onSuccess: () => {
         setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', floor: '', newProductName: '', newProductCategory: '', newProductPrice: '' });
@@ -345,7 +347,9 @@ export default function StockMovements() {
                   </Badge>
                 </TableCell>
                 <TableCell><BranchBadge branch={m.unit} floor={m.floor} /></TableCell>
-                <TableCell className="text-right font-medium">{m.quantity}</TableCell>
+                <TableCell className="text-right font-medium">
+                  {(m.unit_of_measure || 'UN') === 'KG' ? Number(m.quantity).toFixed(3) : m.quantity} {m.unit_of_measure || 'UN'}
+                </TableCell>
                 <TableCell className="text-sm">{m.responsible || '—'}</TableCell>
                 <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">{m.notes}</TableCell>
                 <TableCell>

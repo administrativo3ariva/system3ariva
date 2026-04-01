@@ -12,6 +12,7 @@ export type DbProduct = {
   total_price: number;
   unit: string;
   min_stock: number | null;
+  unit_of_measure: string;
 };
 
 export function useProducts() {
@@ -59,7 +60,6 @@ export function useDeleteProduct() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      // Delete related movements first
       const { error: movError } = await supabase.from('stock_movements').delete().eq('product_id', id);
       if (movError) throw movError;
       const { error } = await supabase.from('products').delete().eq('id', id);
