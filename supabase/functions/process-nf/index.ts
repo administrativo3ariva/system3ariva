@@ -362,6 +362,7 @@ serve(async (req) => {
           total_value: extracted.total_value,
           freight_value: extracted.freight_value,
           other_expenses: extracted.other_expenses,
+          discount_value: extracted.discount_value,
           items: extracted.items,
         }),
         {

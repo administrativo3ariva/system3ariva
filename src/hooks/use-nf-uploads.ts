@@ -106,7 +106,7 @@ export function useUploadAndProcessNf() {
 export function useUpdateNfUpload() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; status?: string; supplier?: string; total_value?: number; freight_value?: number; other_expenses?: number }) => {
+    mutationFn: async ({ id, ...updates }: { id: string; status?: string; supplier?: string; total_value?: number; freight_value?: number; other_expenses?: number; discount_value?: number }) => {
       const { error } = await supabase.from('nf_uploads').update(updates).eq('id', id);
       if (error) throw error;
     },
