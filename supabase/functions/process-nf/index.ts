@@ -89,6 +89,7 @@ function normalizeExtractedResult(input: any): ExtractedNF {
 
   return {
     supplier: String(input?.supplier || "Não identificado").trim() || "Não identificado",
+    issue_date: input?.issue_date ? String(input.issue_date).trim() : null,
     total_value: Number.isFinite(Number(input?.total_value)) ? Number(input.total_value) : 0,
     freight_value: Number.isFinite(Number(input?.freight_value)) ? Number(input.freight_value) : 0,
     other_expenses: Number.isFinite(Number(input?.other_expenses)) ? Number(input.other_expenses) : 0,
