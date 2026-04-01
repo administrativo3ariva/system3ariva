@@ -164,10 +164,19 @@ export default function StockProducts() {
                   </Button>
                 </div>
               </div>
+              <div className="grid gap-2">
+                <Label>Unidade de Medida</Label>
+                <Select value={form.unitOfMeasure} onValueChange={v => setForm(f => ({ ...f, unitOfMeasure: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {['UN', 'CX', 'KG', 'PCT', 'PC', 'FR', 'LT', 'ML', 'G'].map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="grid gap-2">
                   <Label>Quantidade</Label>
-                  <Input type="number" value={form.quantity} onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))} />
+                  <Input type="number" step={form.unitOfMeasure === 'KG' ? '0.001' : '1'} value={form.quantity} onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))} />
                 </div>
                 <div className="grid gap-2">
                   <Label>Valor Unit.</Label>
