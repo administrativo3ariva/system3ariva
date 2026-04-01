@@ -137,6 +137,9 @@ export default function NfUploadPage() {
               <TableHead>Arquivo</TableHead>
               <TableHead>Fornecedor</TableHead>
               <TableHead>Data</TableHead>
+              <TableHead className="text-right">Produtos</TableHead>
+              <TableHead className="text-right">Frete</TableHead>
+              <TableHead className="text-right">Outras Desp.</TableHead>
               <TableHead className="text-right">Valor Total</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Ações</TableHead>
