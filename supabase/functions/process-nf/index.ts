@@ -121,6 +121,7 @@ async function callLovableAi(messages: any[]) {
               type: "object",
               properties: {
                 supplier: { type: "string" },
+                issue_date: { type: "string", description: "Data de emissão da nota fiscal no formato YYYY-MM-DD. Extraia do campo 'Data de Emissão', 'Data da Emissão' ou similar." },
                 total_value: { type: "number", description: "Valor total da nota fiscal (incluindo frete e outras despesas)" },
                 freight_value: { type: "number", description: "Valor do frete da nota fiscal. 0 se não houver." },
                 other_expenses: { type: "number", description: "Valor de outras despesas acessórias da nota fiscal. 0 se não houver." },
