@@ -211,7 +211,7 @@ export default function NfUploadPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div>
                   <Label className="text-muted-foreground text-xs">Fornecedor</Label>
                   <Input defaultValue={previewNf.supplier || ''} className="mt-1" readOnly />
@@ -224,7 +224,49 @@ export default function NfUploadPage() {
                   <Label className="text-muted-foreground text-xs">Filial destino</Label>
                   <div className="mt-1"><BranchBadge branch={previewNf.unit} /></div>
                 </div>
+                <div>
+                  <Label className="text-muted-foreground text-xs">Frete</Label>
+                  <Input
+                    type="number" step="0.01"
+                    defaultValue={previewNf.freight_value ?? 0}
+                    onChange={e => updateNfUpload.mutate({ id: previewNf.id, freight_value: Number(e.target.value) || 0 })}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-muted-foreground text-xs">Outras Despesas</Label>
+                  <Input
+                    type="number" step="0.01"
+                    defaultValue={previewNf.other_expenses ?? 0}
+                    onChange={e => updateNfUpload.mutate({ id: previewNf.id, other_expenses: Number(e.target.value) || 0 })}
+                    className="mt-1"
+                  />
+                </div>
               </div>
+
+              {/* Totals reconciliation */}
+              {(() => {
+                const itemsTotal = editedItems.reduce((s, i) => s + Number(i.total_price), 0);
+                const freight = Number(previewNf.freight_value) || 0;
+                const otherExp = Number(previewNf.other_expenses) || 0;
+                const calculatedTotal = itemsTotal + freight + otherExp;
+                const nfTotal = Number(previewNf.total_value) || 0;
+                const diff = Math.abs(calculatedTotal - nfTotal);
+                return (
+                  <div className={`p-3 rounded-md border text-sm ${diff > 0.05 ? 'bg-warning/10 border-warning/30 text-warning' : 'bg-success/10 border-success/30 text-success'}`}>
+                    <div className="flex justify-between">
+                      <span>Produtos: R$ {itemsTotal.toFixed(2)}</span>
+                      <span>Frete: R$ {freight.toFixed(2)}</span>
+                      <span>Outras: R$ {otherExp.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between font-medium mt-1">
+                      <span>Calculado: R$ {calculatedTotal.toFixed(2)}</span>
+                      <span>NF: R$ {nfTotal.toFixed(2)}</span>
+                      {diff > 0.05 && <span>Diferença: R$ {diff.toFixed(2)}</span>}
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div>
                 <Label className="text-muted-foreground text-xs mb-2 block flex items-center gap-1">
