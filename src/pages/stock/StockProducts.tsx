@@ -235,7 +235,10 @@ export default function StockProducts() {
                     </div>
                   </TableCell>
                   <TableCell className="text-sm">{p.category}</TableCell>
-                  <TableCell className={`text-right font-medium ${isLow ? 'text-warning' : ''}`}>{p.quantity}</TableCell>
+                  <TableCell className="text-sm">{p.unit_of_measure || 'UN'}</TableCell>
+                  <TableCell className={`text-right font-medium ${isLow ? 'text-warning' : ''}`}>
+                    {p.unit_of_measure === 'KG' ? Number(p.quantity).toFixed(3) : p.quantity}
+                  </TableCell>
                   <TableCell className="text-right text-sm text-muted-foreground">{p.min_stock ?? '—'}</TableCell>
                   <TableCell className="text-right text-sm">R$ {Number(p.unit_price).toFixed(2)}</TableCell>
                   <TableCell className="text-right font-medium">R$ {Number(p.total_price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
