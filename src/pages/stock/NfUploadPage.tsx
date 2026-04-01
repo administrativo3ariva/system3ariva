@@ -140,6 +140,7 @@ export default function NfUploadPage() {
               <TableHead className="text-right">Produtos</TableHead>
               <TableHead className="text-right">Frete</TableHead>
               <TableHead className="text-right">Outras Desp.</TableHead>
+              <TableHead className="text-right">Descontos</TableHead>
               <TableHead className="text-right">Valor Total</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Ações</TableHead>
