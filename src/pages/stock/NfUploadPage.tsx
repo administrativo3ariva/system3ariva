@@ -166,7 +166,7 @@ export default function NfUploadPage() {
                   )}
                 </TableCell>
                 <TableCell className="text-sm">{nf.supplier || '—'}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">{new Date(nf.upload_date).toLocaleDateString('pt-BR')}</TableCell>
+                <TableCell className="text-sm text-muted-foreground">{nf.issue_date ? new Date(nf.issue_date + 'T00:00:00').toLocaleDateString('pt-BR') : new Date(nf.upload_date).toLocaleDateString('pt-BR')}</TableCell>
                 <TableCell className="text-right text-sm">
                   {(() => {
                     const itemsTotal = (nf.nf_items || []).reduce((s, i) => s + Number(i.total_price), 0);
