@@ -234,7 +234,7 @@ async function extractFromImage(fileUrl: string) {
         },
         {
           type: "text",
-          text: "Extraia o fornecedor, valor total, frete, outras despesas e itens (com unidade de medida) desta nota fiscal brasileira.",
+          text: "Extraia o fornecedor, data de emissão, valor total, frete, descontos, outras despesas e itens (com unidade de medida) desta nota fiscal brasileira.",
         },
       ],
     },
