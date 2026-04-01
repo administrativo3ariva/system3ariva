@@ -27,7 +27,7 @@ export default function StockProducts() {
   const [search, setSearch] = useState('');
   const [filterCat, setFilterCat] = useState<string>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', category: '', quantity: '', unitPrice: '', minStock: '', newCategory: '' });
+  const [form, setForm] = useState({ name: '', category: '', quantity: '', unitPrice: '', minStock: '', newCategory: '', unitOfMeasure: 'UN' });
   const [editingProduct, setEditingProduct] = useState<DbProduct | null>(null);
   const [editForm, setEditForm] = useState<Partial<DbProduct>>({});
   const [deleteId, setDeleteId] = useState<string | null>(null);
