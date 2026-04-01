@@ -19,6 +19,7 @@ export type DbNfUpload = {
   file_name: string;
   file_url?: string | null;
   upload_date: string;
+  issue_date?: string | null;
   status: string;
   supplier: string | null;
   total_value: number | null;
