@@ -363,6 +363,7 @@ serve(async (req) => {
           file_url: fileUrl,
           status: "pendente",
           supplier: extracted.supplier,
+          issue_date: extracted.issue_date,
           total_value: extracted.total_value,
           freight_value: extracted.freight_value,
           other_expenses: extracted.other_expenses,
