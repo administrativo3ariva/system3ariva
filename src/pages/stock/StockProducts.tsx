@@ -46,6 +46,7 @@ export default function StockProducts() {
     switch (key) {
       case 'name': return item.name;
       case 'category': return item.category;
+      case 'unit_of_measure': return item.unit_of_measure || 'UN';
       case 'quantity': return item.quantity;
       case 'min_stock': return item.min_stock;
       case 'unit_price': return Number(item.unit_price);
