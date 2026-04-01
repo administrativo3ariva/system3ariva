@@ -91,6 +91,7 @@ function normalizeExtractedResult(input: any): ExtractedNF {
     total_value: Number.isFinite(Number(input?.total_value)) ? Number(input.total_value) : 0,
     freight_value: Number.isFinite(Number(input?.freight_value)) ? Number(input.freight_value) : 0,
     other_expenses: Number.isFinite(Number(input?.other_expenses)) ? Number(input.other_expenses) : 0,
+    discount_value: Number.isFinite(Number(input?.discount_value)) ? Number(input.discount_value) : 0,
     items,
   };
 }
