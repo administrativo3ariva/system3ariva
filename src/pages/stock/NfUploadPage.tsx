@@ -140,6 +140,7 @@ export default function NfUploadPage() {
               <TableHead className="text-right">Produtos</TableHead>
               <TableHead className="text-right">Frete</TableHead>
               <TableHead className="text-right">Outras Desp.</TableHead>
+              <TableHead className="text-right">Descontos</TableHead>
               <TableHead className="text-right">Valor Total</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Ações</TableHead>
@@ -148,7 +149,7 @@ export default function NfUploadPage() {
           <TableBody>
             {nfUploads.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                   Nenhuma NF enviada para {selectedBranch}
                 </TableCell>
               </TableRow>
@@ -177,6 +178,9 @@ export default function NfUploadPage() {
                 </TableCell>
                 <TableCell className="text-right text-sm">
                   {nf.other_expenses ? `R$ ${Number(nf.other_expenses).toFixed(2)}` : '—'}
+                </TableCell>
+                <TableCell className="text-right text-sm">
+                  {nf.discount_value ? `R$ ${Number(nf.discount_value).toFixed(2)}` : '—'}
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   {nf.total_value ? `R$ ${Number(nf.total_value).toFixed(2)}` : '—'}
@@ -211,7 +215,7 @@ export default function NfUploadPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
                 <div>
                   <Label className="text-muted-foreground text-xs">Fornecedor</Label>
                   <Input defaultValue={previewNf.supplier || ''} className="mt-1" readOnly />
@@ -242,6 +246,15 @@ export default function NfUploadPage() {
                     className="mt-1"
                   />
                 </div>
+                <div>
+                  <Label className="text-muted-foreground text-xs">Descontos</Label>
+                  <Input
+                    type="number" step="0.01"
+                    defaultValue={previewNf.discount_value ?? 0}
+                    onChange={e => updateNfUpload.mutate({ id: previewNf.id, discount_value: Number(e.target.value) || 0 })}
+                    className="mt-1"
+                  />
+                </div>
               </div>
 
               {/* Totals reconciliation */}
@@ -249,7 +262,8 @@ export default function NfUploadPage() {
                 const itemsTotal = editedItems.reduce((s, i) => s + Number(i.total_price), 0);
                 const freight = Number(previewNf.freight_value) || 0;
                 const otherExp = Number(previewNf.other_expenses) || 0;
-                const calculatedTotal = itemsTotal + freight + otherExp;
+                const discount = Number(previewNf.discount_value) || 0;
+                const calculatedTotal = itemsTotal + freight + otherExp - discount;
                 const nfTotal = Number(previewNf.total_value) || 0;
                 const diff = Math.abs(calculatedTotal - nfTotal);
                 return (
@@ -258,6 +272,7 @@ export default function NfUploadPage() {
                       <span>Produtos: R$ {itemsTotal.toFixed(2)}</span>
                       <span>Frete: R$ {freight.toFixed(2)}</span>
                       <span>Outras: R$ {otherExp.toFixed(2)}</span>
+                      <span>Descontos: -R$ {discount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between font-medium mt-1">
                       <span>Calculado: R$ {calculatedTotal.toFixed(2)}</span>

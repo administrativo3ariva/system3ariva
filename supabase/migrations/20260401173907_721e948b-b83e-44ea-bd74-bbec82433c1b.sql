@@ -1,0 +1,1 @@
+ALTER TABLE public.nf_uploads ADD COLUMN discount_value numeric DEFAULT 0;

@@ -20,6 +20,7 @@ type ExtractedNF = {
   total_value: number;
   freight_value: number;
   other_expenses: number;
+  discount_value: number;
   items: ExtractedItem[];
 };
 
@@ -90,6 +91,7 @@ function normalizeExtractedResult(input: any): ExtractedNF {
     total_value: Number.isFinite(Number(input?.total_value)) ? Number(input.total_value) : 0,
     freight_value: Number.isFinite(Number(input?.freight_value)) ? Number(input.freight_value) : 0,
     other_expenses: Number.isFinite(Number(input?.other_expenses)) ? Number(input.other_expenses) : 0,
+    discount_value: Number.isFinite(Number(input?.discount_value)) ? Number(input.discount_value) : 0,
     items,
   };
 }
@@ -120,6 +122,7 @@ async function callLovableAi(messages: any[]) {
                 total_value: { type: "number", description: "Valor total da nota fiscal (incluindo frete e outras despesas)" },
                 freight_value: { type: "number", description: "Valor do frete da nota fiscal. 0 se não houver." },
                 other_expenses: { type: "number", description: "Valor de outras despesas acessórias da nota fiscal. 0 se não houver." },
+                discount_value: { type: "number", description: "Valor total de descontos da nota fiscal. 0 se não houver." },
                 items: {
                   type: "array",
                   items: {
@@ -136,7 +139,7 @@ async function callLovableAi(messages: any[]) {
                   },
                 },
               },
-              required: ["supplier", "total_value", "freight_value", "other_expenses", "items"],
+              required: ["supplier", "total_value", "freight_value", "other_expenses", "discount_value", "items"],
               additionalProperties: false,
             },
           },
@@ -203,7 +206,7 @@ async function extractFromPdf(pdfBytes: Uint8Array, fileName: string) {
     {
       role: "system",
       content:
-        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor, valor total da nota, valor do frete, outras despesas acessórias e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
+        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
     },
     {
       role: "user",
@@ -217,7 +220,7 @@ async function extractFromImage(fileUrl: string) {
     {
       role: "system",
       content:
-        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor, valor total da nota, valor do frete, outras despesas acessórias e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
+        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
     },
     {
       role: "user",
@@ -324,6 +327,7 @@ serve(async (req) => {
           total_value: extracted.total_value || null,
           freight_value: extracted.freight_value || 0,
           other_expenses: extracted.other_expenses || 0,
+          discount_value: extracted.discount_value || 0,
           status: "pendente",
         })
         .eq("id", nfRecord.id);
@@ -358,6 +362,7 @@ serve(async (req) => {
           total_value: extracted.total_value,
           freight_value: extracted.freight_value,
           other_expenses: extracted.other_expenses,
+          discount_value: extracted.discount_value,
           items: extracted.items,
         }),
         {
