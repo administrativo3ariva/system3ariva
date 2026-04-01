@@ -199,7 +199,7 @@ export default function NfUploadPage() {
       </div>
 
       <Dialog open={!!previewNf} onOpenChange={() => setPreviewNf(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display">Conferência — {previewNf?.file_name}</DialogTitle>
           </DialogHeader>
@@ -275,12 +275,12 @@ export default function NfUploadPage() {
                 <Table>
                   <TableHeader>
                      <TableRow>
-                      <TableHead>Item</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Und.</TableHead>
-                      <TableHead className="text-right">Qtd</TableHead>
-                      <TableHead className="text-right">Valor Unit.</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
+                      <TableHead className="min-w-[250px]">Item</TableHead>
+                      <TableHead className="min-w-[130px]">Categoria</TableHead>
+                      <TableHead className="min-w-[70px]">Und.</TableHead>
+                      <TableHead className="text-right min-w-[80px]">Qtd</TableHead>
+                      <TableHead className="text-right min-w-[100px]">Valor Unit.</TableHead>
+                      <TableHead className="text-right min-w-[80px]">Total</TableHead>
                       <TableHead className="w-[40px]"></TableHead>
                     </TableRow>
                   </TableHeader>
