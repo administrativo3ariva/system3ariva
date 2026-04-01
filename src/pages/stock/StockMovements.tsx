@@ -122,6 +122,7 @@ export default function StockMovements() {
       notes: form.notes || null,
       unit: selectedBranch,
       floor: selectedBranch === 'BH-Matriz' ? (form.floor || null) : null,
+      unit_of_measure: 'UN',
     }, {
       onSuccess: () => {
         setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', floor: '', newProductName: '', newProductCategory: '', newProductPrice: '' });
