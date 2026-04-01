@@ -272,6 +272,7 @@ export default function NfUploadPage() {
                       <span>Produtos: R$ {itemsTotal.toFixed(2)}</span>
                       <span>Frete: R$ {freight.toFixed(2)}</span>
                       <span>Outras: R$ {otherExp.toFixed(2)}</span>
+                      <span>Descontos: -R$ {discount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between font-medium mt-1">
                       <span>Calculado: R$ {calculatedTotal.toFixed(2)}</span>
