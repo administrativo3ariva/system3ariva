@@ -25,6 +25,7 @@ export type DbNfUpload = {
   unit: string;
   freight_value?: number | null;
   other_expenses?: number | null;
+  discount_value?: number | null;
   nf_items?: DbNfItem[];
 };
 
