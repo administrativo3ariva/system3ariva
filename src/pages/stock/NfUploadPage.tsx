@@ -274,9 +274,10 @@ export default function NfUploadPage() {
                 </Label>
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                     <TableRow>
                       <TableHead>Item</TableHead>
                       <TableHead>Categoria</TableHead>
+                      <TableHead>Und.</TableHead>
                       <TableHead className="text-right">Qtd</TableHead>
                       <TableHead className="text-right">Valor Unit.</TableHead>
                       <TableHead className="text-right">Total</TableHead>
