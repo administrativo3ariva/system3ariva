@@ -208,6 +208,7 @@ export type Database = {
       nf_uploads: {
         Row: {
           created_at: string
+          discount_value: number | null
           file_name: string
           file_url: string | null
           freight_value: number | null
@@ -222,6 +223,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          discount_value?: number | null
           file_name: string
           file_url?: string | null
           freight_value?: number | null
@@ -236,6 +238,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          discount_value?: number | null
           file_name?: string
           file_url?: string | null
           freight_value?: number | null
