@@ -287,8 +287,10 @@ export default function NfUploadPage() {
                   <TableBody>
                     {editedItems.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center text-muted-foreground">
                           Nenhum item extraído
+                        </TableCell>
+                      </TableRow>
                         </TableCell>
                       </TableRow>
                     )}
