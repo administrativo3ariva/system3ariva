@@ -121,6 +121,7 @@ async function callLovableAi(messages: any[]) {
                 total_value: { type: "number", description: "Valor total da nota fiscal (incluindo frete e outras despesas)" },
                 freight_value: { type: "number", description: "Valor do frete da nota fiscal. 0 se não houver." },
                 other_expenses: { type: "number", description: "Valor de outras despesas acessórias da nota fiscal. 0 se não houver." },
+                discount_value: { type: "number", description: "Valor total de descontos da nota fiscal. 0 se não houver." },
                 items: {
                   type: "array",
                   items: {
