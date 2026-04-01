@@ -291,8 +291,6 @@ export default function NfUploadPage() {
                           Nenhum item extraído
                         </TableCell>
                       </TableRow>
-                        </TableCell>
-                      </TableRow>
                     )}
                     {editedItems.map((item, i) => (
                       <TableRow key={i}>
