@@ -215,6 +215,7 @@ export default function StockProducts() {
             <TableRow>
               <SortableTableHead sortKey="name" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))}>Produto</SortableTableHead>
               <SortableTableHead sortKey="category" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))}>Categoria</SortableTableHead>
+              <SortableTableHead sortKey="unit_of_measure" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))}>Und.</SortableTableHead>
               <SortableTableHead sortKey="quantity" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))} className="text-right">Qtd</SortableTableHead>
               <SortableTableHead sortKey="min_stock" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))} className="text-right">Mín.</SortableTableHead>
               <SortableTableHead sortKey="unit_price" currentSort={sort} onSort={k => setSort(toggleSort(sort, k))} className="text-right">Valor Unit.</SortableTableHead>
