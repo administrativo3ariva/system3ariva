@@ -166,6 +166,18 @@ export default function NfUploadPage() {
                 </TableCell>
                 <TableCell className="text-sm">{nf.supplier || '—'}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{new Date(nf.upload_date).toLocaleDateString('pt-BR')}</TableCell>
+                <TableCell className="text-right text-sm">
+                  {(() => {
+                    const itemsTotal = (nf.nf_items || []).reduce((s, i) => s + Number(i.total_price), 0);
+                    return itemsTotal ? `R$ ${itemsTotal.toFixed(2)}` : '—';
+                  })()}
+                </TableCell>
+                <TableCell className="text-right text-sm">
+                  {nf.freight_value ? `R$ ${Number(nf.freight_value).toFixed(2)}` : '—'}
+                </TableCell>
+                <TableCell className="text-right text-sm">
+                  {nf.other_expenses ? `R$ ${Number(nf.other_expenses).toFixed(2)}` : '—'}
+                </TableCell>
                 <TableCell className="text-right font-medium">
                   {nf.total_value ? `R$ ${Number(nf.total_value).toFixed(2)}` : '—'}
                 </TableCell>
