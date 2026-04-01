@@ -327,6 +327,7 @@ serve(async (req) => {
           total_value: extracted.total_value || null,
           freight_value: extracted.freight_value || 0,
           other_expenses: extracted.other_expenses || 0,
+          discount_value: extracted.discount_value || 0,
           status: "pendente",
         })
         .eq("id", nfRecord.id);
