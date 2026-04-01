@@ -262,7 +262,8 @@ export default function NfUploadPage() {
                 const itemsTotal = editedItems.reduce((s, i) => s + Number(i.total_price), 0);
                 const freight = Number(previewNf.freight_value) || 0;
                 const otherExp = Number(previewNf.other_expenses) || 0;
-                const calculatedTotal = itemsTotal + freight + otherExp;
+                const discount = Number(previewNf.discount_value) || 0;
+                const calculatedTotal = itemsTotal + freight + otherExp - discount;
                 const nfTotal = Number(previewNf.total_value) || 0;
                 const diff = Math.abs(calculatedTotal - nfTotal);
                 return (
