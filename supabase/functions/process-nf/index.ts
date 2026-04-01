@@ -327,6 +327,7 @@ serve(async (req) => {
         .from("nf_uploads")
         .update({
           supplier: extracted.supplier || null,
+          issue_date: extracted.issue_date || null,
           total_value: extracted.total_value || null,
           freight_value: extracted.freight_value || 0,
           other_expenses: extracted.other_expenses || 0,
