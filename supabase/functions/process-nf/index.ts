@@ -20,6 +20,7 @@ type ExtractedNF = {
   total_value: number;
   freight_value: number;
   other_expenses: number;
+  discount_value: number;
   items: ExtractedItem[];
 };
 
