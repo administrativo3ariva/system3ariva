@@ -179,6 +179,9 @@ export default function NfUploadPage() {
                 <TableCell className="text-right text-sm">
                   {nf.other_expenses ? `R$ ${Number(nf.other_expenses).toFixed(2)}` : '—'}
                 </TableCell>
+                <TableCell className="text-right text-sm">
+                  {nf.discount_value ? `R$ ${Number(nf.discount_value).toFixed(2)}` : '—'}
+                </TableCell>
                 <TableCell className="text-right font-medium">
                   {nf.total_value ? `R$ ${Number(nf.total_value).toFixed(2)}` : '—'}
                 </TableCell>
