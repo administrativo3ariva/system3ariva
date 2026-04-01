@@ -17,6 +17,7 @@ type ExtractedItem = {
 
 type ExtractedNF = {
   supplier: string;
+  issue_date: string | null;
   total_value: number;
   freight_value: number;
   other_expenses: number;
