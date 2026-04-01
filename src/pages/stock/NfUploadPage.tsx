@@ -351,8 +351,28 @@ export default function NfUploadPage() {
                           )}
                         </TableCell>
                         <TableCell>
+                          <Select
+                            value={item.unit_of_measure || 'UN'}
+                            onValueChange={v => {
+                              const updated = [...editedItems];
+                              updated[i] = { ...updated[i], unit_of_measure: v };
+                              setEditedItems(updated);
+                            }}
+                          >
+                            <SelectTrigger className="h-8 text-sm w-16">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {['UN', 'CX', 'KG', 'PCT', 'PC', 'FR', 'LT', 'ML', 'G'].map(u => (
+                                <SelectItem key={u} value={u}>{u}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
                           <Input
                             type="number"
+                            step={(item.unit_of_measure || 'UN') === 'KG' ? '0.001' : '1'}
                             value={item.quantity}
                             onChange={e => {
                               const updated = [...editedItems];
