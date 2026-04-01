@@ -213,6 +213,7 @@ export type Database = {
           file_url: string | null
           freight_value: number | null
           id: string
+          issue_date: string | null
           other_expenses: number | null
           status: string
           supplier: string | null
@@ -228,6 +229,7 @@ export type Database = {
           file_url?: string | null
           freight_value?: number | null
           id?: string
+          issue_date?: string | null
           other_expenses?: number | null
           status?: string
           supplier?: string | null
@@ -243,6 +245,7 @@ export type Database = {
           file_url?: string | null
           freight_value?: number | null
           id?: string
+          issue_date?: string | null
           other_expenses?: number | null
           status?: string
           supplier?: string | null
