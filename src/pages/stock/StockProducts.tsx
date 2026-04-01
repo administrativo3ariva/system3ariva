@@ -77,9 +77,10 @@ export default function StockProducts() {
       total_price: qty * price,
       unit: selectedBranch,
       min_stock: parseInt(form.minStock) || null,
+      unit_of_measure: form.unitOfMeasure || 'UN',
     }, {
       onSuccess: () => {
-        setForm({ name: '', category: '', quantity: '', unitPrice: '', minStock: '', newCategory: '' });
+        setForm({ name: '', category: '', quantity: '', unitPrice: '', minStock: '', newCategory: '', unitOfMeasure: 'UN' });
         setDialogOpen(false);
       }
     });
