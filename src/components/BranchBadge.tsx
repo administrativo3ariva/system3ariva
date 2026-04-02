@@ -17,5 +17,5 @@ export function BranchBadge({ branch, floor }: BranchBadgeProps) {
   const floorSuffix = branch === 'BH-Matriz' && floor
     ? `-${floor.replace('º andar', '')}`
     : '';
-  return <span className={cls}>{branch}{floorSuffix}</span>;
+  return <span className={cls}>{branch}{floorSuffix && floorSuffix}</span>;
 }
