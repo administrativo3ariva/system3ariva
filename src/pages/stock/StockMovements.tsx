@@ -193,10 +193,17 @@ export default function StockMovements() {
     const qty = parseInt(editForm.quantity) || 0;
     if (qty <= 0) { toast.error('Informe uma quantidade válida'); return; }
     if (editForm.type === 'saida' && !editForm.responsible) { toast.error('Selecione o responsável'); return; }
+
+    let finalNotes = editForm.notes || '';
+    if (selectedBranch === 'BH-Matriz' && editForm.floor === '8º andar' && editForm.sala) {
+      const salaNote = `Sala ${editForm.sala}`;
+      finalNotes = finalNotes ? `${salaNote} | ${finalNotes}` : salaNote;
+    }
+
     updateMovement.mutate({
       id: editMovement.id, type: editForm.type, quantity: qty,
       responsible: editForm.type === 'saida' ? editForm.responsible : null,
-      notes: editForm.notes || null,
+      notes: finalNotes || null,
       floor: selectedBranch === 'BH-Matriz' ? (editForm.floor || null) : null,
     }, { onSuccess: () => setEditMovement(null) });
   };
