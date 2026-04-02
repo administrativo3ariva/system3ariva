@@ -21,9 +21,9 @@ export default function CollaboratorsPage() {
   const updateCollaborator = useUpdateCollaborator();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: '', department: '', floor: '' });
+  const [form, setForm] = useState({ name: '', department: '', floor: '', sala: '' });
 
-  const resetForm = () => setForm({ name: '', department: '', floor: '' });
+  const resetForm = () => setForm({ name: '', department: '', floor: '', sala: '' });
 
   const handleSave = () => {
     const floorValue = selectedBranch === 'BH-Matriz' ? (form.floor || null) : null;
@@ -39,7 +39,7 @@ export default function CollaboratorsPage() {
   };
 
   const startEdit = (c: typeof collaborators[0]) => {
-    setForm({ name: c.name, department: c.department, floor: c.floor || '' });
+    setForm({ name: c.name, department: c.department, floor: c.floor || '', sala: '' });
     setEditId(c.id);
     setDialogOpen(true);
   };
@@ -79,7 +79,9 @@ export default function CollaboratorsPage() {
               {selectedBranch === 'BH-Matriz' && (
                 <FloorPicker
                   value={form.floor}
-                  onChange={v => setForm(f => ({ ...f, floor: v }))}
+                  onChange={v => setForm(f => ({ ...f, floor: v, sala: '' }))}
+                  sala={form.sala}
+                  onSalaChange={v => setForm(f => ({ ...f, sala: v }))}
                 />
               )}
               <Button onClick={handleSave} className="bg-accent text-accent-foreground hover:bg-accent/90">

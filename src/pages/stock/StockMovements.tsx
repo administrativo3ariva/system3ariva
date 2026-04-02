@@ -55,7 +55,7 @@ export default function StockMovements() {
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [form, setForm] = useState({
     productId: '', type: 'entrada' as 'entrada' | 'saida' | 'ajuste',
-    quantity: '', responsible: '', notes: '', floor: '',
+    quantity: '', responsible: '', notes: '', floor: '', sala: '',
     newProductName: '', newProductCategory: '', newProductPrice: '',
   });
 
@@ -64,7 +64,7 @@ export default function StockMovements() {
   const [nfLoading, setNfLoading] = useState(false);
   const [editMovement, setEditMovement] = useState<DbMovement | null>(null);
   const [editForm, setEditForm] = useState({
-    type: 'entrada' as string, quantity: '', responsible: '', notes: '', floor: '',
+    type: 'entrada' as string, quantity: '', responsible: '', notes: '', floor: '', sala: '',
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -160,16 +160,23 @@ export default function StockMovements() {
       productName = product.name;
     }
 
+    // Build notes: append sala info for 8º andar
+    let finalNotes = form.notes || '';
+    if (selectedBranch === 'BH-Matriz' && form.floor === '8º andar' && form.sala) {
+      const salaNote = `Sala ${form.sala}`;
+      finalNotes = finalNotes ? `${salaNote} | ${finalNotes}` : salaNote;
+    }
+
     addMovement.mutate({
       product_id: productId, product_name: productName, type: form.type,
       quantity: qty, date: new Date().toISOString().split('T')[0], user: 'Admin',
       responsible: form.type === 'saida' ? form.responsible : null,
-      notes: form.notes || null, unit: selectedBranch,
+      notes: finalNotes || null, unit: selectedBranch,
       floor: selectedBranch === 'BH-Matriz' ? (form.floor || null) : null,
       unit_of_measure: 'UN',
     }, {
       onSuccess: () => {
-        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', floor: '', newProductName: '', newProductCategory: '', newProductPrice: '' });
+        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', floor: '', sala: '', newProductName: '', newProductCategory: '', newProductPrice: '' });
         setIsNewProduct(false);
         setDialogOpen(false);
       }
@@ -178,7 +185,7 @@ export default function StockMovements() {
 
   const openEdit = (m: DbMovement) => {
     setEditMovement(m);
-    setEditForm({ type: m.type, quantity: String(m.quantity), responsible: m.responsible || '', notes: m.notes || '', floor: m.floor || '' });
+    setEditForm({ type: m.type, quantity: String(m.quantity), responsible: m.responsible || '', notes: m.notes || '', floor: m.floor || '', sala: '' });
   };
 
   const handleEdit = () => {
@@ -186,10 +193,17 @@ export default function StockMovements() {
     const qty = parseInt(editForm.quantity) || 0;
     if (qty <= 0) { toast.error('Informe uma quantidade válida'); return; }
     if (editForm.type === 'saida' && !editForm.responsible) { toast.error('Selecione o responsável'); return; }
+
+    let finalNotes = editForm.notes || '';
+    if (selectedBranch === 'BH-Matriz' && editForm.floor === '8º andar' && editForm.sala) {
+      const salaNote = `Sala ${editForm.sala}`;
+      finalNotes = finalNotes ? `${salaNote} | ${finalNotes}` : salaNote;
+    }
+
     updateMovement.mutate({
       id: editMovement.id, type: editForm.type, quantity: qty,
       responsible: editForm.type === 'saida' ? editForm.responsible : null,
-      notes: editForm.notes || null,
+      notes: finalNotes || null,
       floor: selectedBranch === 'BH-Matriz' ? (editForm.floor || null) : null,
     }, { onSuccess: () => setEditMovement(null) });
   };
@@ -263,7 +277,12 @@ export default function StockMovements() {
         </Select>
       </div>
       {selectedBranch === 'BH-Matriz' && (
-        <FloorPicker value={formState.floor || ''} onChange={v => setFormState((f: any) => ({ ...f, floor: v }))} />
+        <FloorPicker
+          value={formState.floor || ''}
+          onChange={v => setFormState((f: any) => ({ ...f, floor: v, sala: '' }))}
+          sala={formState.sala || ''}
+          onSalaChange={v => setFormState((f: any) => ({ ...f, sala: v }))}
+        />
       )}
       {!isEdit && (
         <>

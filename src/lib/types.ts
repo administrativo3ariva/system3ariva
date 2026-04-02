@@ -10,7 +10,7 @@ export type StockBranch = typeof STOCK_BRANCHES[number];
 export const STOCK_UNITS = STOCK_BRANCHES;
 export type StockUnit = StockBranch;
 
-export const BH_MATRIZ_FLOORS = ['3º andar', '8º andar', '9º andar', 'Algar'] as const;
+export const BH_MATRIZ_FLOORS = ['3º andar', '8º andar', '9º andar', '10º andar', 'Algar'] as const;
 export type BhMatrizFloor = typeof BH_MATRIZ_FLOORS[number];
 
 export const ALL_BRANCHES: Branch[] = ['BH-Matriz', 'Vêneto-BH', 'Vêneto-SP', 'SP', 'RJ', 'PAG', 'VAG', 'FLO', 'JM', 'ITA', 'CPN', 'LIM', 'JUN', 'SJC'];
