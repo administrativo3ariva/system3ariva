@@ -185,7 +185,7 @@ export default function StockMovements() {
 
   const openEdit = (m: DbMovement) => {
     setEditMovement(m);
-    setEditForm({ type: m.type, quantity: String(m.quantity), responsible: m.responsible || '', notes: m.notes || '', floor: m.floor || '' });
+    setEditForm({ type: m.type, quantity: String(m.quantity), responsible: m.responsible || '', notes: m.notes || '', floor: m.floor || '', sala: '' });
   };
 
   const handleEdit = () => {
