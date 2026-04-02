@@ -255,8 +255,13 @@ export default function StockMovements() {
   };
 
   const formatQty = (m: DbMovement) => {
-    const val = (m.unit_of_measure || 'UN') === 'KG' ? Number(m.quantity).toFixed(3) : String(m.quantity);
-    return val;
+    const num = Number(m.quantity);
+    if ((m.unit_of_measure || 'UN') === 'KG') return num.toFixed(3);
+    return Number.isInteger(num) ? String(num) : num.toFixed(2);
+  };
+
+  const formatNum = (n: number) => {
+    return Number.isInteger(n) ? String(n) : n.toFixed(2);
   };
 
   const renderFormFields = (
@@ -392,7 +397,7 @@ export default function StockMovements() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Entradas</p>
-            <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">+{totalEntradas}</p>
+            <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">+{formatNum(totalEntradas)}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 rounded-lg border bg-card p-4">
@@ -401,7 +406,7 @@ export default function StockMovements() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Saídas</p>
-            <p className="text-lg font-semibold text-red-500 dark:text-red-400">-{totalSaidas}</p>
+            <p className="text-lg font-semibold text-red-500 dark:text-red-400">-{formatNum(totalSaidas)}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 rounded-lg border bg-card p-4">
@@ -411,7 +416,7 @@ export default function StockMovements() {
           <div>
             <p className="text-xs text-muted-foreground">Saldo do Período</p>
             <p className={cn("text-lg font-semibold", totalEntradas - totalSaidas >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400')}>
-              {totalEntradas - totalSaidas >= 0 ? '+' : ''}{totalEntradas - totalSaidas}
+              {totalEntradas - totalSaidas >= 0 ? '+' : ''}{formatNum(totalEntradas - totalSaidas)}
             </p>
           </div>
         </div>
@@ -433,18 +438,18 @@ export default function StockMovements() {
               <div className="flex items-center gap-1.5">
                 <TrendingUp className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                 <span className="text-xs text-muted-foreground">Entradas</span>
-                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 ml-1">+{group.totalEntradas}</span>
+                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 ml-1">+{formatNum(group.totalEntradas)}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <TrendingDown className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
                 <span className="text-xs text-muted-foreground">Saídas</span>
-                <span className="text-sm font-bold text-red-500 dark:text-red-400 ml-1">-{group.totalSaidas}</span>
+                <span className="text-sm font-bold text-red-500 dark:text-red-400 ml-1">-{formatNum(group.totalSaidas)}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">Saldo do dia</span>
                 <span className={cn("text-sm font-bold ml-1", group.totalEntradas - group.totalSaidas >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400')}>
-                  {group.totalEntradas - group.totalSaidas >= 0 ? '+' : ''}{group.totalEntradas - group.totalSaidas}
+                  {group.totalEntradas - group.totalSaidas >= 0 ? '+' : ''}{formatNum(group.totalEntradas - group.totalSaidas)}
                 </span>
               </div>
             </div>
@@ -495,10 +500,10 @@ export default function StockMovements() {
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleViewMovement(m)}>
                     <Eye className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => openEdit(m)}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(m)}>
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setDeleteId(m.id)}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(m.id)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
