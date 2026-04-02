@@ -16,6 +16,7 @@ export type DbMovement = {
   unit: string;
   floor: string | null;
   unit_of_measure: string;
+  created_at: string;
 };
 
 export function useMovements() {
@@ -37,7 +38,7 @@ export function useMovements() {
 export function useAddMovement() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (m: Omit<DbMovement, 'id'>) => {
+    mutationFn: async (m: Omit<DbMovement, 'id' | 'created_at'>) => {
       const { data, error } = await supabase.from('stock_movements').insert(m).select().single();
       if (error) throw error;
       return data;
