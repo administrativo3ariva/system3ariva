@@ -160,16 +160,23 @@ export default function StockMovements() {
       productName = product.name;
     }
 
+    // Build notes: append sala info for 8º andar
+    let finalNotes = form.notes || '';
+    if (selectedBranch === 'BH-Matriz' && form.floor === '8º andar' && form.sala) {
+      const salaNote = `Sala ${form.sala}`;
+      finalNotes = finalNotes ? `${salaNote} | ${finalNotes}` : salaNote;
+    }
+
     addMovement.mutate({
       product_id: productId, product_name: productName, type: form.type,
       quantity: qty, date: new Date().toISOString().split('T')[0], user: 'Admin',
       responsible: form.type === 'saida' ? form.responsible : null,
-      notes: form.notes || null, unit: selectedBranch,
+      notes: finalNotes || null, unit: selectedBranch,
       floor: selectedBranch === 'BH-Matriz' ? (form.floor || null) : null,
       unit_of_measure: 'UN',
     }, {
       onSuccess: () => {
-        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', floor: '', newProductName: '', newProductCategory: '', newProductPrice: '' });
+        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', floor: '', sala: '', newProductName: '', newProductCategory: '', newProductPrice: '' });
         setIsNewProduct(false);
         setDialogOpen(false);
       }
