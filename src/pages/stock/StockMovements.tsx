@@ -55,7 +55,7 @@ export default function StockMovements() {
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [form, setForm] = useState({
     productId: '', type: 'entrada' as 'entrada' | 'saida' | 'ajuste',
-    quantity: '', responsible: '', notes: '', floor: '',
+    quantity: '', responsible: '', notes: '', floor: '', sala: '',
     newProductName: '', newProductCategory: '', newProductPrice: '',
   });
 
