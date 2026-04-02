@@ -449,7 +449,7 @@ export default function StockMovements() {
                 <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">Saldo do dia</span>
                 <span className={cn("text-sm font-bold ml-1", group.totalEntradas - group.totalSaidas >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400')}>
-                  {group.totalEntradas - group.totalSaidas >= 0 ? '+' : ''}{group.totalEntradas - group.totalSaidas}
+                  {group.totalEntradas - group.totalSaidas >= 0 ? '+' : ''}{formatNum(group.totalEntradas - group.totalSaidas)}
                 </span>
               </div>
             </div>
