@@ -79,7 +79,9 @@ export default function CollaboratorsPage() {
               {selectedBranch === 'BH-Matriz' && (
                 <FloorPicker
                   value={form.floor}
-                  onChange={v => setForm(f => ({ ...f, floor: v }))}
+                  onChange={v => setForm(f => ({ ...f, floor: v, sala: '' }))}
+                  sala={form.sala}
+                  onSalaChange={v => setForm(f => ({ ...f, sala: v }))}
                 />
               )}
               <Button onClick={handleSave} className="bg-accent text-accent-foreground hover:bg-accent/90">
