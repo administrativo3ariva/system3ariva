@@ -255,8 +255,13 @@ export default function StockMovements() {
   };
 
   const formatQty = (m: DbMovement) => {
-    const val = (m.unit_of_measure || 'UN') === 'KG' ? Number(m.quantity).toFixed(3) : String(m.quantity);
-    return val;
+    const num = Number(m.quantity);
+    if ((m.unit_of_measure || 'UN') === 'KG') return num.toFixed(3);
+    return Number.isInteger(num) ? String(num) : num.toFixed(2);
+  };
+
+  const formatNum = (n: number) => {
+    return Number.isInteger(n) ? String(n) : n.toFixed(2);
   };
 
   const renderFormFields = (
