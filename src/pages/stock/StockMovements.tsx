@@ -443,7 +443,7 @@ export default function StockMovements() {
               <div className="flex items-center gap-1.5">
                 <TrendingDown className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
                 <span className="text-xs text-muted-foreground">Saídas</span>
-                <span className="text-sm font-bold text-red-500 dark:text-red-400 ml-1">-{group.totalSaidas}</span>
+                <span className="text-sm font-bold text-red-500 dark:text-red-400 ml-1">-{formatNum(group.totalSaidas)}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
