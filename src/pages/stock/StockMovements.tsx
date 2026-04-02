@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Plus, TrendingUp, TrendingDown, RefreshCw, Eye, Pencil, Trash2, Calendar, Package, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Plus, TrendingUp, TrendingDown, RefreshCw, Eye, Pencil, Trash2, Calendar, Package, ArrowUpCircle, ArrowDownCircle, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProducts, useAddProduct } from '@/hooks/use-products';
 import { useMovements, useAddMovement, useUpdateMovement, useDeleteMovement, DbMovement } from '@/hooks/use-movements';
@@ -8,7 +8,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useCategories } from '@/hooks/use-categories';
 import { BranchBadge } from '@/components/BranchBadge';
 import { FloorPicker } from '@/components/FloorPicker';
-import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
