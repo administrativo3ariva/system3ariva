@@ -23,7 +23,7 @@ export default function CollaboratorsPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', department: '', floor: '', sala: '' });
 
-  const resetForm = () => setForm({ name: '', department: '', floor: '' });
+  const resetForm = () => setForm({ name: '', department: '', floor: '', sala: '' });
 
   const handleSave = () => {
     const floorValue = selectedBranch === 'BH-Matriz' ? (form.floor || null) : null;
