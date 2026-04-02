@@ -21,7 +21,7 @@ export default function CollaboratorsPage() {
   const updateCollaborator = useUpdateCollaborator();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: '', department: '', floor: '' });
+  const [form, setForm] = useState({ name: '', department: '', floor: '', sala: '' });
 
   const resetForm = () => setForm({ name: '', department: '', floor: '' });
 
