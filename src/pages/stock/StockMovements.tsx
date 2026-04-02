@@ -438,7 +438,7 @@ export default function StockMovements() {
               <div className="flex items-center gap-1.5">
                 <TrendingUp className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                 <span className="text-xs text-muted-foreground">Entradas</span>
-                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 ml-1">+{group.totalEntradas}</span>
+                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 ml-1">+{formatNum(group.totalEntradas)}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <TrendingDown className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
