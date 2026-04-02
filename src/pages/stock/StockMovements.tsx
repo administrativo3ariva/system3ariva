@@ -64,7 +64,7 @@ export default function StockMovements() {
   const [nfLoading, setNfLoading] = useState(false);
   const [editMovement, setEditMovement] = useState<DbMovement | null>(null);
   const [editForm, setEditForm] = useState({
-    type: 'entrada' as string, quantity: '', responsible: '', notes: '', floor: '',
+    type: 'entrada' as string, quantity: '', responsible: '', notes: '', floor: '', sala: '',
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
