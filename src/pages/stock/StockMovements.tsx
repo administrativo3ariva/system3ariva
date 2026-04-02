@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Plus, TrendingUp, TrendingDown, RefreshCw, Eye, Pencil, Trash2, Calendar, Package, ArrowUpCircle, ArrowDownCircle, ChevronRight } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Plus, TrendingUp, TrendingDown, RefreshCw, Eye, Pencil, Trash2, Calendar, Package, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProducts, useAddProduct } from '@/hooks/use-products';
 import { useMovements, useAddMovement, useUpdateMovement, useDeleteMovement, DbMovement } from '@/hooks/use-movements';
@@ -8,7 +8,7 @@ import { useApp } from '@/contexts/AppContext';
 import { useCategories } from '@/hooks/use-categories';
 import { BranchBadge } from '@/components/BranchBadge';
 import { FloorPicker } from '@/components/FloorPicker';
-import { Table, TableBody, TableCell, TableHeader, TableHead, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DayGroup {
   date: string;
@@ -27,6 +28,13 @@ interface DayGroup {
   totalEntradas: number;
   totalSaidas: number;
   totalAjustes: number;
+}
+
+interface NfInfo {
+  supplier: string | null;
+  file_name: string | null;
+  total_value: number | null;
+  issue_date: string | null;
 }
 
 export default function StockMovements() {
@@ -52,6 +60,8 @@ export default function StockMovements() {
   });
 
   const [viewMovement, setViewMovement] = useState<DbMovement | null>(null);
+  const [nfInfo, setNfInfo] = useState<NfInfo | null>(null);
+  const [nfLoading, setNfLoading] = useState(false);
   const [editMovement, setEditMovement] = useState<DbMovement | null>(null);
   const [editForm, setEditForm] = useState({
     type: 'entrada' as string, quantity: '', responsible: '', notes: '', floor: '',
@@ -61,7 +71,6 @@ export default function StockMovements() {
   const activeCollabs = collaborators.filter(c => c.active);
   const filtered = filterType === 'all' ? movements : movements.filter(m => m.type === filterType);
 
-  // Group movements by day
   const dayGroups = useMemo<DayGroup[]>(() => {
     const groups: Record<string, DbMovement[]> = {};
     for (const m of filtered) {
@@ -72,7 +81,6 @@ export default function StockMovements() {
     return Object.entries(groups)
       .sort(([a], [b]) => b.localeCompare(a))
       .map(([date, dayMovements]) => {
-        // Sort within day by created_at descending
         dayMovements.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
         const totalEntradas = dayMovements.filter(m => m.type === 'entrada').reduce((s, m) => s + Number(m.quantity), 0);
         const totalSaidas = dayMovements.filter(m => m.type === 'saida').reduce((s, m) => s + Number(m.quantity), 0);
@@ -82,6 +90,40 @@ export default function StockMovements() {
   }, [filtered]);
 
   const allCategories = [...new Set([...categories, ...customCategories])].sort();
+
+  // Fetch NF info when viewing a movement
+  const handleViewMovement = async (m: DbMovement) => {
+    setViewMovement(m);
+    setNfInfo(null);
+    setNfLoading(true);
+    try {
+      // Try to find an NF that contains this product in the same unit
+      const { data: nfItems } = await supabase
+        .from('nf_items')
+        .select('nf_upload_id')
+        .ilike('name', `%${m.product_name}%`)
+        .limit(5);
+
+      if (nfItems && nfItems.length > 0) {
+        const nfIds = nfItems.map(i => i.nf_upload_id);
+        const { data: nfs } = await supabase
+          .from('nf_uploads')
+          .select('supplier, file_name, total_value, issue_date')
+          .in('id', nfIds)
+          .eq('unit', m.unit)
+          .order('upload_date', { ascending: false })
+          .limit(1);
+
+        if (nfs && nfs.length > 0) {
+          setNfInfo(nfs[0]);
+        }
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setNfLoading(false);
+    }
+  };
 
   const handleAddNewCategory = () => {
     const cat = newCategoryInput.trim();
@@ -183,8 +225,7 @@ export default function StockMovements() {
 
   const formatTime = (createdAt: string) => {
     if (!createdAt) return '';
-    const d = new Date(createdAt);
-    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return new Date(createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   };
 
   const formatDateFull = (dateStr: string) => {
@@ -192,16 +233,16 @@ export default function StockMovements() {
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-
-    const isToday = d.toDateString() === today.toDateString();
-    const isYesterday = d.toDateString() === yesterday.toDateString();
-
+    const dayMonth = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    if (d.toDateString() === today.toDateString()) return `Hoje — ${dayMonth}`;
+    if (d.toDateString() === yesterday.toDateString()) return `Ontem — ${dayMonth}`;
     const weekday = d.toLocaleDateString('pt-BR', { weekday: 'long' });
-    const dayMonth = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
-
-    if (isToday) return `Hoje — ${dayMonth}`;
-    if (isYesterday) return `Ontem — ${dayMonth}`;
     return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} — ${dayMonth}`;
+  };
+
+  const formatQty = (m: DbMovement) => {
+    const val = (m.unit_of_measure || 'UN') === 'KG' ? Number(m.quantity).toFixed(3) : String(m.quantity);
+    return val;
   };
 
   const renderFormFields = (
@@ -284,7 +325,6 @@ export default function StockMovements() {
 
   if (isLoading) return <div className="space-y-4 p-6">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-lg" />)}</div>;
 
-  // Summary cards
   const totalEntradas = movements.filter(m => m.type === 'entrada').reduce((s, m) => s + Number(m.quantity), 0);
   const totalSaidas = movements.filter(m => m.type === 'saida').reduce((s, m) => s + Number(m.quantity), 0);
 
@@ -359,107 +399,98 @@ export default function StockMovements() {
       </div>
 
       {/* Day groups — Bank statement style */}
-      <div className="space-y-4">
+      <div className="space-y-0 rounded-lg border bg-card overflow-hidden">
         {dayGroups.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             Nenhuma movimentação encontrada.
           </div>
         )}
 
-        {dayGroups.map(group => (
-          <div key={group.date} className="rounded-lg border bg-card overflow-hidden">
-            {/* Day header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-muted/40 border-b">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-semibold">{formatDateFull(group.date)}</span>
-                <Badge variant="outline" className="text-xs ml-1">{group.movements.length} mov.</Badge>
+        {dayGroups.map((group, gi) => (
+          <div key={group.date}>
+            {/* Day summary header */}
+            <div className={cn("grid grid-cols-[1fr_auto_auto_auto] items-center gap-6 px-5 py-3 bg-muted/50", gi > 0 && "border-t")}>
+              <span className="text-sm font-bold">{formatDateFull(group.date)}</span>
+              <div className="flex items-center gap-1.5">
+                <TrendingUp className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-xs text-muted-foreground">Entradas</span>
+                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 ml-1">+{group.totalEntradas}</span>
               </div>
-              <div className="flex items-center gap-4 text-xs">
-                {group.totalEntradas > 0 && (
-                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
-                    <TrendingUp className="h-3 w-3" /> +{group.totalEntradas}
-                  </span>
-                )}
-                {group.totalSaidas > 0 && (
-                  <span className="flex items-center gap-1 text-red-500 dark:text-red-400 font-medium">
-                    <TrendingDown className="h-3 w-3" /> -{group.totalSaidas}
-                  </span>
-                )}
-                {group.totalAjustes > 0 && (
-                  <span className="flex items-center gap-1 text-blue-500 dark:text-blue-400 font-medium">
-                    <RefreshCw className="h-3 w-3" /> {group.totalAjustes} aj.
-                  </span>
-                )}
-                <Separator orientation="vertical" className="h-4" />
-                <span className={cn("font-semibold", group.totalEntradas - group.totalSaidas >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400')}>
-                  Saldo: {group.totalEntradas - group.totalSaidas >= 0 ? '+' : ''}{group.totalEntradas - group.totalSaidas}
+              <div className="flex items-center gap-1.5">
+                <TrendingDown className="h-3.5 w-3.5 text-red-500 dark:text-red-400" />
+                <span className="text-xs text-muted-foreground">Saídas</span>
+                <span className="text-sm font-bold text-red-500 dark:text-red-400 ml-1">-{group.totalSaidas}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Saldo do dia</span>
+                <span className={cn("text-sm font-bold ml-1", group.totalEntradas - group.totalSaidas >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400')}>
+                  {group.totalEntradas - group.totalSaidas >= 0 ? '+' : ''}{group.totalEntradas - group.totalSaidas}
                 </span>
               </div>
             </div>
 
-            {/* Movement rows */}
-            <div className="divide-y">
-              {group.movements.map(m => (
-                <div key={m.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors group">
-                  {/* Type indicator */}
-                  <div className={cn("flex items-center justify-center rounded-full h-8 w-8 shrink-0", typeBg(m.type))}>
-                    <span className={typeColor(m.type)}>{typeIcon(m.type)}</span>
-                  </div>
-
-                  {/* Product & details */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium truncate">{m.product_name}</span>
-                      <BranchBadge branch={m.unit} floor={m.floor} />
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-muted-foreground">{formatTime(m.created_at)}</span>
-                      {m.responsible && (
-                        <>
-                          <span className="text-xs text-muted-foreground">•</span>
-                          <span className="text-xs text-muted-foreground">{m.responsible}</span>
-                        </>
-                      )}
-                      {m.notes && (
-                        <>
-                          <span className="text-xs text-muted-foreground">•</span>
-                          <span className="text-xs text-muted-foreground truncate max-w-[200px]">{m.notes}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Quantity */}
-                  <div className="text-right shrink-0">
-                    <span className={cn("text-sm font-semibold", typeColor(m.type))}>
-                      {m.type === 'entrada' ? '+' : m.type === 'saida' ? '-' : ''}
-                      {(m.unit_of_measure || 'UN') === 'KG' ? Number(m.quantity).toFixed(3) : m.quantity}
-                      {' '}{m.unit_of_measure || 'UN'}
-                    </span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewMovement(m)}>
-                      <Eye className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(m)}>
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(m.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+            {/* Column headers */}
+            <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_80px_80px_minmax(0,1fr)_minmax(0,1.2fr)_90px] gap-2 px-5 py-2 border-y bg-muted/20 text-xs text-muted-foreground font-medium">
+              <span>Produto</span>
+              <span>Unidade</span>
+              <span>Data</span>
+              <span className="text-right">Qtd</span>
+              <span>Responsável</span>
+              <span>Observações</span>
+              <span className="text-right">Detalhes</span>
             </div>
+
+            {/* Movement rows */}
+            {group.movements.map((m, mi) => (
+              <div key={m.id} className={cn("grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_80px_80px_minmax(0,1fr)_minmax(0,1.2fr)_90px] gap-2 px-5 py-3 items-center hover:bg-muted/30 transition-colors group", mi < group.movements.length - 1 && "border-b border-dashed border-border/50")}>
+                {/* Produto */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={cn("shrink-0", typeColor(m.type))}>{typeIcon(m.type)}</span>
+                  <span className="text-sm font-medium truncate">{m.product_name}</span>
+                </div>
+
+                {/* Unidade */}
+                <div className="min-w-0">
+                  <BranchBadge branch={m.unit} floor={m.floor} />
+                </div>
+
+                {/* Data */}
+                <span className="text-sm text-muted-foreground">
+                  {new Date(m.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                </span>
+
+                {/* Qtd */}
+                <span className={cn("text-sm font-semibold text-right", typeColor(m.type))}>
+                  {m.type === 'entrada' ? '+' : m.type === 'saida' ? '-' : ''}{formatQty(m)}
+                </span>
+
+                {/* Responsável */}
+                <span className="text-sm text-muted-foreground truncate">{m.responsible || '—'}</span>
+
+                {/* Observações */}
+                <span className="text-sm text-muted-foreground truncate">{m.notes || '—'}</span>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-0.5">
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleViewMovement(m)}>
+                    <Eye className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => openEdit(m)}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => setDeleteId(m.id)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         ))}
       </div>
 
-      {/* View Sheet — Enhanced details */}
-      <Sheet open={!!viewMovement} onOpenChange={open => !open && setViewMovement(null)}>
+      {/* View Sheet — Enhanced details with NF info */}
+      <Sheet open={!!viewMovement} onOpenChange={open => { if (!open) { setViewMovement(null); setNfInfo(null); } }}>
         <SheetContent className="sm:max-w-md">
           <SheetHeader>
             <SheetTitle>Detalhes da Movimentação</SheetTitle>
@@ -467,7 +498,7 @@ export default function StockMovements() {
           </SheetHeader>
           {viewMovement && (
             <div className="space-y-5 mt-6">
-              {/* Type badge prominent */}
+              {/* Type badge */}
               <div className={cn("flex items-center gap-3 p-4 rounded-lg", typeBg(viewMovement.type))}>
                 <div className={cn("rounded-full p-2", typeBg(viewMovement.type))}>
                   <span className={typeColor(viewMovement.type)}>{typeIcon(viewMovement.type)}</span>
@@ -476,15 +507,13 @@ export default function StockMovements() {
                   <p className={cn("text-sm font-semibold", typeColor(viewMovement.type))}>{typeLabel(viewMovement.type)}</p>
                   <p className={cn("text-lg font-bold", typeColor(viewMovement.type))}>
                     {viewMovement.type === 'entrada' ? '+' : viewMovement.type === 'saida' ? '-' : ''}
-                    {(viewMovement.unit_of_measure || 'UN') === 'KG' ? Number(viewMovement.quantity).toFixed(3) : viewMovement.quantity}
-                    {' '}{viewMovement.unit_of_measure || 'UN'}
+                    {formatQty(viewMovement)} {viewMovement.unit_of_measure || 'UN'}
                   </p>
                 </div>
               </div>
 
               <Separator />
 
-              {/* Details grid */}
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -535,6 +564,51 @@ export default function StockMovements() {
                     <p className="text-sm bg-muted/50 rounded-md p-3">{viewMovement.notes}</p>
                   </div>
                 )}
+
+                {/* NF Info Section */}
+                <Separator />
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider">Dados da Nota Fiscal</p>
+                  {nfLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                    </div>
+                  ) : nfInfo ? (
+                    <div className="space-y-3 bg-muted/30 rounded-lg p-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-0.5">Fornecedor</p>
+                          <p className="text-sm font-medium">{nfInfo.supplier || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-0.5">Arquivo NF</p>
+                          <p className="text-sm font-medium truncate">{nfInfo.file_name || '—'}</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-0.5">Data Emissão NF</p>
+                          <p className="text-sm font-medium">
+                            {nfInfo.issue_date
+                              ? new Date(nfInfo.issue_date + 'T12:00:00').toLocaleDateString('pt-BR')
+                              : '—'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-0.5">Valor Total NF</p>
+                          <p className="text-sm font-medium">
+                            {nfInfo.total_value != null
+                              ? `R$ ${Number(nfInfo.total_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                              : '—'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">Nenhuma NF vinculada a este produto foi encontrada.</p>
+                  )}
+                </div>
               </div>
             </div>
           )}
