@@ -277,7 +277,12 @@ export default function StockMovements() {
         </Select>
       </div>
       {selectedBranch === 'BH-Matriz' && (
-        <FloorPicker value={formState.floor || ''} onChange={v => setFormState((f: any) => ({ ...f, floor: v }))} />
+        <FloorPicker
+          value={formState.floor || ''}
+          onChange={v => setFormState((f: any) => ({ ...f, floor: v, sala: '' }))}
+          sala={formState.sala || ''}
+          onSalaChange={v => setFormState((f: any) => ({ ...f, sala: v }))}
+        />
       )}
       {!isEdit && (
         <>
