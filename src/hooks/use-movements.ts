@@ -16,6 +16,7 @@ export type DbMovement = {
   unit: string;
   floor: string | null;
   unit_of_measure: string;
+  created_at: string;
 };
 
 export function useMovements() {
