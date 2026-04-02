@@ -39,7 +39,7 @@ export default function CollaboratorsPage() {
   };
 
   const startEdit = (c: typeof collaborators[0]) => {
-    setForm({ name: c.name, department: c.department, floor: c.floor || '' });
+    setForm({ name: c.name, department: c.department, floor: c.floor || '', sala: '' });
     setEditId(c.id);
     setDialogOpen(true);
   };
