@@ -397,7 +397,7 @@ export default function StockMovements() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Entradas</p>
-            <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">+{totalEntradas}</p>
+            <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">+{formatNum(totalEntradas)}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 rounded-lg border bg-card p-4">
