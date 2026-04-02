@@ -416,7 +416,7 @@ export default function StockMovements() {
           <div>
             <p className="text-xs text-muted-foreground">Saldo do Período</p>
             <p className={cn("text-lg font-semibold", totalEntradas - totalSaidas >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400')}>
-              {totalEntradas - totalSaidas >= 0 ? '+' : ''}{totalEntradas - totalSaidas}
+              {totalEntradas - totalSaidas >= 0 ? '+' : ''}{formatNum(totalEntradas - totalSaidas)}
             </p>
           </div>
         </div>
