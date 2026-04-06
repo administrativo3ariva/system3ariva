@@ -19,7 +19,8 @@ type ExtractedNF = {
   supplier: string;
   supplier_cnpj: string | null;
   recipient_name: string | null;
-  recipient_cnpj: string | null;
+  recipient_doc: string | null;
+  recipient_doc_type: string | null;
   issue_date: string | null;
   total_value: number;
   freight_value: number;
@@ -94,7 +95,8 @@ function normalizeExtractedResult(input: any): ExtractedNF {
     supplier: String(input?.supplier || "Não identificado").trim() || "Não identificado",
     supplier_cnpj: input?.supplier_cnpj ? String(input.supplier_cnpj).trim() : null,
     recipient_name: input?.recipient_name ? String(input.recipient_name).trim() : null,
-    recipient_cnpj: input?.recipient_cnpj ? String(input.recipient_cnpj).trim() : null,
+    recipient_doc: input?.recipient_doc ? String(input.recipient_doc).trim() : null,
+    recipient_doc_type: input?.recipient_doc_type ? String(input.recipient_doc_type).trim().toUpperCase() : null,
     issue_date: input?.issue_date ? String(input.issue_date).trim() : null,
     total_value: Number.isFinite(Number(input?.total_value)) ? Number(input.total_value) : 0,
     freight_value: Number.isFinite(Number(input?.freight_value)) ? Number(input.freight_value) : 0,
@@ -129,7 +131,8 @@ async function callLovableAi(messages: any[]) {
                 supplier: { type: "string", description: "Nome ou Razão Social do fornecedor/emitente da nota fiscal." },
                 supplier_cnpj: { type: "string", description: "CNPJ do fornecedor/emitente da nota fiscal. Formato: XX.XXX.XXX/XXXX-XX" },
                 recipient_name: { type: "string", description: "Nome ou Razão Social do tomador/destinatário da nota fiscal." },
-                recipient_cnpj: { type: "string", description: "CNPJ do tomador/destinatário da nota fiscal. Formato: XX.XXX.XXX/XXXX-XX" },
+                recipient_doc: { type: "string", description: "CPF ou CNPJ do tomador/destinatário da nota fiscal, conforme aparece na NF." },
+                recipient_doc_type: { type: "string", enum: ["CPF", "CNPJ"], description: "Tipo do documento do tomador: CPF (pessoa física, 11 dígitos) ou CNPJ (pessoa jurídica, 14 dígitos)." },
                 issue_date: { type: "string", description: "Data de emissão da nota fiscal no formato YYYY-MM-DD. Extraia do campo 'Data de Emissão', 'Data da Emissão' ou similar." },
                 total_value: { type: "number", description: "Valor total da nota fiscal (incluindo frete e outras despesas)" },
                 freight_value: { type: "number", description: "Valor do frete da nota fiscal. 0 se não houver." },
@@ -151,7 +154,7 @@ async function callLovableAi(messages: any[]) {
                   },
                 },
               },
-              required: ["supplier", "supplier_cnpj", "recipient_name", "recipient_cnpj", "issue_date", "total_value", "freight_value", "other_expenses", "discount_value", "items"],
+              required: ["supplier", "supplier_cnpj", "recipient_name", "recipient_doc", "recipient_doc_type", "issue_date", "total_value", "freight_value", "other_expenses", "discount_value", "items"],
               additionalProperties: false,
             },
           },
@@ -338,7 +341,8 @@ serve(async (req) => {
           supplier: extracted.supplier || null,
           supplier_cnpj: extracted.supplier_cnpj || null,
           recipient_name: extracted.recipient_name || null,
-          recipient_cnpj: extracted.recipient_cnpj || null,
+          recipient_doc: extracted.recipient_doc || null,
+          recipient_doc_type: extracted.recipient_doc_type || null,
           issue_date: extracted.issue_date || null,
           total_value: extracted.total_value || null,
           freight_value: extracted.freight_value || 0,
@@ -377,7 +381,8 @@ serve(async (req) => {
           supplier: extracted.supplier,
           supplier_cnpj: extracted.supplier_cnpj,
           recipient_name: extracted.recipient_name,
-          recipient_cnpj: extracted.recipient_cnpj,
+          recipient_doc: extracted.recipient_doc,
+          recipient_doc_type: extracted.recipient_doc_type,
           issue_date: extracted.issue_date,
           total_value: extracted.total_value,
           freight_value: extracted.freight_value,

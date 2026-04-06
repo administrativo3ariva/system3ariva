@@ -241,7 +241,7 @@ export default function NfUploadPage() {
                 </div>
                 <div className="space-y-2 p-3 rounded-lg border bg-muted/30">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Tomador / Destinatário</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <div>
                       <Label className="text-muted-foreground text-xs">Nome / Razão Social</Label>
                       <Input
@@ -251,11 +251,24 @@ export default function NfUploadPage() {
                       />
                     </div>
                     <div>
-                      <Label className="text-muted-foreground text-xs">CNPJ</Label>
+                      <Label className="text-muted-foreground text-xs">Tipo</Label>
+                      <Select
+                        defaultValue={(previewNf as any).recipient_doc_type || 'CNPJ'}
+                        onValueChange={val => updateNfUpload.mutate({ id: previewNf.id, recipient_doc_type: val })}
+                      >
+                        <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="CNPJ">CNPJ</SelectItem>
+                          <SelectItem value="CPF">CPF</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground text-xs">{(previewNf as any).recipient_doc_type === 'CPF' ? 'CPF' : 'CNPJ'}</Label>
                       <Input
-                        defaultValue={(previewNf as any).recipient_cnpj || ''}
-                        placeholder="XX.XXX.XXX/XXXX-XX"
-                        onBlur={e => updateNfUpload.mutate({ id: previewNf.id, recipient_cnpj: e.target.value })}
+                        defaultValue={(previewNf as any).recipient_doc || ''}
+                        placeholder={(previewNf as any).recipient_doc_type === 'CPF' ? 'XXX.XXX.XXX-XX' : 'XX.XXX.XXX/XXXX-XX'}
+                        onBlur={e => updateNfUpload.mutate({ id: previewNf.id, recipient_doc: e.target.value })}
                         className="mt-1"
                       />
                     </div>

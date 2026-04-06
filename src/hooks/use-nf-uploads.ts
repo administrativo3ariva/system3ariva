@@ -24,7 +24,8 @@ export type DbNfUpload = {
   supplier: string | null;
   supplier_cnpj?: string | null;
   recipient_name?: string | null;
-  recipient_cnpj?: string | null;
+  recipient_doc?: string | null;
+  recipient_doc_type?: string | null;
   total_value: number | null;
   unit: string;
   freight_value?: number | null;
@@ -110,7 +111,7 @@ export function useUploadAndProcessNf() {
 export function useUpdateNfUpload() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; status?: string; supplier?: string; supplier_cnpj?: string; recipient_name?: string; recipient_cnpj?: string; total_value?: number; freight_value?: number; other_expenses?: number; discount_value?: number; issue_date?: string }) => {
+    mutationFn: async ({ id, ...updates }: { id: string; status?: string; supplier?: string; supplier_cnpj?: string; recipient_name?: string; recipient_doc?: string; recipient_doc_type?: string; total_value?: number; freight_value?: number; other_expenses?: number; discount_value?: number; issue_date?: string }) => {
       const { error } = await supabase.from('nf_uploads').update(updates).eq('id', id);
       if (error) throw error;
     },

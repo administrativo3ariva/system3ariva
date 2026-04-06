@@ -215,7 +215,8 @@ export type Database = {
           id: string
           issue_date: string | null
           other_expenses: number | null
-          recipient_cnpj: string | null
+          recipient_doc: string | null
+          recipient_doc_type: string | null
           recipient_name: string | null
           status: string
           supplier: string | null
@@ -234,7 +235,8 @@ export type Database = {
           id?: string
           issue_date?: string | null
           other_expenses?: number | null
-          recipient_cnpj?: string | null
+          recipient_doc?: string | null
+          recipient_doc_type?: string | null
           recipient_name?: string | null
           status?: string
           supplier?: string | null
@@ -253,7 +255,8 @@ export type Database = {
           id?: string
           issue_date?: string | null
           other_expenses?: number | null
-          recipient_cnpj?: string | null
+          recipient_doc?: string | null
+          recipient_doc_type?: string | null
           recipient_name?: string | null
           status?: string
           supplier?: string | null
