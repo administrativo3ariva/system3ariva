@@ -72,7 +72,7 @@ function normalizeExtractedResult(input: any): ExtractedNF {
           quantity: Number(item?.quantity || 0),
           unit_price: Number(item?.unit_price || 0),
           total_price: Number(item?.total_price || 0),
-          unit_of_measure: String(item?.unit_of_measure || "UN").trim().toUpperCase(),
+          unit_of_measure: String(item?.unit_of_measure || "UN").trim().toUpperCase().replace(/\d+$/, ""),
         }))
         .filter((item: ExtractedItem) => item.name)
         .map((item: ExtractedItem) => {
