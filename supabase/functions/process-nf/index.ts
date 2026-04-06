@@ -17,6 +17,9 @@ type ExtractedItem = {
 
 type ExtractedNF = {
   supplier: string;
+  supplier_cnpj: string | null;
+  recipient_name: string | null;
+  recipient_cnpj: string | null;
   issue_date: string | null;
   total_value: number;
   freight_value: number;
@@ -89,6 +92,9 @@ function normalizeExtractedResult(input: any): ExtractedNF {
 
   return {
     supplier: String(input?.supplier || "Não identificado").trim() || "Não identificado",
+    supplier_cnpj: input?.supplier_cnpj ? String(input.supplier_cnpj).trim() : null,
+    recipient_name: input?.recipient_name ? String(input.recipient_name).trim() : null,
+    recipient_cnpj: input?.recipient_cnpj ? String(input.recipient_cnpj).trim() : null,
     issue_date: input?.issue_date ? String(input.issue_date).trim() : null,
     total_value: Number.isFinite(Number(input?.total_value)) ? Number(input.total_value) : 0,
     freight_value: Number.isFinite(Number(input?.freight_value)) ? Number(input.freight_value) : 0,
@@ -116,11 +122,14 @@ async function callLovableAi(messages: any[]) {
           type: "function",
           function: {
             name: "extract_nf_data",
-            description: "Extrai fornecedor, valor total, frete, outras despesas e itens de uma nota fiscal brasileira.",
+            description: "Extrai fornecedor, CNPJ do fornecedor, tomador (destinatário), CNPJ do tomador, valor total, frete, outras despesas e itens de uma nota fiscal brasileira.",
             parameters: {
               type: "object",
               properties: {
-                supplier: { type: "string" },
+                supplier: { type: "string", description: "Nome ou Razão Social do fornecedor/emitente da nota fiscal." },
+                supplier_cnpj: { type: "string", description: "CNPJ do fornecedor/emitente da nota fiscal. Formato: XX.XXX.XXX/XXXX-XX" },
+                recipient_name: { type: "string", description: "Nome ou Razão Social do tomador/destinatário da nota fiscal." },
+                recipient_cnpj: { type: "string", description: "CNPJ do tomador/destinatário da nota fiscal. Formato: XX.XXX.XXX/XXXX-XX" },
                 issue_date: { type: "string", description: "Data de emissão da nota fiscal no formato YYYY-MM-DD. Extraia do campo 'Data de Emissão', 'Data da Emissão' ou similar." },
                 total_value: { type: "number", description: "Valor total da nota fiscal (incluindo frete e outras despesas)" },
                 freight_value: { type: "number", description: "Valor do frete da nota fiscal. 0 se não houver." },
@@ -142,7 +151,7 @@ async function callLovableAi(messages: any[]) {
                   },
                 },
               },
-              required: ["supplier", "issue_date", "total_value", "freight_value", "other_expenses", "discount_value", "items"],
+              required: ["supplier", "supplier_cnpj", "recipient_name", "recipient_cnpj", "issue_date", "total_value", "freight_value", "other_expenses", "discount_value", "items"],
               additionalProperties: false,
             },
           },
@@ -209,7 +218,7 @@ async function extractFromPdf(pdfBytes: Uint8Array, fileName: string) {
     {
       role: "system",
       content:
-        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor, data de emissão, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
+        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor (nome/razão social e CNPJ), tomador/destinatário (nome/razão social e CNPJ), data de emissão, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
     },
     {
       role: "user",
@@ -223,7 +232,7 @@ async function extractFromImage(fileUrl: string) {
     {
       role: "system",
       content:
-        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor, data de emissão, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
+        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor (nome/razão social e CNPJ), tomador/destinatário (nome/razão social e CNPJ), data de emissão, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
     },
     {
       role: "user",
@@ -234,7 +243,7 @@ async function extractFromImage(fileUrl: string) {
         },
         {
           type: "text",
-          text: "Extraia o fornecedor, data de emissão, valor total, frete, descontos, outras despesas e itens (com unidade de medida) desta nota fiscal brasileira.",
+          text: "Extraia o fornecedor (nome e CNPJ), tomador/destinatário (nome e CNPJ), data de emissão, valor total, frete, descontos, outras despesas e itens (com unidade de medida) desta nota fiscal brasileira.",
         },
       ],
     },
@@ -327,6 +336,9 @@ serve(async (req) => {
         .from("nf_uploads")
         .update({
           supplier: extracted.supplier || null,
+          supplier_cnpj: extracted.supplier_cnpj || null,
+          recipient_name: extracted.recipient_name || null,
+          recipient_cnpj: extracted.recipient_cnpj || null,
           issue_date: extracted.issue_date || null,
           total_value: extracted.total_value || null,
           freight_value: extracted.freight_value || 0,
@@ -363,6 +375,9 @@ serve(async (req) => {
           file_url: fileUrl,
           status: "pendente",
           supplier: extracted.supplier,
+          supplier_cnpj: extracted.supplier_cnpj,
+          recipient_name: extracted.recipient_name,
+          recipient_cnpj: extracted.recipient_cnpj,
           issue_date: extracted.issue_date,
           total_value: extracted.total_value,
           freight_value: extracted.freight_value,

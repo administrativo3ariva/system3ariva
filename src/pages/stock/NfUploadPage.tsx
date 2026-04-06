@@ -215,11 +215,56 @@ export default function NfUploadPage() {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
-                <div>
-                  <Label className="text-muted-foreground text-xs">Fornecedor</Label>
-                  <Input defaultValue={previewNf.supplier || ''} className="mt-1" readOnly />
+              {/* Fornecedor & Tomador */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2 p-3 rounded-lg border bg-muted/30">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Fornecedor / Emitente</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-muted-foreground text-xs">Nome / Razão Social</Label>
+                      <Input
+                        defaultValue={previewNf.supplier || ''}
+                        onBlur={e => updateNfUpload.mutate({ id: previewNf.id, supplier: e.target.value })}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground text-xs">CNPJ</Label>
+                      <Input
+                        defaultValue={(previewNf as any).supplier_cnpj || ''}
+                        placeholder="XX.XXX.XXX/XXXX-XX"
+                        onBlur={e => updateNfUpload.mutate({ id: previewNf.id, supplier_cnpj: e.target.value })}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
                 </div>
+                <div className="space-y-2 p-3 rounded-lg border bg-muted/30">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Tomador / Destinatário</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-muted-foreground text-xs">Nome / Razão Social</Label>
+                      <Input
+                        defaultValue={(previewNf as any).recipient_name || ''}
+                        onBlur={e => updateNfUpload.mutate({ id: previewNf.id, recipient_name: e.target.value })}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground text-xs">CNPJ</Label>
+                      <Input
+                        defaultValue={(previewNf as any).recipient_cnpj || ''}
+                        placeholder="XX.XXX.XXX/XXXX-XX"
+                        onBlur={e => updateNfUpload.mutate({ id: previewNf.id, recipient_cnpj: e.target.value })}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dados fiscais */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div>
                   <Label className="text-muted-foreground text-xs">Data Emissão</Label>
                   <Input
