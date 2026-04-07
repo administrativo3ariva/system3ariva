@@ -27,6 +27,8 @@ const schema = z.object({
   card_name: z.string().optional(),
   expense_date: z.string().min(1, 'Obrigatório'),
   notes: z.string().optional(),
+  is_installment: z.boolean().optional(),
+  installment_count: z.coerce.number().min(2).max(48).optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -49,6 +51,8 @@ export default function ExpenseForm() {
       card_name: '',
       expense_date: new Date().toISOString().split('T')[0],
       notes: '',
+      is_installment: false,
+      installment_count: undefined,
     },
   });
 
