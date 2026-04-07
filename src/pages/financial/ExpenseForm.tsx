@@ -35,9 +35,18 @@ type FormData = z.infer<typeof schema>;
 
 export default function ExpenseForm() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('edit');
+  const isEditing = !!editId;
+
   const create = useCreateExpense();
+  const update = useUpdateExpense();
+  const { data: expenses = [] } = useExpenses();
+  const editingExpense = isEditing ? expenses.find((e: any) => e.id === editId) : null;
+
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [existingReceiptUrl, setExistingReceiptUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FormData>({
@@ -56,9 +65,30 @@ export default function ExpenseForm() {
     },
   });
 
+  // Load existing expense data for editing
+  useEffect(() => {
+    if (editingExpense) {
+      form.reset({
+        description: editingExpense.description,
+        amount: Number(editingExpense.amount),
+        cost_center: editingExpense.cost_center,
+        company: editingExpense.company,
+        category: editingExpense.category,
+        card_name: editingExpense.card_name || '',
+        expense_date: editingExpense.expense_date,
+        notes: editingExpense.notes || '',
+        is_installment: (editingExpense as any).is_installment || false,
+        installment_count: (editingExpense as any).installment_count || undefined,
+      });
+      if (editingExpense.receipt_url) {
+        setExistingReceiptUrl(editingExpense.receipt_url);
+      }
+    }
+  }, [editingExpense, form]);
+
   const selectedCard = form.watch('card_name');
   const isInstallment = form.watch('is_installment');
-  const hasReceipt = !!receiptFile;
+  const hasReceipt = !!receiptFile || !!existingReceiptUrl;
 
   const handleCompanyChange = useCallback((value: string) => {
     form.setValue('company', value);
@@ -78,11 +108,12 @@ export default function ExpenseForm() {
         return;
       }
       setReceiptFile(file);
+      setExistingReceiptUrl(null);
     }
   };
 
   const onSubmit = async (data: FormData) => {
-    let receipt_url: string | undefined;
+    let receipt_url: string | undefined = existingReceiptUrl || undefined;
 
     if (receiptFile) {
       setUploading(true);
@@ -99,7 +130,7 @@ export default function ExpenseForm() {
       setUploading(false);
     }
 
-    create.mutate({
+    const payload = {
       description: data.description,
       amount: data.amount,
       cost_center: data.cost_center,
@@ -112,7 +143,13 @@ export default function ExpenseForm() {
       installment_count: data.is_installment ? data.installment_count : null,
       installment_current: data.is_installment ? 1 : null,
       ...(receipt_url ? { receipt_url } : {}),
-    } as any, { onSuccess: () => navigate('/financial/expenses') });
+    } as any;
+
+    if (isEditing && editId) {
+      update.mutate({ id: editId, ...payload }, { onSuccess: () => navigate('/financial/expenses') });
+    } else {
+      create.mutate(payload, { onSuccess: () => navigate('/financial/expenses') });
+    }
   };
 
   return (
