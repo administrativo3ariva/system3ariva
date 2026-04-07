@@ -1,20 +1,34 @@
 import { useState } from 'react';
 import { useExpenses, useDeleteExpense, useUpdateExpense } from '@/hooks/use-expenses';
 import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES, EXPENSE_CATEGORIES } from '@/lib/types';
+import { FinancialDetailDialog } from '@/components/FinancialDetailDialog';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { Plus, Trash2, Eye, Pencil, AlertTriangle, CreditCard } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 const statusColors: Record<string, string> = {
   pendente: 'bg-yellow-100 text-yellow-800',
   aprovado: 'bg-green-100 text-green-800',
   rejeitado: 'bg-red-100 text-red-800',
 };
+
+const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+function groupByDate(items: any[]) {
+  const groups: Record<string, any[]> = {};
+  items.forEach(item => {
+    const date = item.expense_date;
+    if (!groups[date]) groups[date] = [];
+    groups[date].push(item);
+  });
+  return Object.entries(groups).sort(([a], [b]) => b.localeCompare(a));
+}
 
 export default function ExpensesList() {
   const { data: expenses = [], isLoading } = useExpenses();
@@ -24,23 +38,29 @@ export default function ExpensesList() {
   const [filterCompany, setFilterCompany] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [viewItem, setViewItem] = useState<any | null>(null);
 
-  const filtered = expenses.filter(e =>
+  const filtered = expenses.filter((e: any) =>
     (filterCC === 'all' || e.cost_center === filterCC) &&
     (filterCompany === 'all' || e.company === filterCompany) &&
     (filterCategory === 'all' || e.category === filterCategory) &&
     (filterStatus === 'all' || e.status === filterStatus)
   );
 
-  const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const grouped = groupByDate(filtered);
+  const total = filtered.reduce((s: number, e: any) => s + Number(e.amount), 0);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Despesas Lançadas</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Despesas Lançadas</h1>
+          <p className="text-sm text-muted-foreground mt-1">{filtered.length} registro(s) • Total: {fmt(total)}</p>
+        </div>
         <Link to="/financial/expenses/new"><Button><Plus className="mr-2 h-4 w-4" />Nova Despesa</Button></Link>
       </div>
 
+      {/* Filters */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Select value={filterCC} onValueChange={setFilterCC}>
           <SelectTrigger><SelectValue placeholder="Centro de Custo" /></SelectTrigger>
@@ -74,57 +94,130 @@ export default function ExpensesList() {
         </Select>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Total: {fmt(filtered.reduce((s, e) => s + Number(e.amount), 0))} — {filtered.length} registro(s)</CardTitle></CardHeader>
-        <CardContent>
-          {isLoading ? <p className="text-muted-foreground">Carregando...</p> : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Centro Custo</TableHead>
-                  <TableHead>Empresa</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Cartão</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map(e => (
-                  <TableRow key={e.id}>
-                    <TableCell className="whitespace-nowrap">{format(new Date(e.expense_date), 'dd/MM/yyyy')}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">{e.description}</TableCell>
-                    <TableCell>{e.cost_center}</TableCell>
-                    <TableCell>{e.company}</TableCell>
-                    <TableCell>{e.category}</TableCell>
-                    <TableCell>{e.card_name || '—'}</TableCell>
-                    <TableCell className="text-right font-medium">{fmt(Number(e.amount))}</TableCell>
-                    <TableCell>
-                      <Select value={e.status} onValueChange={(v) => updateExpense.mutate({ id: e.id, status: v })}>
-                        <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pendente">Pendente</SelectItem>
-                          <SelectItem value="aprovado">Aprovado</SelectItem>
-                          <SelectItem value="rejeitado">Rejeitado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => deleteExpense.mutate(e.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma despesa encontrada</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {/* Bank-statement style list */}
+      {isLoading ? (
+        <p className="text-muted-foreground text-center py-12">Carregando...</p>
+      ) : grouped.length === 0 ? (
+        <Card><CardContent className="py-12 text-center text-muted-foreground">Nenhuma despesa encontrada</CardContent></Card>
+      ) : (
+        <div className="space-y-4">
+          {grouped.map(([date, items]) => {
+            const dayTotal = items.reduce((s: number, e: any) => s + Number(e.amount), 0);
+            return (
+              <Card key={date}>
+                {/* Day header */}
+                <div className="flex items-center justify-between px-5 py-3 bg-muted/40 border-b">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-foreground">
+                      {format(parseISO(date), "dd 'de' MMMM, yyyy", { locale: ptBR })}
+                    </span>
+                    <Badge variant="secondary" className="text-xs">{items.length}</Badge>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums text-foreground">{fmt(dayTotal)}</span>
+                </div>
+
+                {/* Items */}
+                <div className="divide-y">
+                  {items.map((e: any) => (
+                    <div
+                      key={e.id}
+                      className="flex items-center gap-4 px-5 py-3 hover:bg-muted/20 transition-colors group"
+                    >
+                      {/* Status indicator */}
+                      <div className={cn(
+                        'w-2 h-2 rounded-full shrink-0',
+                        e.status === 'aprovado' ? 'bg-green-500' :
+                        e.status === 'rejeitado' ? 'bg-red-500' : 'bg-yellow-500'
+                      )} />
+
+                      {/* Description */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{e.description}</p>
+                        {!e.receipt_url && (
+                          <span className="text-[10px] text-yellow-600 flex items-center gap-1 mt-0.5">
+                            <AlertTriangle className="h-3 w-3" /> Pendente de NF
+                          </span>
+                        )}
+                        {e.is_installment && e.installment_count && (
+                          <span className="text-[10px] text-primary mt-0.5 block">
+                            Parcela {e.installment_current || 1}/{e.installment_count}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Company */}
+                      <span className="text-xs text-muted-foreground w-16 text-center hidden lg:block">{e.company}</span>
+
+                      {/* Cost Center */}
+                      <span className="text-xs text-muted-foreground w-12 text-center hidden md:block">{e.cost_center}</span>
+
+                      {/* Category */}
+                      <span className="text-xs text-muted-foreground w-32 truncate text-center hidden xl:block">{e.category}</span>
+
+                      {/* Card / Payment */}
+                      <div className="w-36 hidden lg:flex items-center justify-center">
+                        {e.card_name ? (
+                          <Badge variant="outline" className="text-[10px] gap-1 px-2 py-0.5">
+                            <CreditCard className="h-3 w-3" />
+                            {e.card_name.replace('Cartão Final ', '')}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </div>
+
+                      {/* Amount */}
+                      <span className="text-sm font-semibold tabular-nums text-foreground w-28 text-right">
+                        {fmt(Number(e.amount))}
+                      </span>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewItem(e)}>
+                          <Eye className="h-3.5 w-3.5" />
+                        </Button>
+                        <Link to={`/financial/expenses/new?edit=${e.id}`}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                        </Link>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                          if (confirm('Excluir esta despesa?')) deleteExpense.mutate(e.id);
+                        }}>
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Detail Dialog */}
+      {viewItem && (
+        <FinancialDetailDialog
+          open={!!viewItem}
+          onOpenChange={(open) => { if (!open) setViewItem(null); }}
+          title={viewItem.description}
+          status={viewItem.status}
+          statusColor=""
+          amount={Number(viewItem.amount)}
+          paymentLabel={viewItem.card_name || undefined}
+          installmentInfo={viewItem.is_installment && viewItem.installment_count ? `Parcela ${viewItem.installment_current || 1}/${viewItem.installment_count}` : null}
+          fields={[
+            { label: 'Data', value: format(parseISO(viewItem.expense_date), 'dd/MM/yyyy') },
+            { label: 'Categoria', value: viewItem.category },
+            { label: 'Empresa', value: viewItem.company },
+            { label: 'Centro de Custo', value: viewItem.cost_center },
+            { label: 'Cartão', value: viewItem.card_name },
+          ]}
+          receiptUrl={viewItem.receipt_url}
+          notes={viewItem.notes}
+        />
+      )}
     </div>
   );
 }

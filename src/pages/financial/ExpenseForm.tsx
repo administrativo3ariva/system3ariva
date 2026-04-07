@@ -27,6 +27,8 @@ const schema = z.object({
   card_name: z.string().optional(),
   expense_date: z.string().min(1, 'Obrigatório'),
   notes: z.string().optional(),
+  is_installment: z.boolean().optional(),
+  installment_count: z.coerce.number().min(2).max(48).optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -49,10 +51,13 @@ export default function ExpenseForm() {
       card_name: '',
       expense_date: new Date().toISOString().split('T')[0],
       notes: '',
+      is_installment: false,
+      installment_count: undefined,
     },
   });
 
-  const selectedCompany = form.watch('company');
+  const selectedCard = form.watch('card_name');
+  const isInstallment = form.watch('is_installment');
   const hasReceipt = !!receiptFile;
 
   const handleCompanyChange = useCallback((value: string) => {
@@ -103,6 +108,9 @@ export default function ExpenseForm() {
       card_name: data.card_name,
       expense_date: data.expense_date,
       notes: data.notes,
+      is_installment: data.is_installment || false,
+      installment_count: data.is_installment ? data.installment_count : null,
+      installment_current: data.is_installment ? 1 : null,
       ...(receipt_url ? { receipt_url } : {}),
     } as any, { onSuccess: () => navigate('/financial/expenses') });
   };
@@ -115,10 +123,10 @@ export default function ExpenseForm() {
           <h1 className="text-2xl font-bold text-foreground">Lançar Despesa</h1>
           <p className="text-sm text-muted-foreground mt-1">Cartão Corporativo</p>
         </div>
-        {selectedCompany && COMPANY_CARD_MAP[selectedCompany as FinancialCompany] && (
+        {selectedCard && (
           <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-sm border-primary/30 bg-primary/5">
             <CreditCard className="h-3.5 w-3.5" />
-            {COMPANY_CARD_MAP[selectedCompany as FinancialCompany]}
+            {selectedCard}
           </Badge>
         )}
       </div>
@@ -245,6 +253,49 @@ export default function ExpenseForm() {
                   </FormItem>
                 )} />
               </div>
+
+              {/* Installment toggle - only when a card is selected */}
+              {selectedCard && (
+                <div className="border-t pt-4 mt-4 space-y-3">
+                  <FormField control={form.control} name="is_installment" render={({ field }) => (
+                    <FormItem className="flex items-center gap-3">
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          checked={field.value || false}
+                          onChange={(e) => {
+                            field.onChange(e.target.checked);
+                            if (!e.target.checked) form.setValue('installment_count', undefined);
+                          }}
+                          className="h-4 w-4 rounded border-input accent-primary"
+                        />
+                      </FormControl>
+                      <FormLabel className="!mt-0 text-sm cursor-pointer">Compra parcelada?</FormLabel>
+                    </FormItem>
+                  )} />
+
+                  {isInstallment && (
+                    <FormField control={form.control} name="installment_count" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número de parcelas</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={(v) => field.onChange(Number(v))} value={field.value?.toString() || ''}>
+                            <SelectTrigger className="w-40">
+                              <SelectValue placeholder="Parcelas" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 12 }, (_, i) => i + 2).map(n => (
+                                <SelectItem key={n} value={n.toString()}>{n}x</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
