@@ -108,6 +108,9 @@ export default function ExpenseForm() {
       card_name: data.card_name,
       expense_date: data.expense_date,
       notes: data.notes,
+      is_installment: data.is_installment || false,
+      installment_count: data.is_installment ? data.installment_count : null,
+      installment_current: data.is_installment ? 1 : null,
       ...(receipt_url ? { receipt_url } : {}),
     } as any, { onSuccess: () => navigate('/financial/expenses') });
   };
@@ -120,10 +123,10 @@ export default function ExpenseForm() {
           <h1 className="text-2xl font-bold text-foreground">Lançar Despesa</h1>
           <p className="text-sm text-muted-foreground mt-1">Cartão Corporativo</p>
         </div>
-        {selectedCompany && COMPANY_CARD_MAP[selectedCompany as FinancialCompany] && (
+        {selectedCard && (
           <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-sm border-primary/30 bg-primary/5">
             <CreditCard className="h-3.5 w-3.5" />
-            {COMPANY_CARD_MAP[selectedCompany as FinancialCompany]}
+            {selectedCard}
           </Badge>
         )}
       </div>
