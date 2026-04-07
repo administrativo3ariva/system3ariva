@@ -121,6 +121,13 @@ export type FinancialCostCenter = typeof FINANCIAL_COST_CENTERS[number];
 export const FINANCIAL_COMPANIES = ['RIVA', '3A', 'RVCS', '3A Serviços', 'Vêneto'] as const;
 export type FinancialCompany = typeof FINANCIAL_COMPANIES[number];
 
+/** Maps companies that have a corporate card to their default card identifier */
+export const COMPANY_CARD_MAP: Partial<Record<FinancialCompany, string>> = {
+  'RIVA': 'Cartão Final 4402',
+  '3A': 'Cartão Final 2819',
+  'RVCS': 'Cartão Final 6498',
+};
+
 export const EXPENSE_CATEGORIES = [
   'Material de Uso & Consumo',
   'Material de Limpeza',
