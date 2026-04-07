@@ -253,6 +253,49 @@ export default function ExpenseForm() {
                   </FormItem>
                 )} />
               </div>
+
+              {/* Installment toggle - only when a card is selected */}
+              {selectedCard && (
+                <div className="border-t pt-4 mt-4 space-y-3">
+                  <FormField control={form.control} name="is_installment" render={({ field }) => (
+                    <FormItem className="flex items-center gap-3">
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          checked={field.value || false}
+                          onChange={(e) => {
+                            field.onChange(e.target.checked);
+                            if (!e.target.checked) form.setValue('installment_count', undefined);
+                          }}
+                          className="h-4 w-4 rounded border-input accent-primary"
+                        />
+                      </FormControl>
+                      <FormLabel className="!mt-0 text-sm cursor-pointer">Compra parcelada?</FormLabel>
+                    </FormItem>
+                  )} />
+
+                  {isInstallment && (
+                    <FormField control={form.control} name="installment_count" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número de parcelas</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={(v) => field.onChange(Number(v))} value={field.value?.toString() || ''}>
+                            <SelectTrigger className="w-40">
+                              <SelectValue placeholder="Parcelas" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 12 }, (_, i) => i + 2).map(n => (
+                                <SelectItem key={n} value={n.toString()}>{n}x</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
