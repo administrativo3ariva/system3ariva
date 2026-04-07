@@ -28,6 +28,7 @@ export function useCreateExpense() {
       card_name?: string;
       expense_date: string;
       notes?: string;
+      receipt_url?: string;
     }) => {
       const { data, error } = await supabase.from('expenses').insert(expense).select().single();
       if (error) throw error;
