@@ -1,20 +1,34 @@
 import { useState } from 'react';
 import { usePaymentRequests, useDeletePaymentRequest, useUpdatePaymentRequest } from '@/hooks/use-payment-requests';
-import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES, EXPENSE_CATEGORIES } from '@/lib/types';
+import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES } from '@/lib/types';
+import { FinancialDetailDialog } from '@/components/FinancialDetailDialog';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { Plus, Trash2, Eye, Pencil, FileBarChart, QrCode, Landmark, AlertTriangle } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
-const statusLabels: Record<string, string> = {
-  pendente: 'Pendente',
-  aprovado: 'Aprovado',
-  pago: 'Pago',
-  rejeitado: 'Rejeitado',
+const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const paymentMethodLabels: Record<string, { label: string; icon: typeof FileBarChart }> = {
+  boleto: { label: 'Boleto', icon: FileBarChart },
+  pix: { label: 'PIX', icon: QrCode },
+  transferencia: { label: 'Transferência', icon: Landmark },
 };
+
+function groupByDate(items: any[], dateField: string) {
+  const groups: Record<string, any[]> = {};
+  items.forEach(item => {
+    const date = item[dateField] || item.created_at?.split('T')[0] || 'sem-data';
+    if (!groups[date]) groups[date] = [];
+    groups[date].push(item);
+  });
+  return Object.entries(groups).sort(([a], [b]) => b.localeCompare(a));
+}
 
 export default function PaymentRequestsList() {
   const { data: requests = [], isLoading } = usePaymentRequests();
@@ -23,22 +37,28 @@ export default function PaymentRequestsList() {
   const [filterCC, setFilterCC] = useState('all');
   const [filterCompany, setFilterCompany] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [viewItem, setViewItem] = useState<any | null>(null);
 
-  const filtered = requests.filter(r =>
+  const filtered = requests.filter((r: any) =>
     (filterCC === 'all' || r.cost_center === filterCC) &&
     (filterCompany === 'all' || r.company === filterCompany) &&
     (filterStatus === 'all' || r.status === filterStatus)
   );
 
-  const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const grouped = groupByDate(filtered, 'due_date');
+  const total = filtered.reduce((s: number, r: any) => s + Number(r.amount), 0);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Solicitações de Pagamento</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Solicitações de Pagamento</h1>
+          <p className="text-sm text-muted-foreground mt-1">{filtered.length} registro(s) • Total: {fmt(total)}</p>
+        </div>
         <Link to="/financial/requests/new"><Button><Plus className="mr-2 h-4 w-4" />Nova Solicitação</Button></Link>
       </div>
 
+      {/* Filters */}
       <div className="grid gap-3 sm:grid-cols-3">
         <Select value={filterCC} onValueChange={setFilterCC}>
           <SelectTrigger><SelectValue placeholder="Centro de Custo" /></SelectTrigger>
@@ -66,58 +86,141 @@ export default function PaymentRequestsList() {
         </Select>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Total: {fmt(filtered.reduce((s, r) => s + Number(r.amount), 0))} — {filtered.length} registro(s)</CardTitle></CardHeader>
-        <CardContent>
-          {isLoading ? <p className="text-muted-foreground">Carregando...</p> : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Fornecedor</TableHead>
-                  <TableHead>Centro Custo</TableHead>
-                  <TableHead>Empresa</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map(r => (
-                  <TableRow key={r.id}>
-                    <TableCell className="max-w-[200px] truncate">{r.description}</TableCell>
-                    <TableCell>{r.supplier || '—'}</TableCell>
-                    <TableCell>{r.cost_center}</TableCell>
-                    <TableCell>{r.company}</TableCell>
-                    <TableCell>{r.category}</TableCell>
-                    <TableCell className="whitespace-nowrap">{r.due_date ? format(new Date(r.due_date), 'dd/MM/yyyy') : '—'}</TableCell>
-                    <TableCell className="text-right font-medium">{fmt(Number(r.amount))}</TableCell>
-                    <TableCell>
-                      <Select value={r.status} onValueChange={(v) => updateReq.mutate({ id: r.id, status: v })}>
-                        <SelectTrigger className="h-7 w-28 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pendente">Pendente</SelectItem>
-                          <SelectItem value="aprovado">Aprovado</SelectItem>
-                          <SelectItem value="pago">Pago</SelectItem>
-                          <SelectItem value="rejeitado">Rejeitado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="icon" onClick={() => deleteReq.mutate(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma solicitação encontrada</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      {/* Bank-statement style list */}
+      {isLoading ? (
+        <p className="text-muted-foreground text-center py-12">Carregando...</p>
+      ) : grouped.length === 0 ? (
+        <Card><CardContent className="py-12 text-center text-muted-foreground">Nenhuma solicitação encontrada</CardContent></Card>
+      ) : (
+        <div className="space-y-4">
+          {grouped.map(([date, items]) => {
+            const dayTotal = items.reduce((s: number, r: any) => s + Number(r.amount), 0);
+            const dateLabel = date === 'sem-data'
+              ? 'Sem data de vencimento'
+              : format(parseISO(date), "dd 'de' MMMM, yyyy", { locale: ptBR });
+            return (
+              <Card key={date}>
+                {/* Day header */}
+                <div className="flex items-center justify-between px-5 py-3 bg-muted/40 border-b">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-foreground">{dateLabel}</span>
+                    <Badge variant="secondary" className="text-xs">{items.length}</Badge>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums text-foreground">{fmt(dayTotal)}</span>
+                </div>
+
+                {/* Items */}
+                <div className="divide-y">
+                  {items.map((r: any) => {
+                    const pm = paymentMethodLabels[r.payment_method] || null;
+                    return (
+                      <div
+                        key={r.id}
+                        className="flex items-center gap-4 px-5 py-3 hover:bg-muted/20 transition-colors group"
+                      >
+                        {/* Status dot */}
+                        <div className={cn(
+                          'w-2 h-2 rounded-full shrink-0',
+                          r.status === 'pago' ? 'bg-blue-500' :
+                          r.status === 'aprovado' ? 'bg-green-500' :
+                          r.status === 'rejeitado' ? 'bg-red-500' : 'bg-yellow-500'
+                        )} />
+
+                        {/* Description */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{r.description}</p>
+                          {r.supplier && (
+                            <span className="text-[10px] text-muted-foreground">{r.supplier}</span>
+                          )}
+                          {!r.receipt_url && (
+                            <span className="text-[10px] text-yellow-600 flex items-center gap-1 mt-0.5">
+                              <AlertTriangle className="h-3 w-3" /> Pendente de NF
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Company */}
+                        <span className="text-xs text-muted-foreground w-16 text-center hidden lg:block">{r.company}</span>
+
+                        {/* Cost Center */}
+                        <span className="text-xs text-muted-foreground w-12 text-center hidden md:block">{r.cost_center}</span>
+
+                        {/* Category */}
+                        <span className="text-xs text-muted-foreground w-32 truncate text-center hidden xl:block">{r.category}</span>
+
+                        {/* Payment method */}
+                        <div className="w-32 hidden lg:flex items-center justify-center">
+                          {pm ? (
+                            <Badge variant="outline" className="text-[10px] gap-1 px-2 py-0.5">
+                              <pm.icon className="h-3 w-3" />
+                              {pm.label}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </div>
+
+                        {/* Amount */}
+                        <span className="text-sm font-semibold tabular-nums text-foreground w-28 text-right">
+                          {fmt(Number(r.amount))}
+                        </span>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewItem(r)}>
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                          <Link to={`/financial/requests/new?edit=${r.id}`}>
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          </Link>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                            if (confirm('Excluir esta solicitação?')) deleteReq.mutate(r.id);
+                          }}>
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Detail Dialog */}
+      {viewItem && (
+        <FinancialDetailDialog
+          open={!!viewItem}
+          onOpenChange={(open) => { if (!open) setViewItem(null); }}
+          title={viewItem.description}
+          status={viewItem.status}
+          statusColor=""
+          amount={Number(viewItem.amount)}
+          paymentLabel={
+            viewItem.payment_method
+              ? paymentMethodLabels[viewItem.payment_method]?.label || viewItem.payment_method
+              : undefined
+          }
+          fields={[
+            { label: 'Fornecedor', value: viewItem.supplier },
+            { label: 'Categoria', value: viewItem.category },
+            { label: 'Empresa', value: viewItem.company },
+            { label: 'Centro de Custo', value: viewItem.cost_center },
+            { label: 'Vencimento', value: viewItem.due_date ? format(parseISO(viewItem.due_date), 'dd/MM/yyyy') : null },
+            { label: 'Data Pagamento', value: viewItem.payment_date ? format(parseISO(viewItem.payment_date), 'dd/MM/yyyy') : null },
+            { label: 'Chave PIX', value: viewItem.pix_key },
+            { label: 'Banco', value: viewItem.bank_name },
+            { label: 'Agência', value: viewItem.bank_agency },
+            { label: 'Conta', value: viewItem.bank_account },
+          ]}
+          receiptUrl={viewItem.receipt_url || viewItem.boleto_url}
+          notes={viewItem.notes}
+        />
+      )}
     </div>
   );
 }
