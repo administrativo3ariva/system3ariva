@@ -111,7 +111,60 @@ export interface NfItem {
   totalPrice: number;
 }
 
-export type AppModule = 'stock' | 'inventory' | 'facilities';
+export type AppModule = 'stock' | 'inventory' | 'facilities' | 'financial';
+
+export const FINANCIAL_COST_CENTERS = [
+  'BH', 'SP', 'RJ', 'PAG', 'VAG', 'FLO', 'JM', 'ITA', 'CPN', 'LIM', 'JUN', 'SJC',
+] as const;
+export type FinancialCostCenter = typeof FINANCIAL_COST_CENTERS[number];
+
+export const FINANCIAL_COMPANIES = ['RIVA', '3A', 'RVCS', '3A Serviços', 'Vêneto'] as const;
+export type FinancialCompany = typeof FINANCIAL_COMPANIES[number];
+
+export const EXPENSE_CATEGORIES = [
+  'Material de Uso & Consumo',
+  'Material de Limpeza',
+  'Material de Escritório & TI',
+  'Eletrodoméstico',
+  'Reparo & Manutenção',
+  'Serviços',
+] as const;
+export type ExpenseCategory = typeof EXPENSE_CATEGORIES[number];
+
+export type ExpenseStatus = 'pendente' | 'aprovado' | 'rejeitado';
+export type PaymentRequestStatus = 'pendente' | 'aprovado' | 'pago' | 'rejeitado';
+
+export interface Expense {
+  id: string;
+  description: string;
+  amount: number;
+  cost_center: string;
+  company: string;
+  category: string;
+  card_name?: string | null;
+  expense_date: string;
+  receipt_url?: string | null;
+  notes?: string | null;
+  status: ExpenseStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaymentRequest {
+  id: string;
+  description: string;
+  amount: number;
+  cost_center: string;
+  company: string;
+  category: string;
+  supplier?: string | null;
+  due_date?: string | null;
+  payment_date?: string | null;
+  notes?: string | null;
+  status: PaymentRequestStatus;
+  created_at: string;
+  updated_at: string;
+}
 
 export const MAINTENANCE_CATEGORIES = [
   'Ar-condicionado',
