@@ -1,6 +1,5 @@
 import { useExpenses } from '@/hooks/use-expenses';
 import { usePaymentRequests } from '@/hooks/use-payment-requests';
-import { KpiCard } from '@/components/KpiCard';
 import { DollarSign, CreditCard, FileText, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -38,10 +37,10 @@ export default function FinancialDashboard() {
       <h1 className="text-2xl font-bold text-foreground">Dashboard Financeiro</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard title="Total Despesas (Cartão)" value={fmt(totalExpenses)} icon={<CreditCard className="h-5 w-5" />} />
-        <KpiCard title="Total Solicitações" value={fmt(totalRequests)} icon={<FileText className="h-5 w-5" />} />
-        <KpiCard title="Despesas Pendentes" value={String(pendingExpenses)} icon={<DollarSign className="h-5 w-5" />} />
-        <KpiCard title="Solicitações Pendentes" value={String(pendingRequests)} icon={<TrendingUp className="h-5 w-5" />} />
+        <Card><CardContent className="flex items-center gap-4 p-4"><div className="rounded-lg bg-primary/10 p-2.5"><CreditCard className="h-5 w-5 text-primary" /></div><div><p className="text-xs text-muted-foreground">Total Despesas (Cartão)</p><p className="text-xl font-bold">{fmt(totalExpenses)}</p></div></CardContent></Card>
+        <Card><CardContent className="flex items-center gap-4 p-4"><div className="rounded-lg bg-primary/10 p-2.5"><FileText className="h-5 w-5 text-primary" /></div><div><p className="text-xs text-muted-foreground">Total Solicitações</p><p className="text-xl font-bold">{fmt(totalRequests)}</p></div></CardContent></Card>
+        <Card><CardContent className="flex items-center gap-4 p-4"><div className="rounded-lg bg-primary/10 p-2.5"><DollarSign className="h-5 w-5 text-primary" /></div><div><p className="text-xs text-muted-foreground">Despesas Pendentes</p><p className="text-xl font-bold">{pendingExpenses}</p></div></CardContent></Card>
+        <Card><CardContent className="flex items-center gap-4 p-4"><div className="rounded-lg bg-primary/10 p-2.5"><TrendingUp className="h-5 w-5 text-primary" /></div><div><p className="text-xs text-muted-foreground">Solicitações Pendentes</p><p className="text-xl font-bold">{pendingRequests}</p></div></CardContent></Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

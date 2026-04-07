@@ -42,7 +42,16 @@ export default function PaymentRequestForm() {
   });
 
   const onSubmit = (data: FormData) => {
-    create.mutate(data, { onSuccess: () => navigate('/financial/requests') });
+    create.mutate({
+      description: data.description,
+      amount: data.amount,
+      cost_center: data.cost_center,
+      company: data.company,
+      category: data.category,
+      supplier: data.supplier,
+      due_date: data.due_date || undefined,
+      notes: data.notes,
+    }, { onSuccess: () => navigate('/financial/requests') });
   };
 
   return (

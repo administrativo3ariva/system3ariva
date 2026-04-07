@@ -44,7 +44,7 @@ export function useCreatePaymentRequest() {
 export function useUpdatePaymentRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; [key: string]: any }) => {
+    mutationFn: async ({ id, ...updates }: { id: string; status?: string; description?: string; amount?: number; cost_center?: string; company?: string; category?: string; supplier?: string; due_date?: string; payment_date?: string; notes?: string }) => {
       const { data, error } = await supabase.from('payment_requests').update(updates).eq('id', id).select().single();
       if (error) throw error;
       return data;

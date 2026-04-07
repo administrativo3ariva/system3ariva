@@ -42,7 +42,16 @@ export default function ExpenseForm() {
   });
 
   const onSubmit = (data: FormData) => {
-    create.mutate(data, { onSuccess: () => navigate('/financial/expenses') });
+    create.mutate({
+      description: data.description,
+      amount: data.amount,
+      cost_center: data.cost_center,
+      company: data.company,
+      category: data.category,
+      card_name: data.card_name,
+      expense_date: data.expense_date,
+      notes: data.notes,
+    }, { onSuccess: () => navigate('/financial/expenses') });
   };
 
   return (
