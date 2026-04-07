@@ -56,7 +56,8 @@ export default function ExpenseForm() {
     },
   });
 
-  const selectedCompany = form.watch('company');
+  const selectedCard = form.watch('card_name');
+  const isInstallment = form.watch('is_installment');
   const hasReceipt = !!receiptFile;
 
   const handleCompanyChange = useCallback((value: string) => {
