@@ -115,6 +115,9 @@ export type Database = {
           description: string
           expense_date: string
           id: string
+          installment_count: number | null
+          installment_current: number | null
+          is_installment: boolean
           notes: string | null
           receipt_url: string | null
           status: string
@@ -130,6 +133,9 @@ export type Database = {
           description: string
           expense_date?: string
           id?: string
+          installment_count?: number | null
+          installment_current?: number | null
+          is_installment?: boolean
           notes?: string | null
           receipt_url?: string | null
           status?: string
@@ -145,6 +151,9 @@ export type Database = {
           description?: string
           expense_date?: string
           id?: string
+          installment_count?: number | null
+          installment_current?: number | null
+          is_installment?: boolean
           notes?: string | null
           receipt_url?: string | null
           status?: string
