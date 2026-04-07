@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCreateExpense } from '@/hooks/use-expenses';
-import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES, EXPENSE_CATEGORIES, COMPANY_CARD_MAP, FinancialCompany } from '@/lib/types';
+import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES, EXPENSE_CATEGORIES, COMPANY_CARD_MAP, CORPORATE_CARDS, FinancialCompany } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -203,10 +203,19 @@ export default function ExpenseForm() {
                   <FormItem>
                     <FormLabel>Cartão Utilizado</FormLabel>
                     <FormControl>
-                      <div className="relative">
-                        <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                        <Input placeholder="Ex: Cartão Final 4402" className="pl-10" {...field} />
-                      </div>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <SelectTrigger>
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="h-4 w-4 text-muted-foreground" />
+                            <SelectValue placeholder="Selecione o cartão" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CORPORATE_CARDS.map(c => (
+                            <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
