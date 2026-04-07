@@ -319,6 +319,11 @@ export type Database = {
       payment_requests: {
         Row: {
           amount: number
+          bank_account: string | null
+          bank_account_type: string | null
+          bank_agency: string | null
+          bank_name: string | null
+          boleto_url: string | null
           category: string
           company: string
           cost_center: string
@@ -328,12 +333,21 @@ export type Database = {
           id: string
           notes: string | null
           payment_date: string | null
+          payment_method: string | null
+          pix_key: string | null
+          receipt_url: string | null
           status: string
           supplier: string | null
+          supplier_id: string | null
           updated_at: string
         }
         Insert: {
           amount?: number
+          bank_account?: string | null
+          bank_account_type?: string | null
+          bank_agency?: string | null
+          bank_name?: string | null
+          boleto_url?: string | null
           category: string
           company: string
           cost_center: string
@@ -343,12 +357,21 @@ export type Database = {
           id?: string
           notes?: string | null
           payment_date?: string | null
+          payment_method?: string | null
+          pix_key?: string | null
+          receipt_url?: string | null
           status?: string
           supplier?: string | null
+          supplier_id?: string | null
           updated_at?: string
         }
         Update: {
           amount?: number
+          bank_account?: string | null
+          bank_account_type?: string | null
+          bank_agency?: string | null
+          bank_name?: string | null
+          boleto_url?: string | null
           category?: string
           company?: string
           cost_center?: string
@@ -358,11 +381,23 @@ export type Database = {
           id?: string
           notes?: string | null
           payment_date?: string | null
+          payment_method?: string | null
+          pix_key?: string | null
+          receipt_url?: string | null
           status?: string
           supplier?: string | null
+          supplier_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payment_requests_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -461,6 +496,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      suppliers: {
+        Row: {
+          bank_account: string | null
+          bank_account_type: string | null
+          bank_agency: string | null
+          bank_name: string | null
+          cnpj_cpf: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          id: string
+          name: string
+          payment_method: string | null
+          pix_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          bank_account?: string | null
+          bank_account_type?: string | null
+          bank_agency?: string | null
+          bank_name?: string | null
+          cnpj_cpf?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          payment_method?: string | null
+          pix_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          bank_account?: string | null
+          bank_account_type?: string | null
+          bank_agency?: string | null
+          bank_name?: string | null
+          cnpj_cpf?: string | null
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          payment_method?: string | null
+          pix_key?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
     }
     Views: {

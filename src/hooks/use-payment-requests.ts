@@ -27,9 +27,18 @@ export function useCreatePaymentRequest() {
       category: string;
       supplier?: string;
       due_date?: string;
+      payment_method?: string;
+      pix_key?: string;
+      bank_name?: string;
+      bank_agency?: string;
+      bank_account?: string;
+      bank_account_type?: string;
+      boleto_url?: string;
+      receipt_url?: string;
+      supplier_id?: string;
       notes?: string;
     }) => {
-      const { data, error } = await supabase.from('payment_requests').insert(req).select().single();
+      const { data, error } = await supabase.from('payment_requests').insert(req as any).select().single();
       if (error) throw error;
       return data;
     },
@@ -44,7 +53,7 @@ export function useCreatePaymentRequest() {
 export function useUpdatePaymentRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, ...updates }: { id: string; status?: string; description?: string; amount?: number; cost_center?: string; company?: string; category?: string; supplier?: string; due_date?: string; payment_date?: string; notes?: string }) => {
+    mutationFn: async ({ id, ...updates }: { id: string; status?: string; description?: string; amount?: number; cost_center?: string; company?: string; category?: string; supplier?: string; due_date?: string; payment_date?: string; payment_method?: string; pix_key?: string; bank_name?: string; bank_agency?: string; bank_account?: string; bank_account_type?: string; boleto_url?: string; receipt_url?: string; supplier_id?: string; notes?: string }) => {
       const { data, error } = await supabase.from('payment_requests').update(updates).eq('id', id).select().single();
       if (error) throw error;
       return data;
