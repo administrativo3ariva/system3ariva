@@ -1,10 +1,10 @@
-import React from 'react';
-import { Package, BarChart3, ArrowLeftRight, FileUp, ClipboardList, PlusCircle, Users, LayoutDashboard, MapPin, ChevronDown, Building2, Wrench, CalendarDays, Kanban, TrendingUp } from 'lucide-react';
+import React, { useState } from 'react';
+import { Package, BarChart3, ArrowLeftRight, FileUp, ClipboardList, PlusCircle, Users, LayoutDashboard, MapPin, ChevronDown, ChevronRight, Building2, Wrench, CalendarDays, Kanban, TrendingUp, CreditCard, FileText, DollarSign } from 'lucide-react';
 import logo from '@/assets/Logo.png';
 import { useLocation } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
 import { useApp } from '@/contexts/AppContext';
-import { STOCK_BRANCH_GROUPS, BRANCH_LABELS, StockBranch, ALL_BRANCHES } from '@/lib/types';
+import { STOCK_BRANCH_GROUPS, BRANCH_LABELS, StockBranch, ALL_BRANCHES, AppModule } from '@/lib/types';
 import {
   Sidebar,
   SidebarContent,
@@ -27,6 +27,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
+const MODULE_TILES: { key: AppModule; label: string; icon: typeof Package }[] = [
+  { key: 'stock', label: 'Estoque', icon: Package },
+  { key: 'inventory', label: 'Patrimônio', icon: Building2 },
+  { key: 'facilities', label: 'Facilities', icon: Wrench },
+  { key: 'financial', label: 'Financeiro', icon: DollarSign },
+];
 
 const stockItems = [
   { title: 'Dashboard', url: '/stock/dashboard', icon: LayoutDashboard },
@@ -51,11 +59,163 @@ const facilitiesItems = [
   { title: 'Desempenho', url: '/facilities/performance', icon: TrendingUp },
 ];
 
+function ModuleSwitcher({ activeModule, setActiveModule, collapsed }: { activeModule: AppModule; setActiveModule: (m: AppModule) => void; collapsed: boolean }) {
+  if (collapsed) return null;
+  return (
+    <div className="p-3">
+      <div className="grid grid-cols-2 gap-1.5">
+        {MODULE_TILES.map(({ key, label, icon: Icon }) => (
+          <button
+            key={key}
+            onClick={() => setActiveModule(key)}
+            className={`flex flex-col items-center justify-center gap-1 rounded-lg px-2 py-2.5 text-[11px] font-medium transition-all duration-200 ${
+              activeModule === key
+                ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm'
+                : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground'
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            <span>{label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FinancialMenu({ collapsed }: { collapsed: boolean }) {
+  const location = useLocation();
+  const [cardOpen, setCardOpen] = useState(location.pathname.startsWith('/financial/expenses'));
+  const [reqOpen, setReqOpen] = useState(location.pathname.startsWith('/financial/requests'));
+
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel className="text-sidebar-foreground/50">Gestão Financeira</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <NavLink to="/financial/dashboard" end className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                {!collapsed && <span>Dashboard</span>}
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* Cartão Corporativo - collapsible */}
+          <Collapsible open={cardOpen} onOpenChange={setCardOpen}>
+            <SidebarMenuItem>
+              <CollapsibleTrigger asChild>
+                <SidebarMenuButton className="hover:bg-sidebar-accent/50 cursor-pointer">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1 text-left">Cartão Corporativo</span>
+                      <ChevronRight className={`h-3.5 w-3.5 transition-transform ${cardOpen ? 'rotate-90' : ''}`} />
+                    </>
+                  )}
+                </SidebarMenuButton>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarMenu className="ml-4 border-l border-sidebar-border pl-2">
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink to="/financial/expenses/new" end className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <PlusCircle className="mr-2 h-3.5 w-3.5" />
+                        {!collapsed && <span className="text-sm">Lançar Despesa</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink to="/financial/expenses" end className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <FileText className="mr-2 h-3.5 w-3.5" />
+                        {!collapsed && <span className="text-sm">Despesas Lançadas</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </CollapsibleContent>
+            </SidebarMenuItem>
+          </Collapsible>
+
+          {/* Solicitações de Pagamento - collapsible */}
+          <Collapsible open={reqOpen} onOpenChange={setReqOpen}>
+            <SidebarMenuItem>
+              <CollapsibleTrigger asChild>
+                <SidebarMenuButton className="hover:bg-sidebar-accent/50 cursor-pointer">
+                  <FileText className="mr-2 h-4 w-4" />
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1 text-left">Solic. Pagamento</span>
+                      <ChevronRight className={`h-3.5 w-3.5 transition-transform ${reqOpen ? 'rotate-90' : ''}`} />
+                    </>
+                  )}
+                </SidebarMenuButton>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarMenu className="ml-4 border-l border-sidebar-border pl-2">
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink to="/financial/requests/new" end className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <PlusCircle className="mr-2 h-3.5 w-3.5" />
+                        {!collapsed && <span className="text-sm">Nova Solicitação</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink to="/financial/requests" end className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <ClipboardList className="mr-2 h-3.5 w-3.5" />
+                        {!collapsed && <span className="text-sm">Solicitações</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </CollapsibleContent>
+            </SidebarMenuItem>
+          </Collapsible>
+
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <NavLink to="/financial/reports" end className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                <BarChart3 className="mr-2 h-4 w-4" />
+                {!collapsed && <span>Relatórios</span>}
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+}
+
+function SimpleMenu({ items, label, collapsed }: { items: { title: string; url: string; icon: typeof Package }[]; label: string; collapsed: boolean }) {
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel className="text-sidebar-foreground/50">{label}</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {items.map((item) => (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton asChild>
+                <NavLink to={item.url} end className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                  <item.icon className="mr-2 h-4 w-4" />
+                  {!collapsed && <span>{item.title}</span>}
+                </NavLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+}
+
 export function AppSidebar() {
   const { activeModule, setActiveModule, selectedBranch, setSelectedBranch, selectedFacilitiesBranch, setSelectedFacilitiesBranch } = useApp();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
-  const location = useLocation();
 
   return (
     <Sidebar collapsible="icon">
@@ -69,43 +229,7 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Context Switcher */}
-        {!collapsed && (
-          <div className="p-3">
-            <div className="flex rounded-md bg-sidebar-accent p-1">
-              <button
-                onClick={() => setActiveModule('stock')}
-                className={`flex-1 rounded px-2 py-1.5 text-xs font-medium transition-colors ${
-                  activeModule === 'stock'
-                    ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-                    : 'text-sidebar-foreground/70 hover:text-sidebar-foreground'
-                }`}
-              >
-                Estoque
-              </button>
-              <button
-                onClick={() => setActiveModule('inventory')}
-                className={`flex-1 rounded px-2 py-1.5 text-xs font-medium transition-colors ${
-                  activeModule === 'inventory'
-                    ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-                    : 'text-sidebar-foreground/70 hover:text-sidebar-foreground'
-                }`}
-              >
-                Patrimônio
-              </button>
-              <button
-                onClick={() => setActiveModule('facilities')}
-                className={`flex-1 rounded px-2 py-1.5 text-xs font-medium transition-colors ${
-                  activeModule === 'facilities'
-                    ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-                    : 'text-sidebar-foreground/70 hover:text-sidebar-foreground'
-                }`}
-              >
-                Facilities
-              </button>
-            </div>
-          </div>
-        )}
+        <ModuleSwitcher activeModule={activeModule} setActiveModule={setActiveModule} collapsed={collapsed} />
 
         {/* Branch Selector — Stock only */}
         {activeModule === 'stock' && !collapsed && (
@@ -125,11 +249,7 @@ export function AppSidebar() {
                     <DropdownMenuLabel className="text-xs text-muted-foreground">{group.label}</DropdownMenuLabel>
                     <DropdownMenuGroup>
                       {group.branches.map(branch => (
-                        <DropdownMenuItem
-                          key={branch}
-                          onClick={() => setSelectedBranch(branch)}
-                          className={selectedBranch === branch ? 'bg-accent/10 text-accent font-medium' : ''}
-                        >
+                        <DropdownMenuItem key={branch} onClick={() => setSelectedBranch(branch)} className={selectedBranch === branch ? 'bg-accent/10 text-accent font-medium' : ''}>
                           {BRANCH_LABELS[branch] || branch}
                         </DropdownMenuItem>
                       ))}
@@ -153,19 +273,12 @@ export function AppSidebar() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56">
-                <DropdownMenuItem
-                  onClick={() => setSelectedFacilitiesBranch(null)}
-                  className={selectedFacilitiesBranch === null ? 'bg-accent/10 text-accent font-medium' : ''}
-                >
+                <DropdownMenuItem onClick={() => setSelectedFacilitiesBranch(null)} className={selectedFacilitiesBranch === null ? 'bg-accent/10 text-accent font-medium' : ''}>
                   Todas as Filiais
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {ALL_BRANCHES.map(branch => (
-                  <DropdownMenuItem
-                    key={branch}
-                    onClick={() => setSelectedFacilitiesBranch(branch)}
-                    className={selectedFacilitiesBranch === branch ? 'bg-accent/10 text-accent font-medium' : ''}
-                  >
+                  <DropdownMenuItem key={branch} onClick={() => setSelectedFacilitiesBranch(branch)} className={selectedFacilitiesBranch === branch ? 'bg-accent/10 text-accent font-medium' : ''}>
                     {BRANCH_LABELS[branch] || branch}
                   </DropdownMenuItem>
                 ))}
@@ -174,80 +287,10 @@ export function AppSidebar() {
           </div>
         )}
 
-        {activeModule === 'stock' && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground/50">Gestão de Estoque</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {stockItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.url}
-                        end
-                        className="hover:bg-sidebar-accent/50"
-                        activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                      >
-                        <item.icon className="mr-2 h-4 w-4" />
-                        {!collapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {activeModule === 'inventory' && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground/50">Inventário Patrimonial</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {inventoryItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.url}
-                        end
-                        className="hover:bg-sidebar-accent/50"
-                        activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                      >
-                        <item.icon className="mr-2 h-4 w-4" />
-                        {!collapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {activeModule === 'facilities' && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground/50">Gestão de Facilities</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {facilitiesItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.url}
-                        end
-                        className="hover:bg-sidebar-accent/50"
-                        activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                      >
-                        <item.icon className="mr-2 h-4 w-4" />
-                        {!collapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+        {activeModule === 'stock' && <SimpleMenu items={stockItems} label="Gestão de Estoque" collapsed={collapsed} />}
+        {activeModule === 'inventory' && <SimpleMenu items={inventoryItems} label="Inventário Patrimonial" collapsed={collapsed} />}
+        {activeModule === 'facilities' && <SimpleMenu items={facilitiesItems} label="Gestão de Facilities" collapsed={collapsed} />}
+        {activeModule === 'financial' && <FinancialMenu collapsed={collapsed} />}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-3">

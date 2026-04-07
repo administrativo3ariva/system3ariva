@@ -104,6 +104,54 @@ export type Database = {
         }
         Relationships: []
       }
+      expenses: {
+        Row: {
+          amount: number
+          card_name: string | null
+          category: string
+          company: string
+          cost_center: string
+          created_at: string
+          description: string
+          expense_date: string
+          id: string
+          notes: string | null
+          receipt_url: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          card_name?: string | null
+          category: string
+          company: string
+          cost_center: string
+          created_at?: string
+          description: string
+          expense_date?: string
+          id?: string
+          notes?: string | null
+          receipt_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          card_name?: string | null
+          category?: string
+          company?: string
+          cost_center?: string
+          created_at?: string
+          description?: string
+          expense_date?: string
+          id?: string
+          notes?: string | null
+          receipt_url?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       maintenance_tasks: {
         Row: {
           actual_cost: number | null
@@ -265,6 +313,54 @@ export type Database = {
           unit?: string
           updated_at?: string
           upload_date?: string
+        }
+        Relationships: []
+      }
+      payment_requests: {
+        Row: {
+          amount: number
+          category: string
+          company: string
+          cost_center: string
+          created_at: string
+          description: string
+          due_date: string | null
+          id: string
+          notes: string | null
+          payment_date: string | null
+          status: string
+          supplier: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          category: string
+          company: string
+          cost_center: string
+          created_at?: string
+          description: string
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          status?: string
+          supplier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          company?: string
+          cost_center?: string
+          created_at?: string
+          description?: string
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          status?: string
+          supplier?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
