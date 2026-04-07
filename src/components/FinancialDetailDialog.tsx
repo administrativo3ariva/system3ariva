@@ -103,22 +103,26 @@ export function FinancialDetailDialog({
 
           {/* Right: Receipt preview */}
           {receiptUrl && (
-            <div className="w-[200px] shrink-0">
-              <a
-                href={receiptUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center rounded-lg border p-4 hover:bg-muted/50 transition-colors h-full gap-3"
-              >
+            <div className="w-[220px] shrink-0">
+              <div className="rounded-lg border overflow-hidden h-full flex flex-col">
                 {receiptUrl.toLowerCase().endsWith('.pdf') ? (
-                  <FileText className="h-12 w-12 text-muted-foreground/50" />
+                  <iframe
+                    src={receiptUrl}
+                    className="w-full flex-1 min-h-[250px]"
+                    title="Comprovante"
+                  />
                 ) : (
-                  <img src={receiptUrl} alt="Comprovante" className="max-h-32 object-contain rounded" />
+                  <img src={receiptUrl} alt="Comprovante" className="w-full object-contain" />
                 )}
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  Visualizar <ExternalLink className="h-3 w-3" />
-                </span>
-              </a>
+                <a
+                  href={receiptUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs text-primary hover:bg-muted/50 border-t transition-colors"
+                >
+                  Abrir em nova aba <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
             </div>
           )}
         </div>

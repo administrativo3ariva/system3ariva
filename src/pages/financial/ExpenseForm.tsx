@@ -1,9 +1,9 @@
-import { useState, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useCreateExpense } from '@/hooks/use-expenses';
+import { useCreateExpense, useUpdateExpense, useExpenses } from '@/hooks/use-expenses';
 import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES, EXPENSE_CATEGORIES, COMPANY_CARD_MAP, CORPORATE_CARDS, FinancialCompany } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -35,9 +35,18 @@ type FormData = z.infer<typeof schema>;
 
 export default function ExpenseForm() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('edit');
+  const isEditing = !!editId;
+
   const create = useCreateExpense();
+  const update = useUpdateExpense();
+  const { data: expenses = [] } = useExpenses();
+  const editingExpense = isEditing ? expenses.find((e: any) => e.id === editId) : null;
+
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [existingReceiptUrl, setExistingReceiptUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FormData>({
@@ -56,9 +65,30 @@ export default function ExpenseForm() {
     },
   });
 
+  // Load existing expense data for editing
+  useEffect(() => {
+    if (editingExpense) {
+      form.reset({
+        description: editingExpense.description,
+        amount: Number(editingExpense.amount),
+        cost_center: editingExpense.cost_center,
+        company: editingExpense.company,
+        category: editingExpense.category,
+        card_name: editingExpense.card_name || '',
+        expense_date: editingExpense.expense_date,
+        notes: editingExpense.notes || '',
+        is_installment: (editingExpense as any).is_installment || false,
+        installment_count: (editingExpense as any).installment_count || undefined,
+      });
+      if (editingExpense.receipt_url) {
+        setExistingReceiptUrl(editingExpense.receipt_url);
+      }
+    }
+  }, [editingExpense, form]);
+
   const selectedCard = form.watch('card_name');
   const isInstallment = form.watch('is_installment');
-  const hasReceipt = !!receiptFile;
+  const hasReceipt = !!receiptFile || !!existingReceiptUrl;
 
   const handleCompanyChange = useCallback((value: string) => {
     form.setValue('company', value);
@@ -78,11 +108,12 @@ export default function ExpenseForm() {
         return;
       }
       setReceiptFile(file);
+      setExistingReceiptUrl(null);
     }
   };
 
   const onSubmit = async (data: FormData) => {
-    let receipt_url: string | undefined;
+    let receipt_url: string | undefined = existingReceiptUrl || undefined;
 
     if (receiptFile) {
       setUploading(true);
@@ -99,7 +130,7 @@ export default function ExpenseForm() {
       setUploading(false);
     }
 
-    create.mutate({
+    const payload = {
       description: data.description,
       amount: data.amount,
       cost_center: data.cost_center,
@@ -112,7 +143,13 @@ export default function ExpenseForm() {
       installment_count: data.is_installment ? data.installment_count : null,
       installment_current: data.is_installment ? 1 : null,
       ...(receipt_url ? { receipt_url } : {}),
-    } as any, { onSuccess: () => navigate('/financial/expenses') });
+    } as any;
+
+    if (isEditing && editId) {
+      update.mutate({ id: editId, ...payload }, { onSuccess: () => navigate('/financial/expenses') });
+    } else {
+      create.mutate(payload, { onSuccess: () => navigate('/financial/expenses') });
+    }
   };
 
   return (
@@ -120,7 +157,7 @@ export default function ExpenseForm() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Lançar Despesa</h1>
+          <h1 className="text-2xl font-bold text-foreground">{isEditing ? 'Editar Despesa' : 'Lançar Despesa'}</h1>
           <p className="text-sm text-muted-foreground mt-1">Cartão Corporativo</p>
         </div>
         {selectedCard && (
@@ -315,7 +352,23 @@ export default function ExpenseForm() {
                 className="hidden"
               />
 
-              {!receiptFile ? (
+              {existingReceiptUrl && !receiptFile ? (
+                <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Comprovante já anexado</p>
+                      <a href={existingReceiptUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">Ver comprovante</a>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button type="button" variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()}>Trocar</Button>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => setExistingReceiptUrl(null)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : !receiptFile ? (
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   className={cn(
@@ -372,8 +425,8 @@ export default function ExpenseForm() {
             <Button type="button" variant="outline" size="lg" onClick={() => navigate('/financial/expenses')}>
               Cancelar
             </Button>
-            <Button type="submit" size="lg" disabled={create.isPending || uploading}>
-              {create.isPending || uploading ? 'Salvando...' : 'Lançar Despesa'}
+            <Button type="submit" size="lg" disabled={create.isPending || update.isPending || uploading}>
+              {create.isPending || update.isPending || uploading ? 'Salvando...' : isEditing ? 'Salvar Alterações' : 'Lançar Despesa'}
             </Button>
           </div>
         </form>
