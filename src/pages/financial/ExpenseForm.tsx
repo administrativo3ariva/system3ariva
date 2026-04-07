@@ -1,9 +1,9 @@
-import { useState, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useCreateExpense } from '@/hooks/use-expenses';
+import { useCreateExpense, useUpdateExpense, useExpenses } from '@/hooks/use-expenses';
 import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES, EXPENSE_CATEGORIES, COMPANY_CARD_MAP, CORPORATE_CARDS, FinancialCompany } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
