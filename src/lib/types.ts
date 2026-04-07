@@ -121,6 +121,14 @@ export type FinancialCostCenter = typeof FINANCIAL_COST_CENTERS[number];
 export const FINANCIAL_COMPANIES = ['RIVA', '3A', 'RVCS', '3A Serviços', 'Vêneto'] as const;
 export type FinancialCompany = typeof FINANCIAL_COMPANIES[number];
 
+export const CORPORATE_CARDS = [
+  { value: 'Cartão Final 4402', label: 'Cartão Final 4402 (Kamino)' },
+  { value: 'Cartão Final 2819', label: 'Cartão Final 2819 (Kamino)' },
+  { value: 'Cartão Final 6498', label: 'Cartão Final 6498 (Kamino)' },
+  { value: 'Cartão Final 0071', label: 'Cartão Final 0071 (Inter)' },
+  { value: 'Cartão Final 3220', label: 'Cartão Final 3220 (Vexpeses)' },
+] as const;
+
 /** Maps companies that have a corporate card to their default card identifier */
 export const COMPANY_CARD_MAP: Partial<Record<FinancialCompany, string>> = {
   'RIVA': 'Cartão Final 4402',
