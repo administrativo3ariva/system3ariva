@@ -157,7 +157,7 @@ export default function ExpenseForm() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Lançar Despesa</h1>
+          <h1 className="text-2xl font-bold text-foreground">{isEditing ? 'Editar Despesa' : 'Lançar Despesa'}</h1>
           <p className="text-sm text-muted-foreground mt-1">Cartão Corporativo</p>
         </div>
         {selectedCard && (
@@ -352,7 +352,23 @@ export default function ExpenseForm() {
                 className="hidden"
               />
 
-              {!receiptFile ? (
+              {existingReceiptUrl && !receiptFile ? (
+                <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Comprovante já anexado</p>
+                      <a href={existingReceiptUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">Ver comprovante</a>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button type="button" variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()}>Trocar</Button>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => setExistingReceiptUrl(null)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ) : !receiptFile ? (
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   className={cn(
@@ -409,8 +425,8 @@ export default function ExpenseForm() {
             <Button type="button" variant="outline" size="lg" onClick={() => navigate('/financial/expenses')}>
               Cancelar
             </Button>
-            <Button type="submit" size="lg" disabled={create.isPending || uploading}>
-              {create.isPending || uploading ? 'Salvando...' : 'Lançar Despesa'}
+            <Button type="submit" size="lg" disabled={create.isPending || update.isPending || uploading}>
+              {create.isPending || update.isPending || uploading ? 'Salvando...' : isEditing ? 'Salvar Alterações' : 'Lançar Despesa'}
             </Button>
           </div>
         </form>
