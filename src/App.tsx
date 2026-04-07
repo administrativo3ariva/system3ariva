@@ -19,6 +19,12 @@ import FacilitiesDashboard from "@/pages/facilities/FacilitiesDashboard";
 import FacilitiesCalendar from "@/pages/facilities/FacilitiesCalendar";
 import FacilitiesKanban from "@/pages/facilities/FacilitiesKanban";
 import FacilitiesPerformance from "@/pages/facilities/FacilitiesPerformance";
+import FinancialDashboard from "@/pages/financial/FinancialDashboard";
+import ExpenseForm from "@/pages/financial/ExpenseForm";
+import ExpensesList from "@/pages/financial/ExpensesList";
+import PaymentRequestForm from "@/pages/financial/PaymentRequestForm";
+import PaymentRequestsList from "@/pages/financial/PaymentRequestsList";
+import FinancialReports from "@/pages/financial/FinancialReports";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -47,6 +53,12 @@ const App = () => (
               <Route path="/facilities/calendar" element={<FacilitiesCalendar />} />
               <Route path="/facilities/kanban" element={<FacilitiesKanban />} />
               <Route path="/facilities/performance" element={<FacilitiesPerformance />} />
+              <Route path="/financial/dashboard" element={<FinancialDashboard />} />
+              <Route path="/financial/expenses/new" element={<ExpenseForm />} />
+              <Route path="/financial/expenses" element={<ExpensesList />} />
+              <Route path="/financial/requests/new" element={<PaymentRequestForm />} />
+              <Route path="/financial/requests" element={<PaymentRequestsList />} />
+              <Route path="/financial/reports" element={<FinancialReports />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
