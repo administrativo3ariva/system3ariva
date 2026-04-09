@@ -152,7 +152,7 @@ export default function ExpensesList() {
                       <span className="text-xs text-muted-foreground w-12 text-center hidden md:block">{e.cost_center}</span>
 
                       {/* Category */}
-                      <span className="text-xs text-muted-foreground w-32 truncate text-center hidden xl:block">{e.category}</span>
+                      <span className="text-xs text-muted-foreground min-w-[140px] text-center hidden xl:block">{e.category}</span>
 
                       {/* Card / Payment */}
                       <div className="w-36 hidden lg:flex items-center justify-center">
@@ -172,7 +172,7 @@ export default function ExpensesList() {
                       </span>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewItem(e)}>
                           <Eye className="h-3.5 w-3.5" />
                         </Button>
