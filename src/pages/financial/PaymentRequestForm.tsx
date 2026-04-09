@@ -53,6 +53,7 @@ export default function PaymentRequestForm() {
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('edit');
   const isEditing = !!editId;
+  const isFromNf = searchParams.get('from_nf') === 'true';
 
   const create = useCreatePaymentRequest();
   const update = useUpdatePaymentRequest();
