@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { usePaymentRequests, useDeletePaymentRequest, useUpdatePaymentRequest } from '@/hooks/use-payment-requests';
 import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES } from '@/lib/types';
 import { FinancialDetailDialog } from '@/components/FinancialDetailDialog';
+import { FinancialFilters, useDateRangeFilter, filterByDateRange, type FilterConfig } from '@/components/FinancialFilters';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Trash2, Eye, Pencil, FileBarChart, QrCode, Landmark, AlertTriangle } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -20,6 +20,12 @@ const paymentMethodLabels: Record<string, { label: string; icon: typeof FileBarC
   pix: { label: 'PIX', icon: QrCode },
   transferencia: { label: 'Transferência', icon: Landmark },
 };
+
+const FILTERS: FilterConfig[] = [
+  { key: 'cost_center', label: 'Centro de Custo', allLabel: 'Todos Centros', options: FINANCIAL_COST_CENTERS },
+  { key: 'company', label: 'Empresa', allLabel: 'Todas Empresas', options: FINANCIAL_COMPANIES },
+  { key: 'status', label: 'Status', allLabel: 'Todos Status', options: ['pendente', 'aprovado', 'pago', 'rejeitado'] },
+];
 
 function groupByDate(items: any[], dateField: string) {
   const groups: Record<string, any[]> = {};
@@ -35,15 +41,21 @@ export default function PaymentRequestsList() {
   const { data: requests = [], isLoading } = usePaymentRequests();
   const deleteReq = useDeletePaymentRequest();
   const updateReq = useUpdatePaymentRequest();
-  const [filterCC, setFilterCC] = useState('all');
-  const [filterCompany, setFilterCompany] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+  const { dateFrom, dateTo, isDefaultRange, handleDateFromChange, handleDateToChange, clearDates } = useDateRangeFilter();
   const [viewItem, setViewItem] = useState<any | null>(null);
 
-  const filtered = requests.filter((r: any) =>
-    (filterCC === 'all' || r.cost_center === filterCC) &&
-    (filterCompany === 'all' || r.company === filterCompany) &&
-    (filterStatus === 'all' || r.status === filterStatus)
+  const handleFilterChange = (key: string, value: string) => {
+    setFilterValues(prev => ({ ...prev, [key]: value }));
+  };
+
+  const filtered = filterByDateRange(
+    requests.filter((r: any) =>
+      Object.entries(filterValues).every(([k, v]) => !v || v === 'all' || (r as any)[k] === v)
+    ),
+    'due_date' as any,
+    dateFrom,
+    dateTo
   );
 
   const grouped = groupByDate(filtered, 'due_date');
@@ -59,35 +71,18 @@ export default function PaymentRequestsList() {
         <Link to="/financial/requests/new"><Button><Plus className="mr-2 h-4 w-4" />Nova Solicitação</Button></Link>
       </div>
 
-      {/* Filters */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        <Select value={filterCC} onValueChange={setFilterCC}>
-          <SelectTrigger><SelectValue placeholder="Centro de Custo" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos Centros</SelectItem>
-            {FINANCIAL_COST_CENTERS.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={filterCompany} onValueChange={setFilterCompany}>
-          <SelectTrigger><SelectValue placeholder="Empresa" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas Empresas</SelectItem>
-            {FINANCIAL_COMPANIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos Status</SelectItem>
-            <SelectItem value="pendente">Pendente</SelectItem>
-            <SelectItem value="aprovado">Aprovado</SelectItem>
-            <SelectItem value="pago">Pago</SelectItem>
-            <SelectItem value="rejeitado">Rejeitado</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <FinancialFilters
+        filters={FILTERS}
+        values={filterValues}
+        onValueChange={handleFilterChange}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        onDateFromChange={handleDateFromChange}
+        onDateToChange={handleDateToChange}
+        onClearDates={clearDates}
+        isDefaultRange={isDefaultRange}
+      />
 
-      {/* Bank-statement style list */}
       {isLoading ? (
         <p className="text-muted-foreground text-center py-12">Carregando...</p>
       ) : grouped.length === 0 ? (
@@ -101,7 +96,6 @@ export default function PaymentRequestsList() {
               : format(parseISO(date), "dd 'de' MMMM, yyyy", { locale: ptBR });
             return (
               <Card key={date}>
-                {/* Day header */}
                 <div className="flex items-center justify-between px-5 py-3 bg-muted/40 border-b">
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-semibold text-foreground">{dateLabel}</span>
@@ -109,101 +103,50 @@ export default function PaymentRequestsList() {
                   </div>
                   <span className="text-sm font-semibold tabular-nums text-foreground">{fmt(dayTotal)}</span>
                 </div>
-
-                {/* Items */}
                 <div className="divide-y">
                   {items.map((r: any) => {
                     const pm = paymentMethodLabels[r.payment_method] || null;
                     return (
-                      <div
-                        key={r.id}
-                        className="flex items-center gap-4 px-5 py-3 hover:bg-muted/20 transition-colors group"
-                      >
-                        {/* Status dot */}
-                        <div className={cn(
-                          'w-2 h-2 rounded-full shrink-0',
-                          r.status === 'pago' ? 'bg-blue-500' :
-                          r.status === 'aprovado' ? 'bg-green-500' :
-                          r.status === 'rejeitado' ? 'bg-red-500' : 'bg-yellow-500'
-                        )} />
-
-                        {/* Description */}
+                      <div key={r.id} className="flex items-center gap-4 px-5 py-3 hover:bg-muted/20 transition-colors group">
+                        <div className={cn('w-2 h-2 rounded-full shrink-0', r.status === 'pago' ? 'bg-blue-500' : r.status === 'aprovado' ? 'bg-green-500' : r.status === 'rejeitado' ? 'bg-red-500' : 'bg-yellow-500')} />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{r.description}</p>
-                          {r.supplier && (
-                            <span className="text-[10px] text-muted-foreground">{r.supplier}</span>
-                          )}
+                          {r.supplier && <span className="text-[10px] text-muted-foreground">{r.supplier}</span>}
                           {!r.receipt_url && (
                             <span className="text-[10px] text-yellow-600 flex items-center gap-1 mt-0.5">
                               <AlertTriangle className="h-3 w-3" /> Pendente de NF
                             </span>
                           )}
                         </div>
-
-                        {/* Company */}
                         <span className="text-xs text-muted-foreground w-16 text-center hidden lg:block">{r.company}</span>
-
-                        {/* Cost Center */}
                         <span className="text-xs text-muted-foreground w-12 text-center hidden md:block">{r.cost_center}</span>
-
-                        {/* Category */}
                         <span className="text-xs text-muted-foreground min-w-[140px] text-center hidden xl:block">{r.category}</span>
-
-                        {/* Payment method */}
                         <div className="w-32 hidden lg:flex items-center justify-center">
                           {pm ? (
                             <Badge variant="outline" className="text-[10px] gap-1 px-2 py-0.5">
                               <pm.icon className="h-3 w-3" />
                               {pm.label}
                             </Badge>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
+                          ) : <span className="text-xs text-muted-foreground">—</span>}
                         </div>
-
-                        {/* Amount */}
-                        <span className="text-sm font-semibold tabular-nums text-foreground w-28 text-right">
-                          {fmt(Number(r.amount))}
-                        </span>
-
-                        {/* Paid toggle */}
+                        <span className="text-sm font-semibold tabular-nums text-foreground w-28 text-right">{fmt(Number(r.amount))}</span>
                         <div className="flex items-center gap-2 w-20 justify-center">
                           <button
-                            onClick={() => {
-                              const newStatus = r.status === 'pago' ? 'pendente' : 'pago';
-                              updateReq.mutate({ id: r.id, status: newStatus });
-                            }}
+                            onClick={() => updateReq.mutate({ id: r.id, status: r.status === 'pago' ? 'pendente' : 'pago' })}
                             className={cn(
                               'flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium transition-colors border',
-                              r.status === 'pago'
-                                ? 'bg-green-100 text-green-700 border-green-200'
-                                : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                              r.status === 'pago' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
                             )}
                           >
-                            <div className={cn(
-                              'w-2 h-2 rounded-full transition-colors',
-                              r.status === 'pago' ? 'bg-green-500' : 'bg-muted-foreground/40'
-                            )} />
+                            <div className={cn('w-2 h-2 rounded-full transition-colors', r.status === 'pago' ? 'bg-green-500' : 'bg-muted-foreground/40')} />
                             {r.status === 'pago' ? 'Pago' : 'Pagar'}
                           </button>
                         </div>
-
-                        {/* Actions */}
                         <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewItem(r)}>
-                            <Eye className="h-3.5 w-3.5" />
-                          </Button>
-                          <Link to={`/financial/requests/new?edit=${r.id}`}>
-                            <Button variant="ghost" size="icon" className="h-7 w-7">
-                              <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                          </Link>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewItem(r)}><Eye className="h-3.5 w-3.5" /></Button>
+                          <Link to={`/financial/requests/new?edit=${r.id}`}><Button variant="ghost" size="icon" className="h-7 w-7"><Pencil className="h-3.5 w-3.5" /></Button></Link>
                           <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7">
-                                <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                              </Button>
-                            </AlertDialogTrigger>
+                            <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7"><Trash2 className="h-3.5 w-3.5 text-destructive" /></Button></AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
@@ -226,7 +169,6 @@ export default function PaymentRequestsList() {
         </div>
       )}
 
-      {/* Detail Dialog */}
       {viewItem && (
         <FinancialDetailDialog
           open={!!viewItem}
@@ -235,11 +177,7 @@ export default function PaymentRequestsList() {
           status={viewItem.status}
           statusColor=""
           amount={Number(viewItem.amount)}
-          paymentLabel={
-            viewItem.payment_method
-              ? paymentMethodLabels[viewItem.payment_method]?.label || viewItem.payment_method
-              : undefined
-          }
+          paymentLabel={viewItem.payment_method ? paymentMethodLabels[viewItem.payment_method]?.label || viewItem.payment_method : undefined}
           fields={[
             { label: 'Fornecedor', value: viewItem.supplier },
             { label: 'Categoria', value: viewItem.category },
