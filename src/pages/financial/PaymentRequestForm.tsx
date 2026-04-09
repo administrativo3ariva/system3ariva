@@ -115,6 +115,23 @@ export default function PaymentRequestForm() {
     }
   }, [editingRequest, form]);
 
+  // Pre-fill from NF link
+  useEffect(() => {
+    if (isFromNf && !isEditing) {
+      const supplier = searchParams.get('supplier');
+      const amount = searchParams.get('amount');
+      const costCenter = searchParams.get('cost_center');
+      const receiptUrl = searchParams.get('receipt_url');
+      const nfName = searchParams.get('nf_name');
+
+      if (supplier) form.setValue('supplier', supplier);
+      if (amount) form.setValue('amount', Number(amount));
+      if (costCenter) form.setValue('cost_center', costCenter);
+      if (receiptUrl) setExistingReceiptUrl(receiptUrl);
+      if (nfName) form.setValue('description', `NF: ${nfName}`);
+    }
+  }, [isFromNf, isEditing, searchParams, form]);
+
   const paymentMethod = form.watch('payment_method');
 
   const handleSelectSupplier = useCallback((supplier: Supplier) => {
