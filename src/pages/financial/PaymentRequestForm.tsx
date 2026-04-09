@@ -151,8 +151,8 @@ export default function PaymentRequestForm() {
   const onSubmit = async (data: FormData) => {
     setUploading(true);
     try {
-      let boleto_url: string | undefined;
-      let receipt_url: string | undefined;
+      let boleto_url: string | undefined = existingBoletoUrl || undefined;
+      let receipt_url: string | undefined = existingReceiptUrl || undefined;
 
       if (boletoFile) boleto_url = await uploadFile(boletoFile, 'boletos');
       if (receiptFile) receipt_url = await uploadFile(receiptFile, 'receipts');
@@ -172,7 +172,7 @@ export default function PaymentRequestForm() {
         supplier_id = newSupplier.id;
       }
 
-      create.mutate({
+      const payload = {
         description: data.description,
         amount: data.amount,
         cost_center: data.cost_center,
@@ -190,7 +190,13 @@ export default function PaymentRequestForm() {
         receipt_url,
         supplier_id: supplier_id || undefined,
         notes: data.notes,
-      }, { onSuccess: () => navigate('/financial/requests') });
+      };
+
+      if (isEditing && editId) {
+        update.mutate({ id: editId, ...payload } as any, { onSuccess: () => navigate('/financial/requests') });
+      } else {
+        create.mutate(payload, { onSuccess: () => navigate('/financial/requests') });
+      }
     } catch (err: any) {
       toast.error('Erro ao enviar arquivo: ' + err.message);
     } finally {
