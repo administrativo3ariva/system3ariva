@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Pencil, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Pencil, Plus, Link2, CreditCard, Landmark } from 'lucide-react';
 import { Upload, FileText, Check, X, Eye, Loader2, Trash2, ExternalLink } from 'lucide-react';
 import { useNfUploads, useUploadAndProcessNf, useUpdateNfUpload, useDeleteNfUpload, useApproveNf } from '@/hooks/use-nf-uploads';
 import type { DbNfUpload, DbNfItem } from '@/hooks/use-nf-uploads';
@@ -17,6 +18,7 @@ import { PRODUCT_CATEGORIES } from '@/lib/mock-data';
 
 export default function NfUploadPage() {
   const { selectedBranch } = useApp();
+  const navigate = useNavigate();
   const { data: nfUploads = [], isLoading } = useNfUploads();
   const uploadNf = useUploadAndProcessNf();
   const updateNfUpload = useUpdateNfUpload();
@@ -29,6 +31,29 @@ export default function NfUploadPage() {
   const [addingCategoryForIndex, setAddingCategoryForIndex] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const branchToCostCenter = (unit: string): string => {
+    const map: Record<string, string> = {
+      'BH-Matriz': 'BH', 'Vêneto-BH': 'BH', 'Vêneto-SP': 'SP',
+      'SP': 'SP', 'RJ': 'RJ', 'PAG': 'PAG', 'VAG': 'VAG',
+      'FLO': 'FLO', 'JM': 'JM', 'ITA': 'ITA', 'CPN': 'CPN',
+      'LIM': 'LIM', 'JUN': 'JUN', 'SJC': 'SJC',
+    };
+    return map[unit] || 'BH';
+  };
+
+  const handleLinkToFinancial = (nf: DbNfUpload, type: 'expense' | 'payment') => {
+    const params = new URLSearchParams();
+    params.set('from_nf', 'true');
+    if (nf.supplier) params.set('supplier', nf.supplier);
+    if (nf.total_value) params.set('amount', String(nf.total_value));
+    params.set('cost_center', branchToCostCenter(nf.unit));
+    if (nf.file_url) params.set('receipt_url', nf.file_url);
+    if (nf.file_name) params.set('nf_name', nf.file_name);
+
+    const path = type === 'expense' ? '/financial/expenses/new' : '/financial/requests/new';
+    navigate(`${path}?${params.toString()}`);
+  };
 
   const allCategories = [...PRODUCT_CATEGORIES, ...customCategories.filter(c => !PRODUCT_CATEGORIES.includes(c))];
 
@@ -517,6 +542,33 @@ export default function NfUploadPage() {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+              {/* Vincular ao Financeiro */}
+              <div className="border-t pt-4 mt-2">
+                <div className="flex items-center gap-2 mb-3">
+                  <Link2 className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground">Vincular ao Financeiro</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    variant="outline"
+                    className="h-auto py-3 flex flex-col items-center gap-1.5"
+                    onClick={() => handleLinkToFinancial(previewNf, 'expense')}
+                  >
+                    <CreditCard className="h-5 w-5 text-primary" />
+                    <span className="text-sm font-medium">Lançar Despesa</span>
+                    <span className="text-xs text-muted-foreground">Cartão Corporativo</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-auto py-3 flex flex-col items-center gap-1.5"
+                    onClick={() => handleLinkToFinancial(previewNf, 'payment')}
+                  >
+                    <Landmark className="h-5 w-5 text-primary" />
+                    <span className="text-sm font-medium">Solicitação de Pagamento</span>
+                    <span className="text-xs text-muted-foreground">Boleto / PIX / Transferência</span>
+                  </Button>
+                </div>
               </div>
 
               {previewNf.status === 'pendente' && (

@@ -41,6 +41,7 @@ export default function ExpenseForm() {
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('edit');
   const isEditing = !!editId;
+  const isFromNf = searchParams.get('from_nf') === 'true';
 
   const create = useCreateExpense();
   const update = useUpdateExpense();
@@ -94,6 +95,23 @@ export default function ExpenseForm() {
       }
     }
   }, [editingExpense, form]);
+
+  // Pre-fill from NF link
+  useEffect(() => {
+    if (isFromNf && !isEditing) {
+      const supplier = searchParams.get('supplier');
+      const amount = searchParams.get('amount');
+      const costCenter = searchParams.get('cost_center');
+      const receiptUrl = searchParams.get('receipt_url');
+      const nfName = searchParams.get('nf_name');
+
+      if (supplier) form.setValue('supplier', supplier);
+      if (amount) form.setValue('amount', Number(amount));
+      if (costCenter) form.setValue('cost_center', costCenter);
+      if (receiptUrl) setExistingReceiptUrl(receiptUrl);
+      if (nfName) form.setValue('description', `NF: ${nfName}`);
+    }
+  }, [isFromNf, isEditing, searchParams, form]);
 
   const selectedCard = form.watch('card_name');
   const isInstallment = form.watch('is_installment');
