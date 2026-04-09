@@ -1,7 +1,8 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { FileText, MessageSquare, CreditCard, QrCode, Landmark, FileBarChart, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { FileText, MessageSquare, CreditCard, QrCode, Landmark, FileBarChart, ExternalLink, Download } from 'lucide-react';
 
 interface DetailField {
   label: string;
@@ -44,12 +45,37 @@ const paymentIcons: Record<string, typeof CreditCard> = {
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+function isPdf(url: string) {
+  try {
+    const pathname = new URL(url).pathname;
+    return pathname.toLowerCase().endsWith('.pdf');
+  } catch {
+    return url.toLowerCase().includes('.pdf');
+  }
+}
+
+function isImage(url: string) {
+  try {
+    const pathname = new URL(url).pathname.toLowerCase();
+    return /\.(jpg|jpeg|png|webp|gif|bmp|svg)$/.test(pathname);
+  } catch {
+    return false;
+  }
+}
+
+function openUrl(url: string) {
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
 export function FinancialDetailDialog({
   open, onOpenChange, title, status, amount, paymentLabel,
   fields, receiptUrl, notes, installmentInfo,
 }: FinancialDetailDialogProps) {
   const PaymentIcon = paymentLabel ? (paymentIcons[paymentLabel.toLowerCase()] || CreditCard) : CreditCard;
   const isCard = paymentLabel?.toLowerCase().startsWith('cartão');
+
+  const receiptIsPdf = receiptUrl ? isPdf(receiptUrl) : false;
+  const receiptIsImage = receiptUrl ? isImage(receiptUrl) : false;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -60,6 +86,7 @@ export function FinancialDetailDialog({
             <DialogTitle className="text-lg font-bold text-foreground leading-tight pr-8">
               {title}
             </DialogTitle>
+            <DialogDescription className="sr-only">Detalhes do registro financeiro</DialogDescription>
           </DialogHeader>
           <div className="flex items-center gap-2 mt-3">
             <Badge variant="outline" className={statusStyles[status] || ''}>
@@ -105,23 +132,37 @@ export function FinancialDetailDialog({
           {receiptUrl && (
             <div className="w-[220px] shrink-0">
               <div className="rounded-lg border overflow-hidden h-full flex flex-col">
-                {receiptUrl.toLowerCase().endsWith('.pdf') ? (
-                  <iframe
+                {receiptIsImage ? (
+                  <img
                     src={receiptUrl}
-                    className="w-full flex-1 min-h-[250px]"
-                    title="Comprovante"
+                    alt="Comprovante"
+                    className="w-full object-contain cursor-pointer"
+                    onClick={() => openUrl(receiptUrl)}
                   />
                 ) : (
-                  <img src={receiptUrl} alt="Comprovante" className="w-full object-contain" />
+                  <div
+                    className="flex-1 min-h-[200px] flex flex-col items-center justify-center gap-3 bg-muted/20 p-4 cursor-pointer hover:bg-muted/40 transition-colors"
+                    onClick={() => openUrl(receiptUrl)}
+                  >
+                    <div className="rounded-full bg-primary/10 p-4">
+                      <FileText className="h-8 w-8 text-primary" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-foreground">
+                        {receiptIsPdf ? 'Documento PDF' : 'Comprovante'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">Clique para visualizar</p>
+                    </div>
+                  </div>
                 )}
-                <a
-                  href={receiptUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs text-primary hover:bg-muted/50 border-t transition-colors"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full rounded-none border-t text-xs gap-1.5 h-9"
+                  onClick={() => openUrl(receiptUrl)}
                 >
                   Abrir em nova aba <ExternalLink className="h-3 w-3" />
-                </a>
+                </Button>
               </div>
             </div>
           )}
