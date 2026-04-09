@@ -239,7 +239,7 @@ export default function PaymentRequestForm() {
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Nova Solicitação de Pagamento</h1>
+        <h1 className="text-2xl font-bold text-foreground">{isEditing ? 'Editar Solicitação de Pagamento' : 'Nova Solicitação de Pagamento'}</h1>
         <p className="text-sm text-muted-foreground mt-1">Preencha os dados do pagamento e do fornecedor</p>
       </div>
 
@@ -525,8 +525,8 @@ export default function PaymentRequestForm() {
             <Button type="button" variant="outline" size="lg" onClick={() => navigate('/financial/requests')}>
               Cancelar
             </Button>
-            <Button type="submit" size="lg" disabled={create.isPending || uploading}>
-              {create.isPending || uploading ? 'Salvando...' : 'Criar Solicitação'}
+            <Button type="submit" size="lg" disabled={create.isPending || update.isPending || uploading}>
+              {create.isPending || update.isPending || uploading ? 'Salvando...' : isEditing ? 'Salvar Alterações' : 'Criar Solicitação'}
             </Button>
           </div>
         </form>
