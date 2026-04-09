@@ -123,12 +123,14 @@ export default function PaymentRequestForm() {
       const costCenter = searchParams.get('cost_center');
       const receiptUrl = searchParams.get('receipt_url');
       const nfName = searchParams.get('nf_name');
+      const issueDate = searchParams.get('issue_date');
 
       if (supplier) form.setValue('supplier', supplier);
       if (amount) form.setValue('amount', Number(amount));
       if (costCenter) form.setValue('cost_center', costCenter);
       if (receiptUrl) setExistingReceiptUrl(receiptUrl);
       if (nfName) form.setValue('description', `NF: ${nfName}`);
+      if (issueDate) form.setValue('due_date', issueDate);
     }
   }, [isFromNf, isEditing, searchParams, form]);
 
@@ -213,7 +215,15 @@ export default function PaymentRequestForm() {
       if (isEditing && editId) {
         update.mutate({ id: editId, ...payload } as any, { onSuccess: () => navigate('/financial/requests') });
       } else {
-        create.mutate(payload, { onSuccess: () => navigate('/financial/requests') });
+        create.mutate(payload, {
+          onSuccess: async () => {
+            const nfId = searchParams.get('nf_id');
+            if (isFromNf && nfId) {
+              await supabase.from('nf_uploads').update({ status: 'vinculado' }).eq('id', nfId);
+            }
+            navigate('/financial/requests');
+          },
+        });
       }
     } catch (err: any) {
       toast.error('Erro ao enviar arquivo: ' + err.message);

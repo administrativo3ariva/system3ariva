@@ -45,11 +45,15 @@ export default function NfUploadPage() {
   const handleLinkToFinancial = (nf: DbNfUpload, type: 'expense' | 'payment') => {
     const params = new URLSearchParams();
     params.set('from_nf', 'true');
+    params.set('nf_id', nf.id);
     if (nf.supplier) params.set('supplier', nf.supplier);
     if (nf.total_value) params.set('amount', String(nf.total_value));
     params.set('cost_center', branchToCostCenter(nf.unit));
     if (nf.file_url) params.set('receipt_url', nf.file_url);
     if (nf.file_name) params.set('nf_name', nf.file_name);
+    if (nf.issue_date) params.set('issue_date', nf.issue_date);
+    if ((nf as any).recipient_name) params.set('recipient_name', (nf as any).recipient_name);
+    if ((nf as any).recipient_doc) params.set('recipient_doc', (nf as any).recipient_doc);
 
     const path = type === 'expense' ? '/financial/expenses/new' : '/financial/requests/new';
     navigate(`${path}?${params.toString()}`);
@@ -106,6 +110,7 @@ export default function NfUploadPage() {
 
   const statusBadge = (s: string) => {
     if (s === 'aprovado') return <Badge className="bg-success/10 text-success border-success/20">Aprovado</Badge>;
+    if (s === 'vinculado') return <Badge className="bg-primary/10 text-primary border-primary/20">Vinculado</Badge>;
     if (s === 'rejeitado') return <Badge variant="destructive">Rejeitado</Badge>;
     if (s === 'processando') return <Badge variant="outline" className="text-accent border-accent/30"><Loader2 className="h-3 w-3 mr-1 animate-spin" />Processando</Badge>;
     if (s === 'erro_ocr') return <Badge variant="destructive">Erro OCR</Badge>;
