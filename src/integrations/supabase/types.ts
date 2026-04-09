@@ -121,6 +121,8 @@ export type Database = {
           notes: string | null
           receipt_url: string | null
           status: string
+          supplier: string | null
+          supplier_id: string | null
           updated_at: string
         }
         Insert: {
@@ -139,6 +141,8 @@ export type Database = {
           notes?: string | null
           receipt_url?: string | null
           status?: string
+          supplier?: string | null
+          supplier_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -157,9 +161,19 @@ export type Database = {
           notes?: string | null
           receipt_url?: string | null
           status?: string
+          supplier?: string | null
+          supplier_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "expenses_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       maintenance_tasks: {
         Row: {
