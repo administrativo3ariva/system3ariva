@@ -1,13 +1,15 @@
 import { useMemo } from 'react';
 import { useExpenses } from '@/hooks/use-expenses';
 import { usePaymentRequests } from '@/hooks/use-payment-requests';
-import { DollarSign, CreditCard, FileText, TrendingUp, AlertTriangle, CalendarDays } from 'lucide-react';
+import { DollarSign, CreditCard, FileText, TrendingUp, AlertTriangle, CalendarDays, Clock, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend,
 } from 'recharts';
-import { format, parseISO, startOfMonth, isSameMonth } from 'date-fns';
+import { format, parseISO, isSameMonth, differenceInDays, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const COLORS = [
@@ -50,7 +52,6 @@ export default function FinancialDashboard() {
   const { data: requests = [] } = usePaymentRequests();
   const now = new Date();
 
-  // KPI totals
   const totalExpenses = expenses.reduce((s, e) => s + Number(e.amount), 0);
   const totalRequests = requests.reduce((s, r) => s + Number(r.amount), 0);
   const monthExpenses = expenses
@@ -62,9 +63,29 @@ export default function FinancialDashboard() {
   const pendingNf = expenses.filter(e => !e.receipt_url).length;
   const pendingRequests = requests.filter(r => r.status === 'pendente').length;
 
+  const currentMonthName = format(now, 'MMMM', { locale: ptBR });
+  const capitalizedMonth = currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1);
+
+  // --- Alerts ---
+  const daysToEndOfMonth = differenceInDays(endOfMonth(now), now);
+
+  const expensesMissingNf = expenses.filter(e => !e.receipt_url && isSameMonth(parseISO(e.expense_date), now));
+  const requestsMissingNf = requests.filter(r => !r.receipt_url && isSameMonth(parseISO(r.created_at), now));
+
+  const upcomingDueRequests = requests.filter(r => {
+    if (r.status === 'pago' || !r.due_date) return false;
+    const due = parseISO(r.due_date);
+    const diff = differenceInDays(due, now);
+    return diff >= 0 && diff <= 7;
+  });
+
+  const overdueRequests = requests.filter(r => {
+    if (r.status === 'pago' || !r.due_date) return false;
+    return differenceInDays(parseISO(r.due_date), now) < 0;
+  });
+
   // --- Chart data ---
 
-  // Evolução mensal de despesas (últimos 12 meses)
   const monthlyEvolution = useMemo(() => {
     const map: Record<string, { despesas: number; solicitacoes: number }> = {};
     for (let i = 11; i >= 0; i--) {
@@ -73,35 +94,38 @@ export default function FinancialDashboard() {
       map[key] = { despesas: 0, solicitacoes: 0 };
     }
     expenses.forEach(e => {
-      const d = parseISO(e.expense_date);
-      const key = format(d, 'MMM/yy', { locale: ptBR });
+      const key = format(parseISO(e.expense_date), 'MMM/yy', { locale: ptBR });
       if (map[key]) map[key].despesas += Number(e.amount);
     });
     requests.forEach(r => {
-      const d = parseISO(r.created_at);
-      const key = format(d, 'MMM/yy', { locale: ptBR });
+      const key = format(parseISO(r.created_at), 'MMM/yy', { locale: ptBR });
       if (map[key]) map[key].solicitacoes += Number(r.amount);
     });
     return Object.entries(map).map(([name, v]) => ({ name, ...v }));
   }, [expenses, requests]);
 
-  // Por empresa
+  // Despesas por empresa (apenas despesas de cartão)
   const byCompany = useMemo(() => {
     const map: Record<string, number> = {};
     expenses.forEach(e => { map[e.company] = (map[e.company] || 0) + Number(e.amount); });
     return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   }, [expenses]);
 
-  // Por centro de custo
-  const byCostCenter = useMemo(() => {
+  // Despesas por centro de custo (apenas despesas de cartão)
+  const expensesByCostCenter = useMemo(() => {
     const map: Record<string, number> = {};
-    [...expenses, ...requests].forEach(item => {
-      map[item.cost_center] = (map[item.cost_center] || 0) + Number(item.amount);
-    });
+    expenses.forEach(e => { map[e.cost_center] = (map[e.cost_center] || 0) + Number(e.amount); });
     return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [expenses, requests]);
+  }, [expenses]);
 
-  // Por categoria
+  // Solicitações por centro de custo
+  const requestsByCostCenter = useMemo(() => {
+    const map: Record<string, number> = {};
+    requests.forEach(r => { map[r.cost_center] = (map[r.cost_center] || 0) + Number(r.amount); });
+    return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  }, [requests]);
+
+  // Despesas por categoria
   const byCategory = useMemo(() => {
     const map: Record<string, number> = {};
     expenses.forEach(e => { map[e.category] = (map[e.category] || 0) + Number(e.amount); });
@@ -121,7 +145,7 @@ export default function FinancialDashboard() {
       .slice(0, 10);
   }, [requests]);
 
-  const currentMonth = format(now, 'MMMM', { locale: ptBR });
+  const hasAlerts = expensesMissingNf.length > 0 || requestsMissingNf.length > 0 || upcomingDueRequests.length > 0 || overdueRequests.length > 0;
 
   return (
     <div className="space-y-6">
@@ -131,15 +155,84 @@ export default function FinancialDashboard() {
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <KpiCard icon={CreditCard} label="Total Despesas" value={fmt(totalExpenses)} color="text-blue-600 bg-blue-100 dark:bg-blue-900/30" />
         <KpiCard icon={FileText} label="Total Solicitações" value={fmt(totalRequests)} color="text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30" />
-        <KpiCard icon={CalendarDays} label={`Despesas ${currentMonth}`} value={fmt(monthExpenses)} color="text-violet-600 bg-violet-100 dark:bg-violet-900/30" />
-        <KpiCard icon={CalendarDays} label={`Solicit. ${currentMonth}`} value={fmt(monthRequests)} color="text-amber-600 bg-amber-100 dark:bg-amber-900/30" />
+        <KpiCard icon={CalendarDays} label={`Despesas (${capitalizedMonth})`} value={fmt(monthExpenses)} color="text-violet-600 bg-violet-100 dark:bg-violet-900/30" />
+        <KpiCard icon={CalendarDays} label={`Solicitações (${capitalizedMonth})`} value={fmt(monthRequests)} color="text-amber-600 bg-amber-100 dark:bg-amber-900/30" />
         <KpiCard icon={AlertTriangle} label="Pendentes de NF" value={String(pendingNf)} color="text-red-600 bg-red-100 dark:bg-red-900/30" />
-        <KpiCard icon={TrendingUp} label="Solicit. Pendentes" value={String(pendingRequests)} color="text-orange-600 bg-orange-100 dark:bg-orange-900/30" />
+        <KpiCard icon={TrendingUp} label="Solicitações Pendentes de Pagamento" value={String(pendingRequests)} color="text-orange-600 bg-orange-100 dark:bg-orange-900/30" />
       </div>
 
-      {/* Evolução Mensal - full width */}
+      {/* Alerts */}
+      {hasAlerts && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-amber-500" />
+              Alertas — Faltam {daysToEndOfMonth} dias para o fim do mês
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {overdueRequests.length > 0 && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Solicitações vencidas</AlertTitle>
+                <AlertDescription>
+                  <span className="font-semibold">{overdueRequests.length}</span> solicitação(ões) com vencimento expirado:
+                  <ul className="mt-1 list-disc pl-5 text-xs space-y-0.5">
+                    {overdueRequests.slice(0, 5).map(r => (
+                      <li key={r.id}>
+                        {r.description} — {fmt(Number(r.amount))} — venceu em {format(parseISO(r.due_date!), 'dd/MM/yyyy')}
+                      </li>
+                    ))}
+                    {overdueRequests.length > 5 && <li>...e mais {overdueRequests.length - 5}</li>}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {upcomingDueRequests.length > 0 && (
+              <Alert>
+                <Clock className="h-4 w-4" />
+                <AlertTitle>Vencimentos próximos (até 7 dias)</AlertTitle>
+                <AlertDescription>
+                  <span className="font-semibold">{upcomingDueRequests.length}</span> solicitação(ões) com vencimento próximo:
+                  <ul className="mt-1 list-disc pl-5 text-xs space-y-0.5">
+                    {upcomingDueRequests.slice(0, 5).map(r => (
+                      <li key={r.id}>
+                        {r.description} — {fmt(Number(r.amount))} — vence em {format(parseISO(r.due_date!), 'dd/MM/yyyy')}
+                      </li>
+                    ))}
+                    {upcomingDueRequests.length > 5 && <li>...e mais {upcomingDueRequests.length - 5}</li>}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {expensesMissingNf.length > 0 && (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Despesas sem comprovante neste mês</AlertTitle>
+                <AlertDescription>
+                  <span className="font-semibold">{expensesMissingNf.length}</span> despesa(s) do mês sem NF anexada.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {requestsMissingNf.length > 0 && (
+              <Alert>
+                <FileText className="h-4 w-4" />
+                <AlertTitle>Solicitações sem comprovante neste mês</AlertTitle>
+                <AlertDescription>
+                  <span className="font-semibold">{requestsMissingNf.length}</span> solicitação(ões) do mês sem comprovante anexado.
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Evolução Mensal */}
       <Card>
-        <CardHeader><CardTitle className="text-sm font-medium">Evolução Mensal</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm font-medium">Evolução Mensal (Despesas vs Solicitações)</CardTitle></CardHeader>
         <CardContent className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={monthlyEvolution}>
@@ -148,14 +241,14 @@ export default function FinancialDashboard() {
               <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} className="fill-muted-foreground" width={60} />
               <Tooltip content={<CustomTooltip />} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Line type="monotone" dataKey="despesas" name="Despesas" stroke="hsl(221, 83%, 53%)" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+              <Line type="monotone" dataKey="despesas" name="Despesas (Cartão)" stroke="hsl(221, 83%, 53%)" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
               <Line type="monotone" dataKey="solicitacoes" name="Solicitações" stroke="hsl(142, 71%, 45%)" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
 
-      {/* Row: Por Empresa + Por Centro de Custo */}
+      {/* Despesas por Empresa + Despesas por Categoria */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader><CardTitle className="text-sm font-medium">Despesas por Empresa</CardTitle></CardHeader>
@@ -174,26 +267,6 @@ export default function FinancialDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">Gastos por Centro de Custo</CardTitle></CardHeader>
-          <CardContent className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={byCostCenter}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} width={60} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="value" name="Total" fill="hsl(221, 83%, 53%)" radius={[4, 4, 0, 0]}>
-                  {byCostCenter.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Row: Por Categoria (Pie) + Top 10 Fornecedores */}
-      <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader><CardTitle className="text-sm font-medium">Despesas por Categoria</CardTitle></CardHeader>
           <CardContent className="h-80">
@@ -218,24 +291,62 @@ export default function FinancialDashboard() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
+      </div>
 
+      {/* Centro de Custo: Despesas vs Solicitações separados */}
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">Top 10 Fornecedores</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-medium">Despesas por Centro de Custo</CardTitle></CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={topSuppliers} layout="vertical">
+              <BarChart data={expensesByCostCenter}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                <XAxis type="number" tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} width={60} />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="value" name="Total" radius={[0, 4, 4, 0]}>
-                  {topSuppliers.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                <Bar dataKey="value" name="Despesas" fill="hsl(221, 83%, 53%)" radius={[4, 4, 0, 0]}>
+                  {expensesByCostCenter.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader><CardTitle className="text-sm font-medium">Solicitações por Centro de Custo</CardTitle></CardHeader>
+          <CardContent className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={requestsByCostCenter}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} width={60} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="value" name="Solicitações" fill="hsl(142, 71%, 45%)" radius={[4, 4, 0, 0]}>
+                  {requestsByCostCenter.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
+
+      {/* Top 10 Fornecedores */}
+      <Card>
+        <CardHeader><CardTitle className="text-sm font-medium">Top 10 Fornecedores (Solicitações)</CardTitle></CardHeader>
+        <CardContent className="h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={topSuppliers} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+              <XAxis type="number" tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar dataKey="value" name="Total" radius={[0, 4, 4, 0]}>
+                {topSuppliers.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
     </div>
   );
 }
