@@ -146,7 +146,7 @@ export default function PaymentRequestsList() {
                         <span className="text-xs text-muted-foreground w-12 text-center hidden md:block">{r.cost_center}</span>
 
                         {/* Category */}
-                        <span className="text-xs text-muted-foreground w-32 truncate text-center hidden xl:block">{r.category}</span>
+                        <span className="text-xs text-muted-foreground min-w-[140px] text-center hidden xl:block">{r.category}</span>
 
                         {/* Payment method */}
                         <div className="w-32 hidden lg:flex items-center justify-center">
@@ -165,8 +165,30 @@ export default function PaymentRequestsList() {
                           {fmt(Number(r.amount))}
                         </span>
 
+                        {/* Paid toggle */}
+                        <div className="flex items-center gap-2 w-20 justify-center">
+                          <button
+                            onClick={() => {
+                              const newStatus = r.status === 'pago' ? 'pendente' : 'pago';
+                              updateReq.mutate({ id: r.id, status: newStatus });
+                            }}
+                            className={cn(
+                              'flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium transition-colors border',
+                              r.status === 'pago'
+                                ? 'bg-green-100 text-green-700 border-green-200'
+                                : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                            )}
+                          >
+                            <div className={cn(
+                              'w-2 h-2 rounded-full transition-colors',
+                              r.status === 'pago' ? 'bg-green-500' : 'bg-muted-foreground/40'
+                            )} />
+                            {r.status === 'pago' ? 'Pago' : 'Pagar'}
+                          </button>
+                        </div>
+
                         {/* Actions */}
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewItem(r)}>
                             <Eye className="h-3.5 w-3.5" />
                           </Button>
