@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { useCreateExpense, useUpdateExpense, useExpenses } from '@/hooks/use-expenses';
 import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES, EXPENSE_CATEGORIES, COMPANY_CARD_MAP, CORPORATE_CARDS, FinancialCompany } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
+import { SupplierAutocomplete } from '@/components/SupplierAutocomplete';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +30,8 @@ const schema = z.object({
   notes: z.string().optional(),
   is_installment: z.boolean().optional(),
   installment_count: z.coerce.number().min(2).max(48).optional(),
+  supplier: z.string().optional(),
+  supplier_id: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -62,8 +65,12 @@ export default function ExpenseForm() {
       notes: '',
       is_installment: false,
       installment_count: undefined,
+      supplier: '',
+      supplier_id: '',
     },
   });
+
+  
 
   // Load existing expense data for editing
   useEffect(() => {
@@ -79,6 +86,8 @@ export default function ExpenseForm() {
         notes: editingExpense.notes || '',
         is_installment: (editingExpense as any).is_installment || false,
         installment_count: (editingExpense as any).installment_count || undefined,
+        supplier: (editingExpense as any).supplier || '',
+        supplier_id: (editingExpense as any).supplier_id || '',
       });
       if (editingExpense.receipt_url) {
         setExistingReceiptUrl(editingExpense.receipt_url);
@@ -139,6 +148,8 @@ export default function ExpenseForm() {
       card_name: data.card_name,
       expense_date: data.expense_date,
       notes: data.notes,
+      supplier: data.supplier || null,
+      supplier_id: data.supplier_id || null,
       is_installment: data.is_installment || false,
       installment_count: data.is_installment ? data.installment_count : null,
       installment_current: data.is_installment ? 1 : null,
@@ -181,6 +192,19 @@ export default function ExpenseForm() {
                 <FormItem>
                   <FormLabel>Descrição da Despesa</FormLabel>
                   <FormControl><Input placeholder="Ex: Compra de material de escritório" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="supplier" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fornecedor</FormLabel>
+                  <FormControl>
+                    <SupplierAutocomplete
+                      value={field.value || ''}
+                      onChange={(name) => field.onChange(name)}
+                      onSelectSupplier={(s) => form.setValue('supplier_id', s.id)}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
