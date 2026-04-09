@@ -543,6 +543,33 @@ export default function NfUploadPage() {
                   </TableBody>
                 </Table>
               </div>
+              {/* Vincular ao Financeiro */}
+              <div className="border-t pt-4 mt-2">
+                <div className="flex items-center gap-2 mb-3">
+                  <Link2 className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground">Vincular ao Financeiro</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    variant="outline"
+                    className="h-auto py-3 flex flex-col items-center gap-1.5"
+                    onClick={() => handleLinkToFinancial(previewNf, 'expense')}
+                  >
+                    <CreditCard className="h-5 w-5 text-primary" />
+                    <span className="text-sm font-medium">Lançar Despesa</span>
+                    <span className="text-xs text-muted-foreground">Cartão Corporativo</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-auto py-3 flex flex-col items-center gap-1.5"
+                    onClick={() => handleLinkToFinancial(previewNf, 'payment')}
+                  >
+                    <Landmark className="h-5 w-5 text-primary" />
+                    <span className="text-sm font-medium">Solicitação de Pagamento</span>
+                    <span className="text-xs text-muted-foreground">Boleto / PIX / Transferência</span>
+                  </Button>
+                </div>
+              </div>
 
               {previewNf.status === 'pendente' && (
                 <div className="flex justify-end gap-3 pt-2">
