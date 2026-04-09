@@ -19,7 +19,6 @@ const FILTERS: FilterConfig[] = [
   { key: 'cost_center', label: 'Centro de Custo', allLabel: 'Todos Centros', options: FINANCIAL_COST_CENTERS },
   { key: 'company', label: 'Empresa', allLabel: 'Todas Empresas', options: FINANCIAL_COMPANIES },
   { key: 'category', label: 'Categoria', allLabel: 'Todas Categorias', options: EXPENSE_CATEGORIES },
-  { key: 'status', label: 'Status', allLabel: 'Todos Status', options: ['pendente', 'aprovado', 'rejeitado'] },
 ];
 
 function groupByDate(items: any[]) {
@@ -112,9 +111,9 @@ export default function ExpensesList() {
                           <span className="text-[10px] text-primary mt-0.5 block">Parcela {e.installment_current || 1}/{e.installment_count}</span>
                         )}
                       </div>
-                      <span className="text-xs text-muted-foreground w-16 text-center hidden lg:block">{e.company}</span>
-                      <span className="text-xs text-muted-foreground w-12 text-center hidden md:block">{e.cost_center}</span>
-                      <span className="text-xs text-muted-foreground min-w-[140px] text-center hidden xl:block">{e.category}</span>
+                      <span className="text-xs text-muted-foreground w-20 text-center hidden lg:block truncate">{e.company}</span>
+                      <span className="text-xs text-muted-foreground w-14 text-center hidden md:block">{e.cost_center}</span>
+                      <span className="text-xs text-muted-foreground w-[180px] text-center hidden xl:block truncate">{e.category}</span>
                       <div className="w-36 hidden lg:flex items-center justify-center">
                         {e.card_name ? (
                           <Badge variant="outline" className="text-[10px] gap-1 px-2 py-0.5">
