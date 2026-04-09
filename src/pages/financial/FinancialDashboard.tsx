@@ -132,18 +132,23 @@ export default function FinancialDashboard() {
     return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   }, [expenses]);
 
-  // Top 10 fornecedores (solicitações)
+  // Top 10 fornecedores (despesas + solicitações)
   const topSuppliers = useMemo(() => {
     const map: Record<string, number> = {};
     requests.forEach(r => {
       const name = r.supplier || 'Sem fornecedor';
       map[name] = (map[name] || 0) + Number(r.amount);
     });
+    expenses.forEach(e => {
+      const name = (e as any).supplier;
+      if (name) map[name] = (map[name] || 0) + Number(e.amount);
+    });
     return Object.entries(map)
+      .filter(([name]) => name !== 'Sem fornecedor')
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 10);
-  }, [requests]);
+  }, [requests, expenses]);
 
   const hasAlerts = expensesMissingNf.length > 0 || requestsMissingNf.length > 0 || upcomingDueRequests.length > 0 || overdueRequests.length > 0;
 
@@ -332,7 +337,7 @@ export default function FinancialDashboard() {
 
       {/* Top 10 Fornecedores */}
       <Card>
-        <CardHeader><CardTitle className="text-sm font-medium">Top 10 Fornecedores (Solicitações)</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm font-medium">Top 10 Fornecedores</CardTitle></CardHeader>
         <CardContent className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={topSuppliers} layout="vertical">

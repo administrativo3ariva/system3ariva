@@ -133,6 +133,9 @@ export default function ExpensesList() {
                       {/* Description */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{e.description}</p>
+                        {(e as any).supplier && (
+                          <span className="text-[10px] text-muted-foreground">{(e as any).supplier}</span>
+                        )}
                         {!e.receipt_url && (
                           <span className="text-[10px] text-yellow-600 flex items-center gap-1 mt-0.5">
                             <AlertTriangle className="h-3 w-3" /> Pendente de NF
@@ -209,6 +212,7 @@ export default function ExpensesList() {
           installmentInfo={viewItem.is_installment && viewItem.installment_count ? `Parcela ${viewItem.installment_current || 1}/${viewItem.installment_count}` : null}
           fields={[
             { label: 'Data', value: format(parseISO(viewItem.expense_date), 'dd/MM/yyyy') },
+            { label: 'Fornecedor', value: viewItem.supplier },
             { label: 'Categoria', value: viewItem.category },
             { label: 'Empresa', value: viewItem.company },
             { label: 'Centro de Custo', value: viewItem.cost_center },

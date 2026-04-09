@@ -203,10 +203,8 @@ export default function ExpenseForm() {
                     <SupplierAutocomplete
                       suppliers={suppliers}
                       value={field.value || ''}
-                      onChange={(name, id) => {
-                        field.onChange(name);
-                        form.setValue('supplier_id', id || '');
-                      }}
+                      onChange={(name) => field.onChange(name)}
+                      onSelectSupplier={(s) => form.setValue('supplier_id', s.id)}
                     />
                   </FormControl>
                   <FormMessage />
