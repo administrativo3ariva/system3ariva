@@ -19,7 +19,6 @@ const FILTERS: FilterConfig[] = [
   { key: 'cost_center', label: 'Centro de Custo', allLabel: 'Todos Centros', options: FINANCIAL_COST_CENTERS },
   { key: 'company', label: 'Empresa', allLabel: 'Todas Empresas', options: FINANCIAL_COMPANIES },
   { key: 'category', label: 'Categoria', allLabel: 'Todas Categorias', options: EXPENSE_CATEGORIES },
-  { key: 'status', label: 'Status', allLabel: 'Todos Status', options: ['pendente', 'aprovado', 'rejeitado'] },
 ];
 
 function groupByDate(items: any[]) {
