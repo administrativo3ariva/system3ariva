@@ -89,6 +89,31 @@ export default function PaymentRequestForm() {
     },
   });
 
+  // Load existing data for editing
+  useEffect(() => {
+    if (editingRequest) {
+      form.reset({
+        description: editingRequest.description,
+        amount: Number(editingRequest.amount),
+        cost_center: editingRequest.cost_center,
+        company: editingRequest.company,
+        category: editingRequest.category,
+        supplier: editingRequest.supplier || '',
+        payment_method: editingRequest.payment_method || '',
+        due_date: editingRequest.due_date || '',
+        pix_key: editingRequest.pix_key || '',
+        bank_name: editingRequest.bank_name || '',
+        bank_agency: editingRequest.bank_agency || '',
+        bank_account: editingRequest.bank_account || '',
+        bank_account_type: editingRequest.bank_account_type || 'corrente',
+        notes: editingRequest.notes || '',
+      });
+      if (editingRequest.supplier_id) setSelectedSupplierId(editingRequest.supplier_id);
+      if (editingRequest.boleto_url) setExistingBoletoUrl(editingRequest.boleto_url);
+      if (editingRequest.receipt_url) setExistingReceiptUrl(editingRequest.receipt_url);
+    }
+  }, [editingRequest, form]);
+
   const paymentMethod = form.watch('payment_method');
 
   const handleSelectSupplier = useCallback((supplier: Supplier) => {
