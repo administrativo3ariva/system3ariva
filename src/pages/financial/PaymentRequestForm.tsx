@@ -1,9 +1,9 @@
-import { useState, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useCreatePaymentRequest } from '@/hooks/use-payment-requests';
+import { useCreatePaymentRequest, useUpdatePaymentRequest, usePaymentRequests } from '@/hooks/use-payment-requests';
 import { useCreateSupplier, Supplier } from '@/hooks/use-suppliers';
 import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES, EXPENSE_CATEGORIES } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,12 +50,22 @@ type FormData = z.infer<typeof schema>;
 
 export default function PaymentRequestForm() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('edit');
+  const isEditing = !!editId;
+
   const create = useCreatePaymentRequest();
+  const update = useUpdatePaymentRequest();
+  const { data: requests = [] } = usePaymentRequests();
+  const editingRequest = isEditing ? requests.find((r: any) => r.id === editId) : null;
+
   const createSupplier = useCreateSupplier();
   const [boletoFile, setBoletoFile] = useState<File | null>(null);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
+  const [existingBoletoUrl, setExistingBoletoUrl] = useState<string | null>(null);
+  const [existingReceiptUrl, setExistingReceiptUrl] = useState<string | null>(null);
   const boletoInputRef = useRef<HTMLInputElement>(null);
   const receiptInputRef = useRef<HTMLInputElement>(null);
 
@@ -78,6 +88,31 @@ export default function PaymentRequestForm() {
       notes: '',
     },
   });
+
+  // Load existing data for editing
+  useEffect(() => {
+    if (editingRequest) {
+      form.reset({
+        description: editingRequest.description,
+        amount: Number(editingRequest.amount),
+        cost_center: editingRequest.cost_center,
+        company: editingRequest.company,
+        category: editingRequest.category,
+        supplier: editingRequest.supplier || '',
+        payment_method: editingRequest.payment_method || '',
+        due_date: editingRequest.due_date || '',
+        pix_key: editingRequest.pix_key || '',
+        bank_name: editingRequest.bank_name || '',
+        bank_agency: editingRequest.bank_agency || '',
+        bank_account: editingRequest.bank_account || '',
+        bank_account_type: editingRequest.bank_account_type || 'corrente',
+        notes: editingRequest.notes || '',
+      });
+      if (editingRequest.supplier_id) setSelectedSupplierId(editingRequest.supplier_id);
+      if (editingRequest.boleto_url) setExistingBoletoUrl(editingRequest.boleto_url);
+      if (editingRequest.receipt_url) setExistingReceiptUrl(editingRequest.receipt_url);
+    }
+  }, [editingRequest, form]);
 
   const paymentMethod = form.watch('payment_method');
 
@@ -116,8 +151,8 @@ export default function PaymentRequestForm() {
   const onSubmit = async (data: FormData) => {
     setUploading(true);
     try {
-      let boleto_url: string | undefined;
-      let receipt_url: string | undefined;
+      let boleto_url: string | undefined = existingBoletoUrl || undefined;
+      let receipt_url: string | undefined = existingReceiptUrl || undefined;
 
       if (boletoFile) boleto_url = await uploadFile(boletoFile, 'boletos');
       if (receiptFile) receipt_url = await uploadFile(receiptFile, 'receipts');
@@ -137,7 +172,7 @@ export default function PaymentRequestForm() {
         supplier_id = newSupplier.id;
       }
 
-      create.mutate({
+      const payload = {
         description: data.description,
         amount: data.amount,
         cost_center: data.cost_center,
@@ -155,7 +190,13 @@ export default function PaymentRequestForm() {
         receipt_url,
         supplier_id: supplier_id || undefined,
         notes: data.notes,
-      }, { onSuccess: () => navigate('/financial/requests') });
+      };
+
+      if (isEditing && editId) {
+        update.mutate({ id: editId, ...payload } as any, { onSuccess: () => navigate('/financial/requests') });
+      } else {
+        create.mutate(payload, { onSuccess: () => navigate('/financial/requests') });
+      }
     } catch (err: any) {
       toast.error('Erro ao enviar arquivo: ' + err.message);
     } finally {
@@ -198,7 +239,7 @@ export default function PaymentRequestForm() {
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Nova Solicitação de Pagamento</h1>
+        <h1 className="text-2xl font-bold text-foreground">{isEditing ? 'Editar Solicitação de Pagamento' : 'Nova Solicitação de Pagamento'}</h1>
         <p className="text-sm text-muted-foreground mt-1">Preencha os dados do pagamento e do fornecedor</p>
       </div>
 
@@ -484,8 +525,8 @@ export default function PaymentRequestForm() {
             <Button type="button" variant="outline" size="lg" onClick={() => navigate('/financial/requests')}>
               Cancelar
             </Button>
-            <Button type="submit" size="lg" disabled={create.isPending || uploading}>
-              {create.isPending || uploading ? 'Salvando...' : 'Criar Solicitação'}
+            <Button type="submit" size="lg" disabled={create.isPending || update.isPending || uploading}>
+              {create.isPending || update.isPending || uploading ? 'Salvando...' : isEditing ? 'Salvar Alterações' : 'Criar Solicitação'}
             </Button>
           </div>
         </form>
