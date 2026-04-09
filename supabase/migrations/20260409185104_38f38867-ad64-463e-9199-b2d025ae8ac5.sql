@@ -1,0 +1,2 @@
+ALTER TABLE public.nf_uploads DROP CONSTRAINT nf_uploads_status_check;
+ALTER TABLE public.nf_uploads ADD CONSTRAINT nf_uploads_status_check CHECK (status = ANY (ARRAY['pendente'::text, 'aprovado'::text, 'rejeitado'::text, 'vinculado'::text]));
