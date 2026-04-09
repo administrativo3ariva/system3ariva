@@ -1,9 +1,9 @@
-import { useState, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useCallback, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useCreatePaymentRequest } from '@/hooks/use-payment-requests';
+import { useCreatePaymentRequest, useUpdatePaymentRequest, usePaymentRequests } from '@/hooks/use-payment-requests';
 import { useCreateSupplier, Supplier } from '@/hooks/use-suppliers';
 import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES, EXPENSE_CATEGORIES } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,12 +50,22 @@ type FormData = z.infer<typeof schema>;
 
 export default function PaymentRequestForm() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('edit');
+  const isEditing = !!editId;
+
   const create = useCreatePaymentRequest();
+  const update = useUpdatePaymentRequest();
+  const { data: requests = [] } = usePaymentRequests();
+  const editingRequest = isEditing ? requests.find((r: any) => r.id === editId) : null;
+
   const createSupplier = useCreateSupplier();
   const [boletoFile, setBoletoFile] = useState<File | null>(null);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
+  const [existingBoletoUrl, setExistingBoletoUrl] = useState<string | null>(null);
+  const [existingReceiptUrl, setExistingReceiptUrl] = useState<string | null>(null);
   const boletoInputRef = useRef<HTMLInputElement>(null);
   const receiptInputRef = useRef<HTMLInputElement>(null);
 
