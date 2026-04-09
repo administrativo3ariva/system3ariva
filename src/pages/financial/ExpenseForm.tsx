@@ -70,7 +70,7 @@ export default function ExpenseForm() {
     },
   });
 
-  const { data: suppliers = [] } = useSuppliers();
+  
 
   // Load existing expense data for editing
   useEffect(() => {
