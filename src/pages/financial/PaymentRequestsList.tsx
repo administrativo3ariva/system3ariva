@@ -58,14 +58,22 @@ export default function PaymentRequestsList() {
     setFilterValues(prev => ({ ...prev, [key]: value }));
   };
 
-  const filtered = filterByDateRange(
-    requests.filter((r: any) =>
-      Object.entries(filterValues).every(([k, v]) => !v || v === 'all' || (r as any)[k] === v)
-    ),
-    'due_date' as any,
-    dateFrom,
-    dateTo
-  );
+  // Enrich with display_status, then filter
+  const enriched = requests.map((r: any) => ({ ...r, display_status: getDisplayStatus(r) }));
+
+  const filtered = enriched.filter((r: any) => {
+    // Apply select filters
+    for (const [k, v] of Object.entries(filterValues)) {
+      if (v && v !== 'all' && r[k] !== v) return false;
+    }
+    // Apply date range: use due_date, fallback to created_at
+    const dateStr = r.due_date || r.created_at?.split('T')[0];
+    if (!dateStr) return true;
+    const d = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+    const fromStr = format(dateFrom, 'yyyy-MM-dd');
+    const toStr = format(dateTo, 'yyyy-MM-dd');
+    return d >= fromStr && d <= toStr;
+  });
 
   const grouped = groupByDate(filtered, 'due_date');
   const total = filtered.reduce((s: number, r: any) => s + Number(r.amount), 0);
