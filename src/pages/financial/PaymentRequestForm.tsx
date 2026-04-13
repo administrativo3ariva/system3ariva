@@ -341,7 +341,7 @@ export default function PaymentRequestForm() {
                 <Tag className="h-4 w-4" />
                 Classificação
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <FormField control={form.control} name="company" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Empresa Contratante</FormLabel>
