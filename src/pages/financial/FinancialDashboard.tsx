@@ -22,16 +22,27 @@ const COLORS = [
 const fmt = (v: number) =>
   v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const StackedTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
+  const cartao = payload.find((p: any) => p.dataKey === 'cartao');
+  const solic = payload.find((p: any) => p.dataKey === 'solicitacoes');
+  const total = (cartao ? Number(cartao.value) : 0) + (solic ? Number(solic.value) : 0);
   return (
-    <div className="rounded-lg border bg-background p-3 shadow-lg">
-      {label && <p className="mb-1 text-xs font-medium text-muted-foreground">{label}</p>}
-      {payload.map((p: any, i: number) => (
-        <p key={i} className="text-sm font-semibold" style={{ color: p.color }}>
-          {p.name}: {fmt(Number(p.value))}
+    <div className="rounded-lg border bg-background p-3 shadow-lg min-w-[180px]">
+      {label && <p className="mb-2 text-xs font-medium text-muted-foreground">{label}</p>}
+      {cartao && Number(cartao.value) > 0 && (
+        <p className="text-sm font-semibold" style={{ color: 'hsl(221, 83%, 53%)' }}>
+          Cartão Corporativo: {fmt(Number(cartao.value))}
         </p>
-      ))}
+      )}
+      {solic && Number(solic.value) > 0 && (
+        <p className="text-sm font-semibold" style={{ color: 'hsl(142, 71%, 45%)' }}>
+          Solicitações: {fmt(Number(solic.value))}
+        </p>
+      )}
+      <p className="text-sm font-bold mt-1 pt-1 border-t border-border">
+        Total: {fmt(total)}
+      </p>
     </div>
   );
 };
@@ -305,87 +316,60 @@ export default function FinancialDashboard() {
         </CardContent>
       </Card>
 
-      {/* Despesas por Empresa + Despesas por Categoria */}
+      {/* Por Empresa + Por Categoria */}
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">Despesas por Empresa</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-medium">Gastos por Empresa</CardTitle></CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={byCompany} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                 <XAxis type="number" tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={80} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="value" name="Total" radius={[0, 4, 4, 0]}>
-                  {byCompany.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Bar>
+                <Tooltip content={<StackedTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="cartao" name="Cartão Corporativo" stackId="a" fill="hsl(221, 83%, 53%)" />
+                <Bar dataKey="solicitacoes" name="Solicitações" stackId="a" fill="hsl(142, 71%, 45%)" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">Despesas por Categoria</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm font-medium">Gastos por Categoria</CardTitle></CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={byCategory}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={100}
-                  paddingAngle={2}
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                  labelLine={{ strokeWidth: 1 }}
-                >
-                  {byCategory.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip content={<PieTooltip />} />
-              </PieChart>
+              <BarChart data={byCategory}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-20} textAnchor="end" height={50} />
+                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} width={60} />
+                <Tooltip content={<StackedTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Bar dataKey="cartao" name="Cartão Corporativo" stackId="a" fill="hsl(221, 83%, 53%)" />
+                <Bar dataKey="solicitacoes" name="Solicitações" stackId="a" fill="hsl(142, 71%, 45%)" radius={[4, 4, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
 
-      {/* Centro de Custo: Despesas vs Solicitações separados */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">Despesas por Centro de Custo</CardTitle></CardHeader>
-          <CardContent className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={expensesByCostCenter}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} width={60} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="value" name="Despesas" fill="hsl(221, 83%, 53%)" radius={[4, 4, 0, 0]}>
-                  {expensesByCostCenter.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">Solicitações por Centro de Custo</CardTitle></CardHeader>
-          <CardContent className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={requestsByCostCenter}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} width={60} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="value" name="Solicitações" fill="hsl(142, 71%, 45%)" radius={[4, 4, 0, 0]}>
-                  {requestsByCostCenter.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Por Centro de Custo */}
+      <Card>
+        <CardHeader><CardTitle className="text-sm font-medium">Gastos por Centro de Custo</CardTitle></CardHeader>
+        <CardContent className="h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={byCostCenter}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+              <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+              <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} width={60} />
+              <Tooltip content={<StackedTooltip />} />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Bar dataKey="cartao" name="Cartão Corporativo" stackId="a" fill="hsl(221, 83%, 53%)" />
+              <Bar dataKey="solicitacoes" name="Solicitações" stackId="a" fill="hsl(142, 71%, 45%)" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* Top 10 Fornecedores */}
       <Card>
