@@ -77,7 +77,7 @@ export default function FinancialReports() {
         company: r.company,
         category: r.category,
         supplier: r.supplier || '—',
-        date: r.due_date || r.created_at?.split('T')[0],
+        date: r.request_date || r.created_at?.split('T')[0],
         source: 'solicitacao' as SourceType,
         sourceLabel: 'Solicitação de Pagamento',
         card_name: '—',
