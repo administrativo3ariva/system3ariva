@@ -191,7 +191,7 @@ export default function PaymentRequestsList() {
           open={!!viewItem}
           onOpenChange={(open) => { if (!open) setViewItem(null); }}
           title={viewItem.description}
-          status={viewItem.status}
+          status={viewItem.display_status}
           statusColor=""
           amount={Number(viewItem.amount)}
           paymentLabel={viewItem.payment_method ? paymentMethodLabels[viewItem.payment_method]?.label || viewItem.payment_method : undefined}
