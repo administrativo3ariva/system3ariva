@@ -1,0 +1,1 @@
+ALTER TABLE public.payment_requests ADD COLUMN request_date date NOT NULL DEFAULT CURRENT_DATE;

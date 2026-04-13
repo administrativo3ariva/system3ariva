@@ -26,6 +26,7 @@ export function useCreatePaymentRequest() {
       company: string;
       category: string;
       supplier?: string;
+      request_date?: string;
       due_date?: string;
       payment_method?: string;
       pix_key?: string;

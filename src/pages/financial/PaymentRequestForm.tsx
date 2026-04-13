@@ -37,6 +37,7 @@ const schema = z.object({
   category: z.string().min(1, 'Obrigatório'),
   supplier: z.string().optional(),
   payment_method: z.string().min(1, 'Selecione a forma de pagamento'),
+  request_date: z.string().min(1, 'Obrigatório'),
   due_date: z.string().optional(),
   pix_key: z.string().optional(),
   bank_name: z.string().optional(),
@@ -80,6 +81,7 @@ export default function PaymentRequestForm() {
       category: '',
       supplier: '',
       payment_method: '',
+      request_date: new Date().toISOString().split('T')[0],
       due_date: '',
       pix_key: '',
       bank_name: '',
@@ -101,6 +103,7 @@ export default function PaymentRequestForm() {
         category: editingRequest.category,
         supplier: editingRequest.supplier || '',
         payment_method: editingRequest.payment_method || '',
+        request_date: editingRequest.request_date || new Date().toISOString().split('T')[0],
         due_date: editingRequest.due_date || '',
         pix_key: editingRequest.pix_key || '',
         bank_name: editingRequest.bank_name || '',
@@ -199,6 +202,7 @@ export default function PaymentRequestForm() {
         company: data.company,
         category: data.category,
         supplier: data.supplier,
+        request_date: data.request_date,
         due_date: data.due_date || undefined,
         payment_method: data.payment_method,
         pix_key: data.pix_key,
@@ -288,11 +292,20 @@ export default function PaymentRequestForm() {
                   <FormMessage />
                 </FormItem>
               )} />
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <FormField control={form.control} name="amount" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Valor</FormLabel>
                     <FormControl><CurrencyInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="request_date" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />

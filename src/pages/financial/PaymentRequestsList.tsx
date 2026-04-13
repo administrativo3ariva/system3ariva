@@ -40,8 +40,9 @@ function groupByDate(items: any[], dateField: string) {
   const groups: Record<string, any[]> = {};
   items.forEach(item => {
     const date = item[dateField] || item.created_at?.split('T')[0] || 'sem-data';
-    if (!groups[date]) groups[date] = [];
-    groups[date].push(item);
+    const normalized = date.includes('T') ? date.split('T')[0] : date;
+    if (!groups[normalized]) groups[normalized] = [];
+    groups[normalized].push(item);
   });
   return Object.entries(groups).sort(([a], [b]) => b.localeCompare(a));
 }
@@ -62,12 +63,11 @@ export default function PaymentRequestsList() {
   const enriched = requests.map((r: any) => ({ ...r, display_status: getDisplayStatus(r) }));
 
   const filtered = enriched.filter((r: any) => {
-    // Apply select filters
     for (const [k, v] of Object.entries(filterValues)) {
       if (v && v !== 'all' && r[k] !== v) return false;
     }
-    // Apply date range: use due_date, fallback to created_at
-    const dateStr = r.due_date || r.created_at?.split('T')[0];
+    // Use request_date for filtering, fallback to created_at
+    const dateStr = r.request_date || r.created_at?.split('T')[0];
     if (!dateStr) return true;
     const d = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
     const fromStr = format(dateFrom, 'yyyy-MM-dd');
@@ -75,7 +75,7 @@ export default function PaymentRequestsList() {
     return d >= fromStr && d <= toStr;
   });
 
-  const grouped = groupByDate(filtered, 'due_date');
+  const grouped = groupByDate(filtered, 'request_date');
   const total = filtered.reduce((s: number, r: any) => s + Number(r.amount), 0);
 
   return (
