@@ -40,8 +40,9 @@ function groupByDate(items: any[], dateField: string) {
   const groups: Record<string, any[]> = {};
   items.forEach(item => {
     const date = item[dateField] || item.created_at?.split('T')[0] || 'sem-data';
-    if (!groups[date]) groups[date] = [];
-    groups[date].push(item);
+    const normalized = date.includes('T') ? date.split('T')[0] : date;
+    if (!groups[normalized]) groups[normalized] = [];
+    groups[normalized].push(item);
   });
   return Object.entries(groups).sort(([a], [b]) => b.localeCompare(a));
 }
