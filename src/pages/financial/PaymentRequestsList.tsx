@@ -125,7 +125,7 @@ export default function PaymentRequestsList() {
                     const pm = paymentMethodLabels[r.payment_method] || null;
                     return (
                       <div key={r.id} className="flex items-center gap-4 px-5 py-3 hover:bg-muted/20 transition-colors group">
-                        <div className={cn('w-2 h-2 rounded-full shrink-0', r.status === 'pago' ? 'bg-blue-500' : r.status === 'aprovado' ? 'bg-green-500' : r.status === 'rejeitado' ? 'bg-red-500' : 'bg-yellow-500')} />
+                        <div className={cn('w-2 h-2 rounded-full shrink-0', r.display_status === 'Pago' ? 'bg-blue-500' : r.display_status === 'Pendente NF' ? 'bg-yellow-500' : 'bg-orange-500')} />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{r.description}</p>
                           {r.supplier && <span className="text-[10px] text-muted-foreground">{r.supplier}</span>}
