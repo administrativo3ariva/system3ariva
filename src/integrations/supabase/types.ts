@@ -359,6 +359,7 @@ export type Database = {
           payment_method: string | null
           pix_key: string | null
           receipt_url: string | null
+          request_date: string
           status: string
           supplier: string | null
           supplier_id: string | null
@@ -383,6 +384,7 @@ export type Database = {
           payment_method?: string | null
           pix_key?: string | null
           receipt_url?: string | null
+          request_date?: string
           status?: string
           supplier?: string | null
           supplier_id?: string | null
@@ -407,6 +409,7 @@ export type Database = {
           payment_method?: string | null
           pix_key?: string | null
           receipt_url?: string | null
+          request_date?: string
           status?: string
           supplier?: string | null
           supplier_id?: string | null
