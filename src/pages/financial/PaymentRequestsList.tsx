@@ -21,10 +21,19 @@ const paymentMethodLabels: Record<string, { label: string; icon: typeof FileBarC
   transferencia: { label: 'Transferência', icon: Landmark },
 };
 
+/** Derive display status based on DB status + receipt_url */
+function getDisplayStatus(r: any): string {
+  if (r.status === 'pago') return 'Pago';
+  if (!r.receipt_url) return 'Pendente NF';
+  return 'Pendente Pagamento';
+}
+
+const STATUS_OPTIONS = ['Pago', 'Pendente Pagamento', 'Pendente NF'] as const;
+
 const FILTERS: FilterConfig[] = [
   { key: 'cost_center', label: 'Centro de Custo', allLabel: 'Todos Centros', options: FINANCIAL_COST_CENTERS },
   { key: 'company', label: 'Empresa', allLabel: 'Todas Empresas', options: FINANCIAL_COMPANIES },
-  { key: 'status', label: 'Status', allLabel: 'Todos Status', options: ['pendente', 'aprovado', 'pago', 'rejeitado'] },
+  { key: 'display_status', label: 'Status', allLabel: 'Todos Status', options: STATUS_OPTIONS as unknown as string[] },
 ];
 
 function groupByDate(items: any[], dateField: string) {
