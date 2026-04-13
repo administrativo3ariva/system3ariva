@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { usePaymentRequests, useDeletePaymentRequest, useUpdatePaymentRequest } from '@/hooks/use-payment-requests';
 import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES } from '@/lib/types';
 import { FinancialDetailDialog } from '@/components/FinancialDetailDialog';
-import { FinancialFilters, useDateRangeFilter, filterByDateRange, type FilterConfig } from '@/components/FinancialFilters';
+import { FinancialFilters, useDateRangeFilter, type FilterConfig } from '@/components/FinancialFilters';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
