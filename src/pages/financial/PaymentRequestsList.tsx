@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { usePaymentRequests, useDeletePaymentRequest, useUpdatePaymentRequest } from '@/hooks/use-payment-requests';
 import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES } from '@/lib/types';
 import { FinancialDetailDialog } from '@/components/FinancialDetailDialog';
-import { FinancialFilters, useDateRangeFilter, filterByDateRange, type FilterConfig } from '@/components/FinancialFilters';
+import { FinancialFilters, useDateRangeFilter, type FilterConfig } from '@/components/FinancialFilters';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,10 +21,19 @@ const paymentMethodLabels: Record<string, { label: string; icon: typeof FileBarC
   transferencia: { label: 'Transferência', icon: Landmark },
 };
 
+/** Derive display status based on DB status + receipt_url */
+function getDisplayStatus(r: any): string {
+  if (r.status === 'pago') return 'Pago';
+  if (!r.receipt_url) return 'Pendente NF';
+  return 'Pendente Pagamento';
+}
+
+const STATUS_OPTIONS = ['Pago', 'Pendente Pagamento', 'Pendente NF'] as const;
+
 const FILTERS: FilterConfig[] = [
   { key: 'cost_center', label: 'Centro de Custo', allLabel: 'Todos Centros', options: FINANCIAL_COST_CENTERS },
   { key: 'company', label: 'Empresa', allLabel: 'Todas Empresas', options: FINANCIAL_COMPANIES },
-  { key: 'status', label: 'Status', allLabel: 'Todos Status', options: ['pendente', 'aprovado', 'pago', 'rejeitado'] },
+  { key: 'display_status', label: 'Status', allLabel: 'Todos Status', options: STATUS_OPTIONS as unknown as string[] },
 ];
 
 function groupByDate(items: any[], dateField: string) {
@@ -49,14 +58,22 @@ export default function PaymentRequestsList() {
     setFilterValues(prev => ({ ...prev, [key]: value }));
   };
 
-  const filtered = filterByDateRange(
-    requests.filter((r: any) =>
-      Object.entries(filterValues).every(([k, v]) => !v || v === 'all' || (r as any)[k] === v)
-    ),
-    'due_date' as any,
-    dateFrom,
-    dateTo
-  );
+  // Enrich with display_status, then filter
+  const enriched = requests.map((r: any) => ({ ...r, display_status: getDisplayStatus(r) }));
+
+  const filtered = enriched.filter((r: any) => {
+    // Apply select filters
+    for (const [k, v] of Object.entries(filterValues)) {
+      if (v && v !== 'all' && r[k] !== v) return false;
+    }
+    // Apply date range: use due_date, fallback to created_at
+    const dateStr = r.due_date || r.created_at?.split('T')[0];
+    if (!dateStr) return true;
+    const d = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+    const fromStr = format(dateFrom, 'yyyy-MM-dd');
+    const toStr = format(dateTo, 'yyyy-MM-dd');
+    return d >= fromStr && d <= toStr;
+  });
 
   const grouped = groupByDate(filtered, 'due_date');
   const total = filtered.reduce((s: number, r: any) => s + Number(r.amount), 0);
@@ -108,7 +125,7 @@ export default function PaymentRequestsList() {
                     const pm = paymentMethodLabels[r.payment_method] || null;
                     return (
                       <div key={r.id} className="flex items-center gap-4 px-5 py-3 hover:bg-muted/20 transition-colors group">
-                        <div className={cn('w-2 h-2 rounded-full shrink-0', r.status === 'pago' ? 'bg-blue-500' : r.status === 'aprovado' ? 'bg-green-500' : r.status === 'rejeitado' ? 'bg-red-500' : 'bg-yellow-500')} />
+                        <div className={cn('w-2 h-2 rounded-full shrink-0', r.display_status === 'Pago' ? 'bg-blue-500' : r.display_status === 'Pendente NF' ? 'bg-yellow-500' : 'bg-orange-500')} />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{r.description}</p>
                           {r.supplier && <span className="text-[10px] text-muted-foreground">{r.supplier}</span>}
@@ -174,7 +191,7 @@ export default function PaymentRequestsList() {
           open={!!viewItem}
           onOpenChange={(open) => { if (!open) setViewItem(null); }}
           title={viewItem.description}
-          status={viewItem.status}
+          status={viewItem.display_status}
           statusColor=""
           amount={Number(viewItem.amount)}
           paymentLabel={viewItem.payment_method ? paymentMethodLabels[viewItem.payment_method]?.label || viewItem.payment_method : undefined}
