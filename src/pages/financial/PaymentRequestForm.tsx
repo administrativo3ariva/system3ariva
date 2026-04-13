@@ -202,6 +202,7 @@ export default function PaymentRequestForm() {
         company: data.company,
         category: data.category,
         supplier: data.supplier,
+        request_date: data.request_date,
         due_date: data.due_date || undefined,
         payment_method: data.payment_method,
         pix_key: data.pix_key,
@@ -291,11 +292,20 @@ export default function PaymentRequestForm() {
                   <FormMessage />
                 </FormItem>
               )} />
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <FormField control={form.control} name="amount" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Valor</FormLabel>
                     <FormControl><CurrencyInput value={field.value} onChange={field.onChange} onBlur={field.onBlur} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="request_date" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Data</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
