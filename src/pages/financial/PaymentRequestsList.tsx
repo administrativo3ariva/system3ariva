@@ -135,9 +135,9 @@ export default function PaymentRequestsList() {
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-muted-foreground w-16 text-center hidden lg:block">{r.company}</span>
-                        <span className="text-xs text-muted-foreground w-12 text-center hidden md:block">{r.cost_center}</span>
-                        <span className="text-xs text-muted-foreground min-w-[140px] text-center hidden xl:block">{r.category}</span>
+                        <span className="text-xs text-muted-foreground w-20 text-center hidden lg:block truncate">{r.company}</span>
+                        <span className="text-xs text-muted-foreground w-14 text-center hidden md:block">{r.cost_center}</span>
+                        <span className="text-xs text-muted-foreground w-[180px] text-center hidden xl:block truncate">{r.category}</span>
                         <div className="w-32 hidden lg:flex items-center justify-center">
                           {pm ? (
                             <Badge variant="outline" className="text-[10px] gap-1 px-2 py-0.5">
