@@ -36,6 +36,33 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
+const EvolutionTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  const cartao = payload.find((p: any) => p.dataKey === 'despesas');
+  const solic = payload.find((p: any) => p.dataKey === 'solicitacoes');
+  const total = payload.find((p: any) => p.dataKey === 'total');
+  return (
+    <div className="rounded-lg border bg-background p-3 shadow-lg min-w-[180px]">
+      {label && <p className="mb-2 text-xs font-medium text-muted-foreground">{label}</p>}
+      {cartao && (
+        <p className="text-sm font-semibold" style={{ color: cartao.color }}>
+          Cartão Corporativo: {fmt(Number(cartao.value))}
+        </p>
+      )}
+      {solic && (
+        <p className="text-sm font-semibold" style={{ color: solic.color }}>
+          Solicitações: {fmt(Number(solic.value))}
+        </p>
+      )}
+      {total && (
+        <p className="text-sm font-bold mt-1 pt-1 border-t border-border" style={{ color: total.color }}>
+          Total: {fmt(Number(total.value))}
+        </p>
+      )}
+    </div>
+  );
+};
+
 const PieTooltip = ({ active, payload }: any) => {
   if (!active || !payload?.length) return null;
   const d = payload[0];
@@ -101,7 +128,11 @@ export default function FinancialDashboard() {
       const key = format(parseISO(r.request_date || r.created_at), 'MMM/yy', { locale: ptBR });
       if (map[key]) map[key].solicitacoes += Number(r.amount);
     });
-    return Object.entries(map).map(([name, v]) => ({ name, ...v }));
+    return Object.entries(map).map(([name, v]) => ({
+      name,
+      ...v,
+      total: v.despesas + v.solicitacoes,
+    }));
   }, [expenses, requests]);
 
   // Despesas por empresa (apenas despesas de cartão)
@@ -244,10 +275,11 @@ export default function FinancialDashboard() {
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
               <XAxis dataKey="name" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
               <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} className="fill-muted-foreground" width={60} />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<EvolutionTooltip />} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Line type="monotone" dataKey="despesas" name="Despesas (Cartão)" stroke="hsl(221, 83%, 53%)" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+              <Line type="monotone" dataKey="despesas" name="Cartão Corporativo" stroke="hsl(221, 83%, 53%)" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
               <Line type="monotone" dataKey="solicitacoes" name="Solicitações" stroke="hsl(142, 71%, 45%)" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+              <Line type="monotone" dataKey="total" name="Tendência Geral" stroke="hsl(280, 65%, 60%)" strokeWidth={2} strokeDasharray="6 3" dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </CardContent>
