@@ -58,7 +58,7 @@ export default function FinancialDashboard() {
     .filter(e => isSameMonth(parseISO(e.expense_date), now))
     .reduce((s, e) => s + Number(e.amount), 0);
   const monthRequests = requests
-    .filter(r => isSameMonth(parseISO(r.created_at), now))
+    .filter(r => isSameMonth(parseISO(r.request_date || r.created_at), now))
     .reduce((s, r) => s + Number(r.amount), 0);
   const pendingNf = expenses.filter(e => !e.receipt_url).length;
   const pendingRequests = requests.filter(r => r.status === 'pendente').length;
@@ -70,7 +70,7 @@ export default function FinancialDashboard() {
   const daysToEndOfMonth = differenceInDays(endOfMonth(now), now);
 
   const expensesMissingNf = expenses.filter(e => !e.receipt_url && isSameMonth(parseISO(e.expense_date), now));
-  const requestsMissingNf = requests.filter(r => !r.receipt_url && isSameMonth(parseISO(r.created_at), now));
+  const requestsMissingNf = requests.filter(r => !r.receipt_url && isSameMonth(parseISO(r.request_date || r.created_at), now));
 
   const upcomingDueRequests = requests.filter(r => {
     if (r.status === 'pago' || !r.due_date) return false;
@@ -98,7 +98,7 @@ export default function FinancialDashboard() {
       if (map[key]) map[key].despesas += Number(e.amount);
     });
     requests.forEach(r => {
-      const key = format(parseISO(r.created_at), 'MMM/yy', { locale: ptBR });
+      const key = format(parseISO(r.request_date || r.created_at), 'MMM/yy', { locale: ptBR });
       if (map[key]) map[key].solicitacoes += Number(r.amount);
     });
     return Object.entries(map).map(([name, v]) => ({ name, ...v }));
