@@ -135,33 +135,53 @@ export default function FinancialDashboard() {
     }));
   }, [expenses, requests]);
 
-  // Despesas por empresa (apenas despesas de cartão)
+  // Por empresa (cartão + solicitações)
   const byCompany = useMemo(() => {
-    const map: Record<string, number> = {};
-    expenses.forEach(e => { map[e.company] = (map[e.company] || 0) + Number(e.amount); });
-    return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [expenses]);
+    const map: Record<string, { cartao: number; solicitacoes: number }> = {};
+    expenses.forEach(e => {
+      if (!map[e.company]) map[e.company] = { cartao: 0, solicitacoes: 0 };
+      map[e.company].cartao += Number(e.amount);
+    });
+    requests.forEach(r => {
+      if (!map[r.company]) map[r.company] = { cartao: 0, solicitacoes: 0 };
+      map[r.company].solicitacoes += Number(r.amount);
+    });
+    return Object.entries(map)
+      .map(([name, v]) => ({ name, ...v, total: v.cartao + v.solicitacoes }))
+      .sort((a, b) => b.total - a.total);
+  }, [expenses, requests]);
 
-  // Despesas por centro de custo (apenas despesas de cartão)
-  const expensesByCostCenter = useMemo(() => {
-    const map: Record<string, number> = {};
-    expenses.forEach(e => { map[e.cost_center] = (map[e.cost_center] || 0) + Number(e.amount); });
-    return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [expenses]);
+  // Por centro de custo (cartão + solicitações)
+  const byCostCenter = useMemo(() => {
+    const map: Record<string, { cartao: number; solicitacoes: number }> = {};
+    expenses.forEach(e => {
+      if (!map[e.cost_center]) map[e.cost_center] = { cartao: 0, solicitacoes: 0 };
+      map[e.cost_center].cartao += Number(e.amount);
+    });
+    requests.forEach(r => {
+      if (!map[r.cost_center]) map[r.cost_center] = { cartao: 0, solicitacoes: 0 };
+      map[r.cost_center].solicitacoes += Number(r.amount);
+    });
+    return Object.entries(map)
+      .map(([name, v]) => ({ name, ...v, total: v.cartao + v.solicitacoes }))
+      .sort((a, b) => b.total - a.total);
+  }, [expenses, requests]);
 
-  // Solicitações por centro de custo
-  const requestsByCostCenter = useMemo(() => {
-    const map: Record<string, number> = {};
-    requests.forEach(r => { map[r.cost_center] = (map[r.cost_center] || 0) + Number(r.amount); });
-    return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [requests]);
-
-  // Despesas por categoria
+  // Por categoria (cartão + solicitações)
   const byCategory = useMemo(() => {
-    const map: Record<string, number> = {};
-    expenses.forEach(e => { map[e.category] = (map[e.category] || 0) + Number(e.amount); });
-    return Object.entries(map).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
-  }, [expenses]);
+    const map: Record<string, { cartao: number; solicitacoes: number }> = {};
+    expenses.forEach(e => {
+      if (!map[e.category]) map[e.category] = { cartao: 0, solicitacoes: 0 };
+      map[e.category].cartao += Number(e.amount);
+    });
+    requests.forEach(r => {
+      if (!map[r.category]) map[r.category] = { cartao: 0, solicitacoes: 0 };
+      map[r.category].solicitacoes += Number(r.amount);
+    });
+    return Object.entries(map)
+      .map(([name, v]) => ({ name, ...v, total: v.cartao + v.solicitacoes }))
+      .sort((a, b) => b.total - a.total);
+  }, [expenses, requests]);
 
   // Top 10 fornecedores (despesas + solicitações)
   const topSuppliers = useMemo(() => {
