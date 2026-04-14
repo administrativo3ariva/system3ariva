@@ -378,9 +378,9 @@ export default function FinancialDashboard() {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={topSuppliers} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-              <XAxis type="number" tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
+              <XAxis type="number" tickFormatter={(v) => v >= 1000 ? `R$${(v / 1000).toFixed(1).replace('.0', '')}k` : `R$${v}`} tick={{ fontSize: 11 }} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
-              <Tooltip content={<StackedTooltip />} />
+              <Tooltip formatter={(v: number) => fmt(v)} />
               <Bar dataKey="value" name="Total" radius={[0, 4, 4, 0]}>
                 {topSuppliers.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
               </Bar>
