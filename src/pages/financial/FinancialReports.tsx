@@ -142,7 +142,7 @@ export default function FinancialReports() {
 
   // Export XLSX
   const handleExport = () => {
-    const rows = filteredData.map(item => ({
+    const mapRow = (item: typeof filteredData[0]) => ({
       'Data': item.date,
       'Descrição': item.description,
       'Valor (R$)': item.amount,
@@ -150,10 +150,12 @@ export default function FinancialReports() {
       'Centro de Custo': item.cost_center,
       'Categoria': item.category,
       'Fornecedor': item.supplier,
-      'Origem': item.sourceLabel,
       'Cartão': item.card_name,
       'Status': item.status,
-    }));
+    });
+
+    const cartaoRows = filteredData.filter(i => i.source === 'cartao').map(mapRow);
+    const solicitacaoRows = filteredData.filter(i => i.source === 'solicitacao').map(mapRow);
 
     // Summary sheet
     const summaryRows = [
@@ -173,20 +175,23 @@ export default function FinancialReports() {
     }));
 
     const wb = XLSX.utils.book_new();
-    const wsData = XLSX.utils.json_to_sheet(rows);
     const wsSummary = XLSX.utils.json_to_sheet(summaryRows);
+    const wsCartao = XLSX.utils.json_to_sheet(cartaoRows);
+    const wsSolicitacao = XLSX.utils.json_to_sheet(solicitacaoRows);
     const wsGrouped = XLSX.utils.json_to_sheet(groupedRows);
 
-    // Set column widths
-    wsData['!cols'] = [
+    const colWidths = [
       { wch: 12 }, { wch: 40 }, { wch: 14 }, { wch: 15 },
-      { wch: 16 }, { wch: 28 }, { wch: 25 }, { wch: 24 }, { wch: 22 }, { wch: 12 },
+      { wch: 16 }, { wch: 28 }, { wch: 25 }, { wch: 22 }, { wch: 12 },
     ];
+    wsCartao['!cols'] = colWidths;
+    wsSolicitacao['!cols'] = colWidths;
     wsSummary['!cols'] = [{ wch: 30 }, { wch: 20 }];
     wsGrouped['!cols'] = [{ wch: 30 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
 
     XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumo');
-    XLSX.utils.book_append_sheet(wb, wsData, 'Lançamentos');
+    XLSX.utils.book_append_sheet(wb, wsCartao, 'Cartão Corporativo');
+    XLSX.utils.book_append_sheet(wb, wsSolicitacao, 'Solicitações');
     XLSX.utils.book_append_sheet(wb, wsGrouped, `Por ${groupLabels[groupBy]}`);
 
     XLSX.writeFile(wb, `Relatorio_Financeiro_${dateStart}_${dateEnd}.xlsx`);
