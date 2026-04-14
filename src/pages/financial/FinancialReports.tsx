@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Download, FileSpreadsheet, Filter, X, TrendingUp, TrendingDown, ArrowRightLeft } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx-js-style';
 
 const GroupedTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
