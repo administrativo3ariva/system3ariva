@@ -17,14 +17,16 @@ import * as XLSX from 'xlsx';
 type SourceType = 'cartao' | 'solicitacao';
 
 const COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--accent))',
-  'hsl(210, 70%, 50%)',
-  'hsl(150, 60%, 45%)',
-  'hsl(30, 80%, 55%)',
-  'hsl(280, 60%, 55%)',
-  'hsl(0, 65%, 55%)',
-  'hsl(190, 70%, 45%)',
+  'hsl(221, 83%, 53%)',
+  'hsl(142, 71%, 45%)',
+  'hsl(38, 92%, 50%)',
+  'hsl(262, 83%, 58%)',
+  'hsl(0, 84%, 60%)',
+  'hsl(190, 90%, 50%)',
+  'hsl(330, 80%, 55%)',
+  'hsl(45, 93%, 47%)',
+  'hsl(160, 60%, 45%)',
+  'hsl(280, 65%, 60%)',
 ];
 
 function getMonthRange() {
@@ -114,11 +116,11 @@ export default function FinancialReports() {
       .sort((a, b) => b.total - a.total);
   }, [filteredData, groupBy]);
 
-  // Pie data by category
+  // Pie data by cost center
   const pieData = useMemo(() => {
     const map: Record<string, number> = {};
     filteredData.forEach(i => {
-      map[i.category] = (map[i.category] || 0) + i.amount;
+      map[i.cost_center] = (map[i.cost_center] || 0) + i.amount;
     });
     return Object.entries(map)
       .map(([name, value]) => ({ name, value }))
@@ -389,8 +391,8 @@ export default function FinancialReports() {
                   <XAxis type="number" tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} />
                   <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10 }} />
                   <Tooltip formatter={(v: number) => fmt(v)} />
-                  <Bar dataKey="cartao" name="Cartão Corp." fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} stackId="a" />
-                  <Bar dataKey="solicitacao" name="Solicitações" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} stackId="a" />
+                  <Bar dataKey="cartao" name="Cartão Corp." fill="hsl(221, 83%, 53%)" radius={[0, 4, 4, 0]} stackId="a" />
+                  <Bar dataKey="solicitacao" name="Solicitações" fill="hsl(142, 71%, 45%)" radius={[0, 4, 4, 0]} stackId="a" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -398,7 +400,7 @@ export default function FinancialReports() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">Distribuição por Categoria</CardTitle>
+              <CardTitle className="text-sm">Distribuição por Centro de Custo</CardTitle>
             </CardHeader>
             <CardContent className="h-72">
               <ResponsiveContainer width="100%" height="100%">
