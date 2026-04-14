@@ -94,7 +94,7 @@ export default function FinancialReports() {
         source: 'cartao' as SourceType,
         sourceLabel: 'Cartão Corporativo',
         card_name: e.card_name || '—',
-        status: e.status,
+        status: e.receipt_url ? 'Comprovado' : 'Pendente',
       })),
       ...requests.map(r => ({
         id: r.id,
