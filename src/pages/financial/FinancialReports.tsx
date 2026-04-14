@@ -391,8 +391,8 @@ export default function FinancialReports() {
                   <XAxis type="number" tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} />
                   <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10 }} />
                   <Tooltip formatter={(v: number) => fmt(v)} />
-                  <Bar dataKey="cartao" name="Cartão Corp." fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} stackId="a" />
-                  <Bar dataKey="solicitacao" name="Solicitações" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} stackId="a" />
+                  <Bar dataKey="cartao" name="Cartão Corp." fill="hsl(221, 83%, 53%)" radius={[0, 4, 4, 0]} stackId="a" />
+                  <Bar dataKey="solicitacao" name="Solicitações" fill="hsl(142, 71%, 45%)" radius={[0, 4, 4, 0]} stackId="a" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
