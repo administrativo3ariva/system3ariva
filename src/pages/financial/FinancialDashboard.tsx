@@ -324,7 +324,7 @@ export default function FinancialDashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={byCompany} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                <XAxis type="number" tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
+                <XAxis type="number" tickFormatter={(v) => v >= 1000 ? `R$${(v / 1000).toFixed(1).replace('.0', '')}k` : `R$${v}`} tick={{ fontSize: 11 }} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={80} />
                 <Tooltip content={<StackedTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -342,7 +342,7 @@ export default function FinancialDashboard() {
               <BarChart data={byCategory}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                 <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-20} textAnchor="end" height={50} />
-                <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} width={60} />
+                <YAxis tickFormatter={(v) => v >= 1000 ? `R$${(v / 1000).toFixed(1).replace('.0', '')}k` : `R$${v}`} tick={{ fontSize: 11 }} width={70} />
                 <Tooltip content={<StackedTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Bar dataKey="cartao" name="Cartão Corporativo" stackId="a" fill="hsl(221, 83%, 53%)" />
@@ -361,7 +361,7 @@ export default function FinancialDashboard() {
             <BarChart data={byCostCenter}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
               <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-              <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} width={60} />
+              <YAxis tickFormatter={(v) => v >= 1000 ? `R$${(v / 1000).toFixed(1).replace('.0', '')}k` : `R$${v}`} tick={{ fontSize: 11 }} width={70} />
               <Tooltip content={<StackedTooltip />} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="cartao" name="Cartão Corporativo" stackId="a" fill="hsl(221, 83%, 53%)" />
