@@ -12,7 +12,32 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Download, FileSpreadsheet, Filter, X, TrendingUp, TrendingDown, ArrowRightLeft } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx-js-style';
+
+const GroupedTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  const cartao = payload.find((p: any) => p.dataKey === 'cartao');
+  const solic = payload.find((p: any) => p.dataKey === 'solicitacao');
+  const total = (cartao ? Number(cartao.value) : 0) + (solic ? Number(solic.value) : 0);
+  return (
+    <div className="rounded-lg border bg-background p-3 shadow-lg min-w-[180px]">
+      {label && <p className="mb-2 text-sm font-medium text-foreground">{label}</p>}
+      {cartao && Number(cartao.value) > 0 && (
+        <p className="text-sm font-semibold" style={{ color: 'hsl(221, 83%, 53%)' }}>
+          Cartão Corporativo: {fmt(Number(cartao.value))}
+        </p>
+      )}
+      {solic && Number(solic.value) > 0 && (
+        <p className="text-sm font-semibold" style={{ color: 'hsl(142, 71%, 45%)' }}>
+          Solicitações: {fmt(Number(solic.value))}
+        </p>
+      )}
+      <p className="text-sm font-bold mt-1 pt-1 border-t border-border text-foreground">
+        Total: {fmt(total)}
+      </p>
+    </div>
+  );
+};
 
 type SourceType = 'cartao' | 'solicitacao';
 
@@ -190,6 +215,63 @@ export default function FinancialReports() {
     wsSolicitacao['!cols'] = colWidths;
     wsSummary['!cols'] = [{ wch: 30 }, { wch: 20 }];
     wsGrouped['!cols'] = [{ wch: 30 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
+
+    // Apply formatting to all sheets
+    const headerStyle = {
+      font: { bold: true, color: { rgb: 'FFFFFF' } },
+      fill: { fgColor: { rgb: '1E3A5F' } },
+      alignment: { horizontal: 'center', vertical: 'center' },
+      border: {
+        top: { style: 'thin', color: { rgb: 'CCCCCC' } },
+        bottom: { style: 'thin', color: { rgb: 'CCCCCC' } },
+        left: { style: 'thin', color: { rgb: 'CCCCCC' } },
+        right: { style: 'thin', color: { rgb: 'CCCCCC' } },
+      },
+    };
+
+    const currencyFmt = '#,##0.00';
+    const borderStyle = {
+      top: { style: 'thin', color: { rgb: 'E0E0E0' } },
+      bottom: { style: 'thin', color: { rgb: 'E0E0E0' } },
+      left: { style: 'thin', color: { rgb: 'E0E0E0' } },
+      right: { style: 'thin', color: { rgb: 'E0E0E0' } },
+    };
+
+    const applyFormatting = (ws: XLSX.WorkSheet, numCols: number, currencyCols: number[]) => {
+      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+
+      // Format header row
+      for (let c = range.s.c; c <= range.e.c; c++) {
+        const addr = XLSX.utils.encode_cell({ r: 0, c });
+        if (ws[addr]) ws[addr].s = headerStyle;
+      }
+
+      // Format data rows
+      for (let r = 1; r <= range.e.r; r++) {
+        const isEven = r % 2 === 0;
+        for (let c = range.s.c; c <= range.e.c; c++) {
+          const addr = XLSX.utils.encode_cell({ r, c });
+          if (!ws[addr]) continue;
+          const cellStyle: any = {
+            border: borderStyle,
+            alignment: { vertical: 'center' },
+          };
+          if (isEven) {
+            cellStyle.fill = { fgColor: { rgb: 'F5F7FA' } };
+          }
+          if (currencyCols.includes(c)) {
+            cellStyle.numFmt = currencyFmt;
+            cellStyle.alignment = { horizontal: 'right', vertical: 'center' };
+          }
+          ws[addr].s = cellStyle;
+        }
+      }
+    };
+
+    applyFormatting(wsSummary, 2, [1]);
+    applyFormatting(wsCartao, 9, [2]);
+    applyFormatting(wsSolicitacao, 9, [2]);
+    applyFormatting(wsGrouped, 4, [1, 2, 3]);
 
     XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumo');
     XLSX.utils.book_append_sheet(wb, wsCartao, 'Cartão Corporativo');
@@ -390,7 +472,7 @@ export default function FinancialReports() {
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                   <XAxis type="number" tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} />
                   <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10 }} />
-                  <Tooltip formatter={(v: number) => fmt(v)} />
+                  <Tooltip content={<GroupedTooltip />} />
                   <Bar dataKey="cartao" name="Cartão Corp." fill="hsl(221, 83%, 53%)" radius={[0, 4, 4, 0]} stackId="a" />
                   <Bar dataKey="solicitacao" name="Solicitações" fill="hsl(142, 71%, 45%)" radius={[0, 4, 4, 0]} stackId="a" />
                 </BarChart>
