@@ -305,7 +305,7 @@ export default function FinancialDashboard() {
             <LineChart data={monthlyEvolution}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
               <XAxis dataKey="name" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-              <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} className="fill-muted-foreground" width={60} />
+              <YAxis tickFormatter={(v) => v >= 1000 ? `R$${(v / 1000).toFixed(1).replace('.0', '')}k` : `R$${v}`} tick={{ fontSize: 11 }} className="fill-muted-foreground" width={70} allowDecimals={false} tickCount={6} />
               <Tooltip content={<EvolutionTooltip />} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Line type="monotone" dataKey="despesas" name="Cartão Corporativo" stroke="hsl(221, 83%, 53%)" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
