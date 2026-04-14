@@ -216,7 +216,7 @@ export default function FinancialDashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Dashboard Financeiro</h1>
+      <h1 className="text-2xl font-bold text-foreground">Dashboard Administrativo Financeiro</h1>
 
       {/* KPI Cards */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
