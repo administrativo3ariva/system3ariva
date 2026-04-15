@@ -445,14 +445,30 @@ export default function PaymentRequestForm() {
                   <div>
                     <p className="text-sm font-medium mb-2">Boleto (PDF)</p>
                     <input type="file" ref={boletoInputRef} onChange={handleFileChange(setBoletoFile)} accept=".pdf" className="hidden" />
-                    <FileUploadZone
-                      file={boletoFile}
-                      onRemove={() => { setBoletoFile(null); if (boletoInputRef.current) boletoInputRef.current.value = ''; }}
-                      inputRef={boletoInputRef}
-                      onClickUpload={() => boletoInputRef.current?.click()}
-                      label="Clique para anexar o boleto"
-                      accept="PDF"
-                    />
+                    {!boletoFile && existingBoletoUrl ? (
+                      <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+                        <div className="flex items-center gap-3">
+                          <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-foreground">Boleto anexado</p>
+                            <a href={existingBoletoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">Visualizar arquivo</a>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => boletoInputRef.current?.click()}>Substituir</Button>
+                          <Button type="button" variant="ghost" size="icon" onClick={() => setExistingBoletoUrl(null)}><X className="h-4 w-4" /></Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <FileUploadZone
+                        file={boletoFile}
+                        onRemove={() => { setBoletoFile(null); if (boletoInputRef.current) boletoInputRef.current.value = ''; }}
+                        inputRef={boletoInputRef}
+                        onClickUpload={() => boletoInputRef.current?.click()}
+                        label="Clique para anexar o boleto"
+                        accept="PDF"
+                      />
+                    )}
                   </div>
                 </div>
               )}
@@ -529,22 +545,40 @@ export default function PaymentRequestForm() {
                 Nota Fiscal / Comprovante
               </div>
               <input type="file" ref={receiptInputRef} onChange={handleFileChange(setReceiptFile)} accept=".pdf,.jpg,.jpeg,.png,.webp" className="hidden" />
-              <FileUploadZone
-                file={receiptFile}
-                onRemove={() => { setReceiptFile(null); if (receiptInputRef.current) receiptInputRef.current.value = ''; }}
-                inputRef={receiptInputRef}
-                onClickUpload={() => receiptInputRef.current?.click()}
-                label="Clique para anexar a NF ou comprovante"
-                accept="PDF, JPG ou PNG"
-              />
-              {!receiptFile && (
-                <div className="flex items-start gap-2 rounded-md bg-yellow-500/10 border border-yellow-500/20 p-3">
-                  <AlertTriangle className="h-4 w-4 text-yellow-600 shrink-0 mt-0.5" />
-                  <p className="text-xs text-yellow-700 dark:text-yellow-400">
-                    Sem NF anexada. A solicitação ficará marcada como <strong>pendente de NF</strong> e você poderá anexar depois.
-                  </p>
+              {!receiptFile && existingReceiptUrl ? (
+                <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">NF / Comprovante anexado</p>
+                      <a href={existingReceiptUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">Visualizar arquivo</a>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button type="button" variant="ghost" size="sm" className="text-xs" onClick={() => receiptInputRef.current?.click()}>Substituir</Button>
+                    <Button type="button" variant="ghost" size="icon" onClick={() => setExistingReceiptUrl(null)}><X className="h-4 w-4" /></Button>
+                  </div>
                 </div>
-              )}
+              ) : (
+                <>
+                  <FileUploadZone
+                    file={receiptFile}
+                    onRemove={() => { setReceiptFile(null); if (receiptInputRef.current) receiptInputRef.current.value = ''; }}
+                    inputRef={receiptInputRef}
+                    onClickUpload={() => receiptInputRef.current?.click()}
+                    label="Clique para anexar a NF ou comprovante"
+                    accept="PDF, JPG ou PNG"
+                  />
+                  {!receiptFile && (
+                    <div className="flex items-start gap-2 rounded-md bg-yellow-500/10 border border-yellow-500/20 p-3">
+                      <AlertTriangle className="h-4 w-4 text-yellow-600 shrink-0 mt-0.5" />
+                      <p className="text-xs text-yellow-700 dark:text-yellow-400">
+                        Sem NF anexada. A solicitação ficará marcada como <strong>pendente de NF</strong> e você poderá anexar depois.
+                      </p>
+                    </div>
+                  )}
+                </>
+              )
             </CardContent>
           </Card>
 
