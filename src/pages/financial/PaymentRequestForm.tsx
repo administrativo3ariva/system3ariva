@@ -578,7 +578,7 @@ export default function PaymentRequestForm() {
                     </div>
                   )}
                 </>
-              )
+              )}
             </CardContent>
           </Card>
 
