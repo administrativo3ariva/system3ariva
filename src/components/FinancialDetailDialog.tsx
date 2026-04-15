@@ -64,13 +64,7 @@ function isImage(url: string) {
 }
 
 function openUrl(url: string) {
-  const a = document.createElement('a');
-  a.href = url;
-  a.target = '_blank';
-  a.rel = 'noopener noreferrer';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  window.open(url, '_blank', 'noopener,noreferrer');
 }
 
 export function FinancialDetailDialog({
@@ -138,17 +132,20 @@ export function FinancialDetailDialog({
           {receiptUrl && (
             <div className="w-[220px] shrink-0">
               <div className="rounded-lg border overflow-hidden h-full flex flex-col">
-                {receiptIsImage ? (
-                  <img
-                    src={receiptUrl}
-                    alt="Comprovante"
-                    className="w-full object-contain cursor-pointer"
-                    onClick={() => openUrl(receiptUrl)}
-                  />
+             {receiptIsImage ? (
+                  <a href={receiptUrl} target="_blank" rel="noopener noreferrer">
+                    <img
+                      src={receiptUrl}
+                      alt="Comprovante"
+                      className="w-full object-contain cursor-pointer"
+                    />
+                  </a>
                 ) : (
-                  <div
-                    className="flex-1 min-h-[200px] flex flex-col items-center justify-center gap-3 bg-muted/20 p-4 cursor-pointer hover:bg-muted/40 transition-colors"
-                    onClick={() => openUrl(receiptUrl)}
+                  <a
+                    href={receiptUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 min-h-[200px] flex flex-col items-center justify-center gap-3 bg-muted/20 p-4 cursor-pointer hover:bg-muted/40 transition-colors no-underline"
                   >
                     <div className="rounded-full bg-primary/10 p-4">
                       <FileText className="h-8 w-8 text-primary" />
@@ -159,16 +156,16 @@ export function FinancialDetailDialog({
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">Clique para visualizar</p>
                     </div>
-                  </div>
+                  </a>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full rounded-none border-t text-xs gap-1.5 h-9"
-                  onClick={() => openUrl(receiptUrl)}
+                <a
+                  href={receiptUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 w-full rounded-none border-t text-xs h-9 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors no-underline"
                 >
                   Abrir em nova aba <ExternalLink className="h-3 w-3" />
-                </Button>
+                </a>
               </div>
             </div>
           )}
