@@ -158,14 +158,14 @@ export function FinancialDetailDialog({
                     </div>
                   </a>
                 )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full rounded-none border-t text-xs gap-1.5 h-9"
-                  onClick={() => openUrl(receiptUrl)}
+                <a
+                  href={receiptUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 w-full rounded-none border-t text-xs h-9 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors no-underline"
                 >
                   Abrir em nova aba <ExternalLink className="h-3 w-3" />
-                </Button>
+                </a>
               </div>
             </div>
           )}
