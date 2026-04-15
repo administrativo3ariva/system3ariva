@@ -131,8 +131,8 @@ export default function FinancialDashboard() {
 
   const monthlyEvolution = useMemo(() => {
     const map: Record<string, { despesas: number; solicitacoes: number }> = {};
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(2026, i, 1);
       const key = format(d, 'MMM/yy', { locale: ptBR });
       map[key] = { despesas: 0, solicitacoes: 0 };
     }
