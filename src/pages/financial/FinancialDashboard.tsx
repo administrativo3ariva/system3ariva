@@ -86,9 +86,14 @@ const PieTooltip = ({ active, payload }: any) => {
 };
 
 export default function FinancialDashboard() {
-  const { data: expenses = [] } = useExpenses();
-  const { data: requests = [] } = usePaymentRequests();
+  const { data: allExpenses = [] } = useExpenses();
+  const { data: allRequests = [] } = usePaymentRequests();
   const now = new Date();
+
+  // Filtrar apenas dados a partir de Janeiro/2026
+  const cutoffDate = '2026-01-01';
+  const expenses = useMemo(() => allExpenses.filter(e => e.expense_date >= cutoffDate), [allExpenses]);
+  const requests = useMemo(() => allRequests.filter(r => (r.request_date || r.created_at) >= cutoffDate), [allRequests]);
 
   const totalExpenses = expenses.reduce((s, e) => s + Number(e.amount), 0);
   const totalRequests = requests.reduce((s, r) => s + Number(r.amount), 0);
