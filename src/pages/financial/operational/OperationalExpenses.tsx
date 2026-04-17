@@ -191,6 +191,12 @@ export default function OperationalExpenses() {
           </Table>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="recurring" className="mt-0">
+          <RecurringExpensesTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
