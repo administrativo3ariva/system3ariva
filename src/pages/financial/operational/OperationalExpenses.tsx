@@ -4,13 +4,15 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useExpenses } from '@/hooks/use-expenses';
 import { usePaymentRequests } from '@/hooks/use-payment-requests';
 import { ALL_BRANCHES, BRANCH_LABELS, OPERATIONAL_CATEGORIES_BY_MACROBLOCO, MONTH_LABELS_PT, CATEGORY_TO_MACROBLOCO } from '@/lib/types';
 import { buildConsumedList, fmtBRL, OPERATIONAL_EXPENSES_MACROBLOCOS } from '@/lib/operational-utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Search, ArrowUpDown } from 'lucide-react';
+import { Search, ArrowUpDown, Repeat, Receipt } from 'lucide-react';
+import RecurringExpensesTab from './RecurringExpensesTab';
 
 const YEAR = 2026;
 
