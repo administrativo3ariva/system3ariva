@@ -339,6 +339,126 @@ export type Database = {
         }
         Relationships: []
       }
+      operational_budgets: {
+        Row: {
+          annual_amount: number
+          apr_amount: number
+          aug_amount: number
+          branch: string
+          category: string
+          created_at: string
+          dec_amount: number
+          feb_amount: number
+          id: string
+          jan_amount: number
+          jul_amount: number
+          jun_amount: number
+          macrobloco: string
+          mar_amount: number
+          may_amount: number
+          notes: string | null
+          nov_amount: number
+          oct_amount: number
+          sep_amount: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          annual_amount?: number
+          apr_amount?: number
+          aug_amount?: number
+          branch: string
+          category: string
+          created_at?: string
+          dec_amount?: number
+          feb_amount?: number
+          id?: string
+          jan_amount?: number
+          jul_amount?: number
+          jun_amount?: number
+          macrobloco: string
+          mar_amount?: number
+          may_amount?: number
+          notes?: string | null
+          nov_amount?: number
+          oct_amount?: number
+          sep_amount?: number
+          updated_at?: string
+          year?: number
+        }
+        Update: {
+          annual_amount?: number
+          apr_amount?: number
+          aug_amount?: number
+          branch?: string
+          category?: string
+          created_at?: string
+          dec_amount?: number
+          feb_amount?: number
+          id?: string
+          jan_amount?: number
+          jul_amount?: number
+          jun_amount?: number
+          macrobloco?: string
+          mar_amount?: number
+          may_amount?: number
+          notes?: string | null
+          nov_amount?: number
+          oct_amount?: number
+          sep_amount?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      operational_expenses: {
+        Row: {
+          amount: number
+          branch: string
+          category: string
+          created_at: string
+          description: string
+          expense_date: string
+          id: string
+          macrobloco: string
+          notes: string | null
+          receipt_url: string | null
+          supplier: string | null
+          supplier_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          branch: string
+          category: string
+          created_at?: string
+          description: string
+          expense_date?: string
+          id?: string
+          macrobloco: string
+          notes?: string | null
+          receipt_url?: string | null
+          supplier?: string | null
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          branch?: string
+          category?: string
+          created_at?: string
+          description?: string
+          expense_date?: string
+          id?: string
+          macrobloco?: string
+          notes?: string | null
+          receipt_url?: string | null
+          supplier?: string | null
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_requests: {
         Row: {
           amount: number
