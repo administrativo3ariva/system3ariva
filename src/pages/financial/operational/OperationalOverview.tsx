@@ -108,7 +108,7 @@ export default function OperationalOverview() {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><TrendingUp className="h-4 w-4" />% Consumido</CardTitle></CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${pct > 100 ? 'text-destructive' : pct >= 80 ? 'text-yellow-500' : ''}`}>{pct.toFixed(1)}%</div>
+            <div className={`text-2xl font-bold ${pct > 100 ? 'text-destructive' : pct >= 80 ? 'text-warning' : ''}`}>{pct.toFixed(1)}%</div>
             <Progress value={Math.min(pct, 100)} className="mt-2" />
           </CardContent>
         </Card>
@@ -169,16 +169,16 @@ export default function OperationalOverview() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2 text-yellow-500"><AlertTriangle className="h-4 w-4" />Categorias Acima de 80%</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2 text-warning"><AlertTriangle className="h-4 w-4" />Categorias Acima de 80%</CardTitle></CardHeader>
           <CardContent className="space-y-2">
             {nearLimitCats.length === 0 && <p className="text-sm text-muted-foreground">Tudo sob controle.</p>}
             {nearLimitCats.map(o => (
-              <div key={o.category} className="flex items-center justify-between rounded-md border border-yellow-500/30 bg-yellow-500/5 p-2">
+              <div key={o.category} className="flex items-center justify-between rounded-md border border-warning/30 bg-warning/5 p-2">
                 <div>
                   <p className="text-sm font-medium">{o.category}</p>
                   <p className="text-xs text-muted-foreground">{fmtBRL(o.spent)} / {fmtBRL(o.budget)}</p>
                 </div>
-                <Badge className="bg-yellow-500/20 text-yellow-600 hover:bg-yellow-500/20">{o.pct.toFixed(0)}%</Badge>
+                <Badge className="bg-warning/20 text-warning hover:bg-warning/20">{o.pct.toFixed(0)}%</Badge>
               </div>
             ))}
           </CardContent>
