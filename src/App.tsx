@@ -25,6 +25,10 @@ import ExpensesList from "@/pages/financial/ExpensesList";
 import PaymentRequestForm from "@/pages/financial/PaymentRequestForm";
 import PaymentRequestsList from "@/pages/financial/PaymentRequestsList";
 import FinancialReports from "@/pages/financial/FinancialReports";
+import OperationalOverview from "@/pages/financial/operational/OperationalOverview";
+import OperationalBudget from "@/pages/financial/operational/OperationalBudget";
+import OperationalBudgetEdit from "@/pages/financial/operational/OperationalBudgetEdit";
+import OperationalExpenses from "@/pages/financial/operational/OperationalExpenses";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -58,6 +62,10 @@ const App = () => (
               <Route path="/financial/expenses" element={<ExpensesList />} />
               <Route path="/financial/requests/new" element={<PaymentRequestForm />} />
               <Route path="/financial/requests" element={<PaymentRequestsList />} />
+              <Route path="/financial/operational/overview" element={<OperationalOverview />} />
+              <Route path="/financial/operational/budget" element={<OperationalBudget />} />
+              <Route path="/financial/operational/adjust" element={<OperationalBudgetEdit />} />
+              <Route path="/financial/operational/expenses" element={<OperationalExpenses />} />
               <Route path="/financial/reports" element={<FinancialReports />} />
             </Route>
             <Route path="*" element={<NotFound />} />

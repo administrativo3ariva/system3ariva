@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, BarChart3, ArrowLeftRight, FileUp, ClipboardList, PlusCircle, Users, LayoutDashboard, MapPin, ChevronDown, ChevronRight, Building2, Wrench, CalendarDays, Kanban, TrendingUp, CreditCard, FileText, DollarSign } from 'lucide-react';
+import { Package, BarChart3, ArrowLeftRight, FileUp, ClipboardList, PlusCircle, Users, LayoutDashboard, MapPin, ChevronDown, ChevronRight, Building2, Wrench, CalendarDays, Kanban, TrendingUp, CreditCard, FileText, DollarSign, Activity, PieChart, Target, SlidersHorizontal, Receipt } from 'lucide-react';
 import logo from '@/assets/Logo.png';
 import { useLocation } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
@@ -87,6 +87,7 @@ function FinancialMenu({ collapsed }: { collapsed: boolean }) {
   const location = useLocation();
   const [cardOpen, setCardOpen] = useState(location.pathname.startsWith('/financial/expenses'));
   const [reqOpen, setReqOpen] = useState(location.pathname.startsWith('/financial/requests'));
+  const [opOpen, setOpOpen] = useState(location.pathname.startsWith('/financial/operational'));
 
   return (
     <SidebarGroup>
@@ -168,6 +169,59 @@ function FinancialMenu({ collapsed }: { collapsed: boolean }) {
                       <NavLink to="/financial/requests" end className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                         <ClipboardList className="mr-2 h-3.5 w-3.5" />
                         {!collapsed && <span className="text-sm">Solicitações</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </CollapsibleContent>
+            </SidebarMenuItem>
+          </Collapsible>
+
+          {/* Operacional - collapsible */}
+          <Collapsible open={opOpen} onOpenChange={setOpOpen}>
+            <SidebarMenuItem>
+              <CollapsibleTrigger asChild>
+                <SidebarMenuButton className="hover:bg-sidebar-accent/50 cursor-pointer">
+                  <Activity className="mr-2 h-4 w-4" />
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1 text-left">Operacional</span>
+                      <ChevronRight className={`h-3.5 w-3.5 transition-transform ${opOpen ? 'rotate-90' : ''}`} />
+                    </>
+                  )}
+                </SidebarMenuButton>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <SidebarMenu className="ml-4 border-l border-sidebar-border pl-2">
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink to="/financial/operational/overview" end className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <PieChart className="mr-2 h-3.5 w-3.5" />
+                        {!collapsed && <span className="text-sm">Visão Geral</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink to="/financial/operational/budget" end className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <Target className="mr-2 h-3.5 w-3.5" />
+                        {!collapsed && <span className="text-sm">Orçamento</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink to="/financial/operational/adjust" end className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <SlidersHorizontal className="mr-2 h-3.5 w-3.5" />
+                        {!collapsed && <span className="text-sm">Ajustes de Orçamento</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink to="/financial/operational/expenses" end className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <Receipt className="mr-2 h-3.5 w-3.5" />
+                        {!collapsed && <span className="text-sm">Despesas Operacionais</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
