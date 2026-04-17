@@ -554,6 +554,98 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_expense_runs: {
+        Row: {
+          generated_at: string
+          id: string
+          month: number
+          payment_request_id: string | null
+          recurring_expense_id: string
+          year: number
+        }
+        Insert: {
+          generated_at?: string
+          id?: string
+          month: number
+          payment_request_id?: string | null
+          recurring_expense_id: string
+          year: number
+        }
+        Update: {
+          generated_at?: string
+          id?: string
+          month?: number
+          payment_request_id?: string | null
+          recurring_expense_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_expense_runs_recurring_expense_id_fkey"
+            columns: ["recurring_expense_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recurring_expenses: {
+        Row: {
+          active: boolean
+          amount: number
+          branch: string
+          category: string
+          company: string
+          cost_center: string
+          created_at: string
+          description: string
+          due_day: number
+          id: string
+          macrobloco: string
+          notes: string | null
+          payment_method: string | null
+          supplier: string | null
+          supplier_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          amount?: number
+          branch: string
+          category: string
+          company: string
+          cost_center: string
+          created_at?: string
+          description: string
+          due_day?: number
+          id?: string
+          macrobloco?: string
+          notes?: string | null
+          payment_method?: string | null
+          supplier?: string | null
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          amount?: number
+          branch?: string
+          category?: string
+          company?: string
+          cost_center?: string
+          created_at?: string
+          description?: string
+          due_day?: number
+          id?: string
+          macrobloco?: string
+          notes?: string | null
+          payment_method?: string | null
+          supplier?: string | null
+          supplier_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       stock_movements: {
         Row: {
           created_at: string
