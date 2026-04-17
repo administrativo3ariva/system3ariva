@@ -4,13 +4,15 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useExpenses } from '@/hooks/use-expenses';
 import { usePaymentRequests } from '@/hooks/use-payment-requests';
 import { ALL_BRANCHES, BRANCH_LABELS, OPERATIONAL_CATEGORIES_BY_MACROBLOCO, MONTH_LABELS_PT, CATEGORY_TO_MACROBLOCO } from '@/lib/types';
 import { buildConsumedList, fmtBRL, OPERATIONAL_EXPENSES_MACROBLOCOS } from '@/lib/operational-utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Search, ArrowUpDown } from 'lucide-react';
+import { Search, ArrowUpDown, Repeat, Receipt } from 'lucide-react';
+import RecurringExpensesTab from './RecurringExpensesTab';
 
 const YEAR = 2026;
 
@@ -85,10 +87,17 @@ export default function OperationalExpenses() {
       <div>
         <h1 className="text-2xl font-bold">Despesas Operacionais</h1>
         <p className="text-sm text-muted-foreground">
-          Visão automática dos lançamentos classificados em <strong>Serviços e Apoio Operacional</strong> e <strong>Ocupação e Infraestrutura</strong>, vindos de Cartão Corporativo e Solicitações de Pagamento.
+          Visão automática dos lançamentos classificados em <strong>Serviços e Apoio Operacional</strong> e <strong>Ocupação e Infraestrutura</strong>, mais a gestão de despesas recorrentes mensais.
         </p>
       </div>
 
+      <Tabs defaultValue="entries" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="entries"><Receipt className="h-4 w-4 mr-2" />Lançamentos</TabsTrigger>
+          <TabsTrigger value="recurring"><Repeat className="h-4 w-4 mr-2" />Recorrentes</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="entries" className="space-y-6 mt-0">
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Realizado (Pagos)</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{fmtBRL(realizado)}</div></CardContent></Card>
@@ -182,6 +191,12 @@ export default function OperationalExpenses() {
           </Table>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="recurring" className="mt-0">
+          <RecurringExpensesTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
