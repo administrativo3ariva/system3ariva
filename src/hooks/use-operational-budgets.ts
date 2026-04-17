@@ -44,7 +44,8 @@ export function useUpsertBudget() {
       } else {
         MONTH_KEYS.forEach(k => { monthlyValues[`${k}_amount`] = monthly[k] ?? 0; });
       }
-      const payload = { ...rest, ...monthlyValues };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const payload = { ...rest, ...monthlyValues } as any;
 
       const { data: existing } = await supabase
         .from('operational_budgets')
@@ -87,7 +88,8 @@ export function useUpdateBudgetMonth() {
     mutationFn: async ({ id, field, value }: { id: string; field: string; value: number }) => {
       const { data, error } = await supabase
         .from('operational_budgets')
-        .update({ [field]: value })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .update({ [field]: value } as any)
         .eq('id', id)
         .select()
         .single();

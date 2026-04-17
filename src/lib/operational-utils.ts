@@ -91,7 +91,7 @@ export function getMonthIndex(dateStr: string): number {
 /** Returns the monthly amount of a budget row for a given month index 0-11 */
 export function budgetMonthAmount(b: OperationalBudget, monthIdx: number): number {
   const key = MONTH_KEYS[monthIdx];
-  return Number((b as Record<string, unknown>)[`${key}_amount`] ?? 0);
+  return Number((b as unknown as Record<string, unknown>)[`${key}_amount`] ?? 0);
 }
 
 /** True if a category is recognized in the operational catalog. */
