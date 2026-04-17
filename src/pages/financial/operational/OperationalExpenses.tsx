@@ -152,13 +152,13 @@ export default function OperationalExpenses() {
                 <TableHead className="cursor-pointer" onClick={() => toggleSort('category')}>Categoria</TableHead>
                 <TableHead>Pagamento</TableHead>
                 <TableHead>Origem</TableHead>
-                <TableHead>Status</TableHead>
+                
                 <TableHead className="text-right cursor-pointer" onClick={() => toggleSort('amount')}>Valor</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={12} className="text-center text-muted-foreground py-8">Nenhum lançamento operacional para os filtros selecionados.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground py-8">Nenhum lançamento operacional para os filtros selecionados.</TableCell></TableRow>
               )}
               {filtered.map(i => (
                 <TableRow key={`${i.source}-${i.id}`}>
@@ -174,11 +174,6 @@ export default function OperationalExpenses() {
                   <TableCell>
                     {i.source === 'card' && <Badge variant="secondary">Cartão</Badge>}
                     {i.source === 'request' && <Badge variant="outline">Solicitação</Badge>}
-                  </TableCell>
-                  <TableCell>
-                    {i.status === 'realizado' && <Badge className="bg-success/20 text-success hover:bg-success/20">Realizado</Badge>}
-                    {i.status === 'comprometido' && <Badge variant="default">Comprometido</Badge>}
-                    {i.status === 'cancelado' && <Badge variant="outline" className="text-muted-foreground">Cancelado</Badge>}
                   </TableCell>
                   <TableCell className="text-right font-mono">{fmtBRL(i.amount)}</TableCell>
                 </TableRow>
