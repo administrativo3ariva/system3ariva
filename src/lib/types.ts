@@ -1,4 +1,4 @@
-export type Branch = 'BH-Matriz' | 'Vêneto-BH' | 'Vêneto-SP' | 'SP' | 'RJ' | 'PAG' | 'VAG' | 'FLO' | 'JM' | 'ITA' | 'CPN' | 'LIM' | 'JUN' | 'SJC';
+export type Branch = 'BH-Matriz' | 'Vêneto-BH' | 'Vêneto-SP' | 'SP' | 'RJ' | 'PAG' | 'VAG' | 'FLO' | 'ITA' | 'CPN' | 'LIM' | 'JUN' | 'SJC';
 
 export const STOCK_BRANCHES = [
   'BH-Matriz', 'Vêneto-BH', 'Vêneto-SP',
@@ -13,7 +13,7 @@ export type StockUnit = StockBranch;
 export const BH_MATRIZ_FLOORS = ['3º andar', '8º andar', '9º andar', '10º andar', 'Algar'] as const;
 export type BhMatrizFloor = typeof BH_MATRIZ_FLOORS[number];
 
-export const ALL_BRANCHES: Branch[] = ['BH-Matriz', 'Vêneto-BH', 'Vêneto-SP', 'SP', 'RJ', 'PAG', 'VAG', 'FLO', 'JM', 'ITA', 'CPN', 'LIM', 'JUN', 'SJC'];
+export const ALL_BRANCHES: Branch[] = ['BH-Matriz', 'Vêneto-BH', 'Vêneto-SP', 'SP', 'RJ', 'PAG', 'VAG', 'FLO', 'ITA', 'CPN', 'LIM', 'JUN', 'SJC'];
 
 export const BRANCH_LABELS: Record<string, string> = {
   'BH-Matriz': 'BH (Matriz)',
@@ -24,7 +24,6 @@ export const BRANCH_LABELS: Record<string, string> = {
   'PAG': 'Pouso Alegre',
   'VAG': 'Varginha',
   'FLO': 'Florianópolis',
-  'JM': 'Juiz de Fora',
   'ITA': 'Itajubá',
   'CPN': 'Campinas',
   'LIM': 'Limeira',
@@ -114,7 +113,7 @@ export interface NfItem {
 export type AppModule = 'stock' | 'inventory' | 'facilities' | 'financial';
 
 export const FINANCIAL_COST_CENTERS = [
-  'BH', 'SP', 'RJ', 'PAG', 'VAG', 'FLO', 'JM', 'ITA', 'CPN', 'LIM', 'JUN', 'SJC',
+  'BH', 'SP', 'RJ', 'PAG', 'VAG', 'FLO', 'ITA', 'CPN', 'LIM', 'JUN', 'SJC',
 ] as const;
 export type FinancialCostCenter = typeof FINANCIAL_COST_CENTERS[number];
 

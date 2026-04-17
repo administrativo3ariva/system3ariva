@@ -36,7 +36,7 @@ export default function NfUploadPage() {
     const map: Record<string, string> = {
       'BH-Matriz': 'BH', 'Vêneto-BH': 'BH', 'Vêneto-SP': 'SP',
       'SP': 'SP', 'RJ': 'RJ', 'PAG': 'PAG', 'VAG': 'VAG',
-      'FLO': 'FLO', 'JM': 'JM', 'ITA': 'ITA', 'CPN': 'CPN',
+      'FLO': 'FLO', 'ITA': 'ITA', 'CPN': 'CPN',
       'LIM': 'LIM', 'JUN': 'JUN', 'SJC': 'SJC',
     };
     return map[unit] || 'BH';

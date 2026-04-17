@@ -4,7 +4,7 @@ import { OperationalBudgetMonthly, CATEGORY_TO_MACROBLOCO, ALL_OPERATIONAL_CATEG
  *  Note: FLO (cost_center) maps to FLN (branch label per spec). */
 export const COST_CENTER_TO_BRANCH: Record<string, string> = {
   BH: 'BH-Matriz', SP: 'SP', RJ: 'RJ', PAG: 'PAG', VAG: 'VAG', FLO: 'FLN',
-  JM: 'JM', ITA: 'ITA', CPN: 'CPN', LIM: 'LIM', JUN: 'JUN', SJC: 'SJC',
+  ITA: 'ITA', CPN: 'CPN', LIM: 'LIM', JUN: 'JUN', SJC: 'SJC',
 };
 
 export function fmtBRL(v: number): string {
