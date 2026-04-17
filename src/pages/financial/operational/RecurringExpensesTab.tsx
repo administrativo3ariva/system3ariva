@@ -167,7 +167,7 @@ export default function RecurringExpensesTab() {
                   <TableRow key={t.id} className={!t.active ? 'opacity-60' : ''}>
                     <TableCell>
                       {t.active
-                        ? <Badge className="bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/30">Ativo</Badge>
+                        ? <Badge>Ativo</Badge>
                         : <Badge variant="outline">Pausado</Badge>}
                     </TableCell>
                     <TableCell className="text-sm">{BRANCH_LABELS[t.branch] || t.branch}</TableCell>
