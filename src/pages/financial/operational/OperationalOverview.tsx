@@ -9,7 +9,25 @@ import { usePaymentRequests } from '@/hooks/use-payment-requests';
 import { ALL_BRANCHES, BRANCH_LABELS, OPERATIONAL_MACROBLOCOS, MONTH_LABELS_PT } from '@/lib/types';
 import { buildConsumedList, fmtBRL, fmtBRLk, isKnownCategory, sumBudget, COMMITTED_MACROBLOCO } from '@/lib/operational-utils';
 import { AlertTriangle, TrendingUp, Wallet, CircleDollarSign, AlertCircle, Receipt, Lock } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, LineChart, Line, PieChart as RPieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ComposedChart, Area, Line, PieChart as RPieChart, Pie, Cell, LabelList, ReferenceLine } from 'recharts';
+
+// Shared tooltip with currency formatting
+type TooltipPayload = { name: string; value: number; color?: string; dataKey?: string };
+const CurrencyTooltip = ({ active, payload, label }: { active?: boolean; payload?: TooltipPayload[]; label?: string }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-md border border-border bg-popover px-3 py-2 shadow-lg text-xs">
+      {label && <div className="font-medium text-foreground mb-1">{label}</div>}
+      {payload.map((p, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <span className="inline-block h-2 w-2 rounded-sm" style={{ background: p.color }} />
+          <span className="text-muted-foreground">{p.name}:</span>
+          <span className="font-mono font-medium text-foreground">{fmtBRL(Number(p.value) || 0)}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const YEAR = 2026;
 const NOW_MONTH = new Date().getMonth() + 1; // 1-12
@@ -107,18 +125,25 @@ export default function OperationalOverview() {
     return { macro: m, Orçamento: +bud.toFixed(2), Realizado: +sp.toFixed(2) };
   });
 
-  // By branch (month) — only when "all"
-  const branchData = ALL_BRANCHES.map(br => {
-    const sp = consumedYear.filter(c => c.branch === br && c.status === 'realizado' && new Date(c.date).getMonth() + 1 === monthFilter).reduce((s, c) => s + c.amount, 0);
-    return { branch: br, Realizado: +sp.toFixed(2) };
-  }).filter(b => b.Realizado > 0);
-
-  // Distribution by category (month)
+  // Distribution by category (month) — for pie when filial selected
   const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--warning))', 'hsl(var(--destructive))', 'hsl(var(--muted-foreground))', '#8b5cf6', '#ec4899', '#10b981'];
   const distByCategory = Array.from(byCategoryMonth.entries())
     .map(([name, value]) => ({ name, value: +value.toFixed(2) }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 8);
+  const distTotal = distByCategory.reduce((s, d) => s + d.value, 0);
+
+  // Macroblock data with % consumed for label
+  const macroDataPct = macroData
+    .map(m => ({ ...m, pct: m.Orçamento > 0 ? (m.Realizado / m.Orçamento) * 100 : 0 }))
+    .sort((a, b) => b.Orçamento - a.Orçamento);
+
+  // Branch data sorted by Realizado, with budget reference
+  const branchDataFull = ALL_BRANCHES.map(br => {
+    const sp = consumedYear.filter(c => c.branch === br && c.status === 'realizado' && new Date(c.date).getMonth() + 1 === monthFilter).reduce((s, c) => s + c.amount, 0);
+    const bd = sumBudget(budgets, { branch: br, month: monthFilter });
+    return { branch: br, Realizado: +sp.toFixed(2), Orçamento: +bd.toFixed(2) };
+  }).filter(b => b.Realizado > 0 || b.Orçamento > 0).sort((a, b) => b.Realizado - a.Realizado);
 
   return (
     <div className="space-y-6">
@@ -191,78 +216,138 @@ export default function OperationalOverview() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Evolução Mensal — barras agrupadas + linha de meta */}
         <Card>
-          <CardHeader><CardTitle className="text-base">Evolução Mensal {YEAR}</CardTitle></CardHeader>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Evolução Mensal {YEAR}</CardTitle>
+            <p className="text-xs text-muted-foreground">Orçamento previsto vs. realizado por mês</p>
+          </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={monthly}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                <YAxis tickFormatter={fmtBRLk} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))' }} />
-                <Legend />
-                <Bar dataKey="Orçamento" fill="hsl(var(--primary))" />
-                <Bar dataKey="Realizado" fill="hsl(var(--accent))" />
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={monthly} margin={{ top: 8, right: 12, left: 0, bottom: 0 }} barCategoryGap="20%">
+                <defs>
+                  <linearGradient id="gradBudget" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
+                  </linearGradient>
+                  <linearGradient id="gradReal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.95} />
+                    <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0.6} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={fmtBRLk} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={60} />
+                <Tooltip content={<CurrencyTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
+                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" />
+                <ReferenceLine x={MONTH_LABELS_PT[monthFilter - 1]} stroke="hsl(var(--warning))" strokeDasharray="3 3" label={{ value: 'Mês', fill: 'hsl(var(--warning))', fontSize: 10, position: 'top' }} />
+                <Bar dataKey="Orçamento" fill="url(#gradBudget)" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                <Bar dataKey="Realizado" fill="url(#gradReal)" radius={[4, 4, 0, 0]} maxBarSize={28} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
+        {/* Tendência Acumulada — área + linha */}
         <Card>
-          <CardHeader><CardTitle className="text-base">Tendência Acumulada</CardTitle></CardHeader>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Tendência Acumulada</CardTitle>
+            <p className="text-xs text-muted-foreground">Orçado vs realizado acumulados ao longo do ano</p>
+          </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={trend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                <YAxis tickFormatter={fmtBRLk} tick={{ fontSize: 11 }} />
-                <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))' }} />
-                <Legend />
-                <Line type="monotone" dataKey="Orçado" stroke="hsl(var(--primary))" strokeWidth={2} />
-                <Line type="monotone" dataKey="Realizado" stroke="hsl(var(--accent))" strokeWidth={2} />
-              </LineChart>
+            <ResponsiveContainer width="100%" height={300}>
+              <ComposedChart data={trend} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="areaReal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.4} />
+                    <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={fmtBRLk} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={60} />
+                <Tooltip content={<CurrencyTooltip />} />
+                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" />
+                <Area type="monotone" dataKey="Realizado" stroke="hsl(var(--accent))" strokeWidth={2.5} fill="url(#areaReal)" dot={false} activeDot={{ r: 4 }} />
+                <Line type="monotone" dataKey="Orçado" stroke="hsl(var(--primary))" strokeWidth={2} strokeDasharray="5 4" dot={false} activeDot={{ r: 4 }} />
+              </ComposedChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
+        {/* Por Macrobloco — barras horizontais com % consumido */}
         <Card>
-          <CardHeader><CardTitle className="text-base">Por Macrobloco (mês)</CardTitle></CardHeader>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Por Macrobloco · {MONTH_LABELS_PT[monthFilter - 1]}</CardTitle>
+            <p className="text-xs text-muted-foreground">Orçado, realizado e % de consumo por bloco</p>
+          </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={macroData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" tickFormatter={fmtBRLk} tick={{ fontSize: 11 }} />
-                <YAxis type="category" dataKey="macro" tick={{ fontSize: 10 }} width={140} />
-                <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))' }} />
-                <Legend />
-                <Bar dataKey="Orçamento" fill="hsl(var(--primary))" />
-                <Bar dataKey="Realizado" fill="hsl(var(--accent))" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle className="text-base">{branchFilter === 'all' ? 'Gasto por Filial (mês)' : 'Distribuição por Categoria (mês)'}</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              {branchFilter === 'all' ? (
-                <BarChart data={branchData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="branch" tick={{ fontSize: 11 }} />
-                  <YAxis tickFormatter={fmtBRLk} tick={{ fontSize: 11 }} />
-                  <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))' }} />
-                  <Bar dataKey="Realizado" fill="hsl(var(--primary))" />
+            {macroDataPct.every(m => m.Orçamento === 0 && m.Realizado === 0) ? (
+              <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">Sem dados para o mês selecionado</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={macroDataPct} layout="vertical" margin={{ top: 8, right: 60, left: 0, bottom: 0 }} barCategoryGap="25%">
+                  <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis type="number" tickFormatter={fmtBRLk} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="macro" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} width={170} axisLine={false} tickLine={false} />
+                  <Tooltip content={<CurrencyTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
+                  <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" />
+                  <Bar dataKey="Orçamento" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} maxBarSize={18} />
+                  <Bar dataKey="Realizado" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} maxBarSize={18}>
+                    <LabelList dataKey="pct" position="right" formatter={(v: number) => `${v.toFixed(0)}%`} style={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                  </Bar>
                 </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Filial (mês) com Orçamento vs Realizado OU Pizza por categoria */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">{branchFilter === 'all' ? `Por Filial · ${MONTH_LABELS_PT[monthFilter - 1]}` : `Top Categorias · ${MONTH_LABELS_PT[monthFilter - 1]}`}</CardTitle>
+            <p className="text-xs text-muted-foreground">{branchFilter === 'all' ? 'Realizado e orçamento por filial' : 'Distribuição do realizado por categoria (top 8)'}</p>
+          </CardHeader>
+          <CardContent>
+            {branchFilter === 'all' ? (
+              branchDataFull.length === 0 ? (
+                <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">Sem lançamentos no mês</div>
               ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={branchDataFull} margin={{ top: 8, right: 12, left: 0, bottom: 0 }} barCategoryGap="20%">
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="branch" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                    <YAxis tickFormatter={fmtBRLk} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={60} />
+                    <Tooltip content={<CurrencyTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
+                    <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" />
+                    <Bar dataKey="Orçamento" fill="hsl(var(--primary) / 0.5)" radius={[4, 4, 0, 0]} maxBarSize={32} />
+                    <Bar dataKey="Realizado" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} maxBarSize={32} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )
+            ) : distByCategory.length === 0 ? (
+              <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">Sem lançamentos no mês</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
                 <RPieChart>
-                  <Pie data={distByCategory} dataKey="value" nameKey="name" outerRadius={100} label={(e) => e.name}>
+                  <Pie
+                    data={distByCategory}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={60}
+                    outerRadius={105}
+                    paddingAngle={2}
+                    stroke="hsl(var(--background))"
+                    strokeWidth={2}
+                  >
                     {distByCategory.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                    <LabelList dataKey="value" position="outside" formatter={(v: number) => distTotal > 0 ? `${((v / distTotal) * 100).toFixed(0)}%` : ''} style={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
                   </Pie>
-                  <Tooltip formatter={(v: number) => fmtBRL(v)} contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))' }} />
+                  <Tooltip content={<CurrencyTooltip />} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" layout="vertical" align="right" verticalAlign="middle" />
                 </RPieChart>
-              )}
-            </ResponsiveContainer>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>
