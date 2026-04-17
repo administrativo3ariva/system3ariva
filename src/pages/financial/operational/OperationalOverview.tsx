@@ -131,12 +131,25 @@ export default function OperationalOverview() {
     return { branch: br, Realizado: +sp.toFixed(2) };
   }).filter(b => b.Realizado > 0);
 
-  // Distribution by category (month)
+  // Distribution by category (month) — for pie when filial selected
   const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--warning))', 'hsl(var(--destructive))', 'hsl(var(--muted-foreground))', '#8b5cf6', '#ec4899', '#10b981'];
   const distByCategory = Array.from(byCategoryMonth.entries())
     .map(([name, value]) => ({ name, value: +value.toFixed(2) }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 8);
+  const distTotal = distByCategory.reduce((s, d) => s + d.value, 0);
+
+  // Macroblock data with % consumed for label
+  const macroDataPct = macroData
+    .map(m => ({ ...m, pct: m.Orçamento > 0 ? (m.Realizado / m.Orçamento) * 100 : 0 }))
+    .sort((a, b) => b.Orçamento - a.Orçamento);
+
+  // Branch data sorted by Realizado, with budget reference
+  const branchDataFull = ALL_BRANCHES.map(br => {
+    const sp = consumedYear.filter(c => c.branch === br && c.status === 'realizado' && new Date(c.date).getMonth() + 1 === monthFilter).reduce((s, c) => s + c.amount, 0);
+    const bd = sumBudget(budgets, { branch: br, month: monthFilter });
+    return { branch: br, Realizado: +sp.toFixed(2), Orçamento: +bd.toFixed(2) };
+  }).filter(b => b.Realizado > 0 || b.Orçamento > 0).sort((a, b) => b.Realizado - a.Realizado);
 
   return (
     <div className="space-y-6">
