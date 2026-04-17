@@ -1,248 +1,202 @@
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { useOperationalExpenses, useCreateOperationalExpense, useDeleteOperationalExpense } from '@/hooks/use-operational-expenses';
-import { ALL_BRANCHES, BRANCH_LABELS, OPERATIONAL_MACROBLOCOS, OPERATIONAL_CATEGORIES_BY_MACROBLOCO, OperationalMacrobloco } from '@/lib/types';
-import { fmtBRL, COST_CENTER_TO_BRANCH } from '@/lib/operational-utils';
 import { useExpenses } from '@/hooks/use-expenses';
 import { usePaymentRequests } from '@/hooks/use-payment-requests';
-import { Plus, Trash2, ExternalLink } from 'lucide-react';
+import { ALL_BRANCHES, BRANCH_LABELS, OPERATIONAL_CATEGORIES_BY_MACROBLOCO, MONTH_LABELS_PT, CATEGORY_TO_MACROBLOCO } from '@/lib/types';
+import { buildConsumedList, fmtBRL, OPERATIONAL_EXPENSES_MACROBLOCOS } from '@/lib/operational-utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Search, ArrowUpDown } from 'lucide-react';
+
+const YEAR = 2026;
+
+const ELIGIBLE_CATEGORIES = new Set(
+  OPERATIONAL_EXPENSES_MACROBLOCOS.flatMap(m => OPERATIONAL_CATEGORIES_BY_MACROBLOCO[m])
+);
+
+type SortKey = 'date' | 'amount' | 'branch' | 'category';
 
 export default function OperationalExpenses() {
-  const { data: opExpenses = [] } = useOperationalExpenses();
   const { data: cardExpenses = [] } = useExpenses();
   const { data: payments = [] } = usePaymentRequests();
-  const createMut = useCreateOperationalExpense();
-  const deleteMut = useDeleteOperationalExpense();
 
-  const [showForm, setShowForm] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [filterBranch, setFilterBranch] = useState<string>('all');
+  const [filterMonth, setFilterMonth] = useState<string>('all');
+  const [filterMacro, setFilterMacro] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [search, setSearch] = useState('');
+  const [sortKey, setSortKey] = useState<SortKey>('date');
+  const [sortAsc, setSortAsc] = useState(false);
 
-  const [form, setForm] = useState({
-    description: '',
-    amount: '',
-    branch: ALL_BRANCHES[0] as string,
-    macrobloco: OPERATIONAL_MACROBLOCOS[0] as string,
-    category: OPERATIONAL_CATEGORIES_BY_MACROBLOCO[OPERATIONAL_MACROBLOCOS[0]][0],
-    expense_date: format(new Date(), 'yyyy-MM-dd'),
-    supplier: '',
-    notes: '',
-  });
+  const all = useMemo(() => buildConsumedList({
+    year: YEAR,
+    expenses: cardExpenses as Parameters<typeof buildConsumedList>[0]['expenses'],
+    payments: payments as Parameters<typeof buildConsumedList>[0]['payments'],
+  }), [cardExpenses, payments]);
 
-  const cats = OPERATIONAL_CATEGORIES_BY_MACROBLOCO[form.macrobloco as OperationalMacrobloco] || [];
+  // Auto-include only categories belonging to the 2 operational macroblocks (or unclassified for visibility)
+  const opOnly = useMemo(() => all.filter(c => {
+    const macro = CATEGORY_TO_MACROBLOCO[c.category];
+    return macro && OPERATIONAL_EXPENSES_MACROBLOCOS.includes(macro);
+  }), [all]);
 
-  // Unified consumed list (op + card + paid requests)
-  const all = useMemo(() => {
-    const list: Array<{
-      id: string; description: string; amount: number; branch: string;
-      macrobloco: string; category: string; date: string;
-      source: 'card' | 'request' | 'operational'; canDelete: boolean;
-    }> = [];
-    opExpenses.forEach(o => list.push({
-      id: o.id, description: o.description, amount: Number(o.amount),
-      branch: o.branch, macrobloco: o.macrobloco, category: o.category,
-      date: o.expense_date, source: 'operational', canDelete: true,
-    }));
-    cardExpenses.forEach(e => list.push({
-      id: e.id, description: e.description, amount: Number(e.amount),
-      branch: COST_CENTER_TO_BRANCH[e.cost_center] ?? e.cost_center,
-      macrobloco: '—', category: e.category,
-      date: e.expense_date, source: 'card', canDelete: false,
-    }));
-    payments.filter(p => p.status === 'pago').forEach(p => {
-      const ref = p.payment_date || p.request_date || p.due_date;
-      if (!ref) return;
-      list.push({
-        id: p.id, description: p.description, amount: Number(p.amount),
-        branch: COST_CENTER_TO_BRANCH[p.cost_center] ?? p.cost_center,
-        macrobloco: '—', category: p.category,
-        date: ref, source: 'request', canDelete: false,
-      });
+  const filtered = useMemo(() => {
+    let list = opOnly;
+    if (filterBranch !== 'all') list = list.filter(i => i.branch === filterBranch);
+    if (filterMonth !== 'all') list = list.filter(i => new Date(i.date).getMonth() + 1 === Number(filterMonth));
+    if (filterMacro !== 'all') list = list.filter(i => i.macrobloco === filterMacro);
+    if (filterStatus !== 'all') list = list.filter(i => i.status === filterStatus);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(i =>
+        i.description.toLowerCase().includes(q) ||
+        (i.supplier || '').toLowerCase().includes(q) ||
+        (i.company || '').toLowerCase().includes(q) ||
+        i.category.toLowerCase().includes(q)
+      );
+    }
+    list = [...list].sort((a, b) => {
+      let cmp = 0;
+      if (sortKey === 'date') cmp = a.date.localeCompare(b.date);
+      else if (sortKey === 'amount') cmp = a.amount - b.amount;
+      else if (sortKey === 'branch') cmp = a.branch.localeCompare(b.branch);
+      else if (sortKey === 'category') cmp = a.category.localeCompare(b.category);
+      return sortAsc ? cmp : -cmp;
     });
-    list.sort((a, b) => b.date.localeCompare(a.date));
     return list;
-  }, [opExpenses, cardExpenses, payments]);
+  }, [opOnly, filterBranch, filterMonth, filterMacro, filterStatus, search, sortKey, sortAsc]);
 
-  const filtered = filterBranch === 'all' ? all : all.filter(i => i.branch === filterBranch);
-  const total = filtered.reduce((s, i) => s + i.amount, 0);
+  const realizado = filtered.filter(i => i.status === 'realizado').reduce((s, i) => s + i.amount, 0);
+  const comprometido = filtered.filter(i => i.status === 'comprometido').reduce((s, i) => s + i.amount, 0);
+  const cancelado = filtered.filter(i => i.status === 'cancelado').reduce((s, i) => s + i.amount, 0);
 
-  async function handleSubmit() {
-    if (!form.description || !form.amount) return;
-    await createMut.mutateAsync({
-      description: form.description,
-      amount: parseFloat(form.amount.replace(',', '.')) || 0,
-      branch: form.branch,
-      macrobloco: form.macrobloco as OperationalMacrobloco,
-      category: form.category,
-      expense_date: form.expense_date,
-      supplier: form.supplier || null,
-      notes: form.notes || null,
-    });
-    setForm({ ...form, description: '', amount: '', supplier: '', notes: '' });
-    setShowForm(false);
+  // Lançamentos potencialmente sem classificação (descrição parece operacional mas categoria não está em ELIGIBLE)
+  const unclassifiedCount = all.filter(c => !CATEGORY_TO_MACROBLOCO[c.category]).length;
+
+  function toggleSort(k: SortKey) {
+    if (sortKey === k) setSortAsc(!sortAsc); else { setSortKey(k); setSortAsc(false); }
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold">Despesas Operacionais</h1>
-          <p className="text-sm text-muted-foreground">Lançamentos que abatem o orçamento (cartão + solicitações pagas + lançamentos próprios)</p>
-        </div>
-        <div className="flex items-center gap-2">
+      <div>
+        <h1 className="text-2xl font-bold">Despesas Operacionais</h1>
+        <p className="text-sm text-muted-foreground">
+          Visão automática dos lançamentos classificados em <strong>Serviços e Apoio Operacional</strong> e <strong>Ocupação e Infraestrutura</strong>, vindos de Cartão Corporativo e Solicitações de Pagamento.
+        </p>
+      </div>
+
+      {/* Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Realizado (Pagos)</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{fmtBRL(realizado)}</div></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Comprometido</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{fmtBRL(comprometido)}</div></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Cancelados/Rejeitados</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-muted-foreground">{fmtBRL(cancelado)}</div></CardContent></Card>
+        <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Lançamentos</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{filtered.length}</div></CardContent></Card>
+      </div>
+
+      {unclassifiedCount > 0 && (
+        <Card className="border-warning/30 bg-warning/5">
+          <CardContent className="pt-6 text-sm">
+            <strong className="text-warning">{unclassifiedCount}</strong> lançamento{unclassifiedCount > 1 ? 's têm' : ' tem'} categoria não vinculada a nenhum macrobloco operacional. Eles não aparecem aqui — verifique a classificação no cadastro do lançamento.
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-5 gap-3">
+          <div className="relative md:col-span-2">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input className="pl-8" placeholder="Buscar descrição, fornecedor, empresa…" value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <Select value={filterMonth} onValueChange={setFilterMonth}>
+            <SelectTrigger><SelectValue placeholder="Mês" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os meses</SelectItem>
+              {MONTH_LABELS_PT.map((l, i) => <SelectItem key={i} value={String(i + 1)}>{l}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Select value={filterBranch} onValueChange={setFilterBranch}>
-            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+            <SelectTrigger><SelectValue placeholder="Filial" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas filiais</SelectItem>
               {ALL_BRANCHES.map(b => <SelectItem key={b} value={b}>{BRANCH_LABELS[b] || b}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button onClick={() => setShowForm(!showForm)}><Plus className="h-4 w-4 mr-1" />Novo lançamento</Button>
-        </div>
-      </div>
-
-      {showForm && (
-        <Card>
-          <CardHeader><CardTitle className="text-base">Novo Lançamento Operacional</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2 md:col-span-2">
-              <Label>Descrição *</Label>
-              <Input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
-            </div>
-            <div className="space-y-2">
-              <Label>Valor *</Label>
-              <Input type="number" step="0.01" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} />
-            </div>
-            <div className="space-y-2">
-              <Label>Data</Label>
-              <Input type="date" value={form.expense_date} onChange={e => setForm({ ...form, expense_date: e.target.value })} />
-            </div>
-            <div className="space-y-2">
-              <Label>Filial</Label>
-              <Select value={form.branch} onValueChange={v => setForm({ ...form, branch: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {ALL_BRANCHES.map(b => <SelectItem key={b} value={b}>{BRANCH_LABELS[b] || b}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Macrobloco</Label>
-              <Select value={form.macrobloco} onValueChange={v => {
-                const newCats = OPERATIONAL_CATEGORIES_BY_MACROBLOCO[v as OperationalMacrobloco];
-                setForm({ ...form, macrobloco: v, category: newCats[0] });
-              }}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {OPERATIONAL_MACROBLOCOS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Categoria</Label>
-              <Select value={form.category} onValueChange={v => setForm({ ...form, category: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {cats.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Fornecedor (opcional)</Label>
-              <Input value={form.supplier} onChange={e => setForm({ ...form, supplier: e.target.value })} />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>Observações</Label>
-              <Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2} />
-            </div>
-            <div className="md:col-span-2 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
-              <Button onClick={handleSubmit} disabled={createMut.isPending}>Registrar</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          <Select value={filterMacro} onValueChange={setFilterMacro}>
+            <SelectTrigger><SelectValue placeholder="Macrobloco" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos macroblocos</SelectItem>
+              {OPERATIONAL_EXPENSES_MACROBLOCOS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos status</SelectItem>
+              <SelectItem value="realizado">Realizado</SelectItem>
+              <SelectItem value="comprometido">Comprometido</SelectItem>
+              <SelectItem value="cancelado">Cancelado</SelectItem>
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Histórico Consolidado</CardTitle>
-          <div className="text-sm text-muted-foreground">Total: <span className="font-semibold text-foreground">{fmtBRL(total)}</span></div>
-        </CardHeader>
-        <CardContent>
+        <CardHeader><CardTitle className="text-base">Lançamentos</CardTitle></CardHeader>
+        <CardContent className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Data</TableHead>
+                <TableHead className="cursor-pointer" onClick={() => toggleSort('date')}>Data <ArrowUpDown className="inline h-3 w-3" /></TableHead>
                 <TableHead>Descrição</TableHead>
-                <TableHead>Filial</TableHead>
+                <TableHead>Fornecedor</TableHead>
+                <TableHead>Empresa</TableHead>
+                <TableHead className="cursor-pointer" onClick={() => toggleSort('branch')}>Filial</TableHead>
+                <TableHead>CC</TableHead>
                 <TableHead>Macrobloco</TableHead>
-                <TableHead>Categoria</TableHead>
+                <TableHead className="cursor-pointer" onClick={() => toggleSort('category')}>Categoria</TableHead>
+                <TableHead>Pagamento</TableHead>
                 <TableHead>Origem</TableHead>
-                <TableHead className="text-right">Valor</TableHead>
-                <TableHead className="w-12" />
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right cursor-pointer" onClick={() => toggleSort('amount')}>Valor</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 && (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum lançamento</TableCell></TableRow>
+                <TableRow><TableCell colSpan={12} className="text-center text-muted-foreground py-8">Nenhum lançamento operacional para os filtros selecionados.</TableCell></TableRow>
               )}
               {filtered.map(i => (
                 <TableRow key={`${i.source}-${i.id}`}>
                   <TableCell className="whitespace-nowrap text-sm">{format(new Date(i.date), 'dd/MM/yy', { locale: ptBR })}</TableCell>
                   <TableCell className="max-w-xs truncate">{i.description}</TableCell>
+                  <TableCell className="text-sm">{i.supplier || '—'}</TableCell>
+                  <TableCell className="text-sm">{i.company || '—'}</TableCell>
                   <TableCell className="text-sm">{BRANCH_LABELS[i.branch] || i.branch}</TableCell>
+                  <TableCell className="text-sm">{i.cost_center || '—'}</TableCell>
                   <TableCell className="text-sm">{i.macrobloco}</TableCell>
                   <TableCell className="text-sm">{i.category}</TableCell>
+                  <TableCell className="text-sm">{i.payment_method || '—'}</TableCell>
                   <TableCell>
-                    {i.source === 'operational' && <Badge variant="default">Operacional</Badge>}
                     {i.source === 'card' && <Badge variant="secondary">Cartão</Badge>}
                     {i.source === 'request' && <Badge variant="outline">Solicitação</Badge>}
                   </TableCell>
-                  <TableCell className="text-right font-mono">{fmtBRL(i.amount)}</TableCell>
                   <TableCell>
-                    {i.canDelete ? (
-                      <Button size="icon" variant="ghost" onClick={() => setConfirmDelete(i.id)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    ) : (
-                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground/40" />
-                    )}
+                    {i.status === 'realizado' && <Badge className="bg-success/20 text-success hover:bg-success/20">Realizado</Badge>}
+                    {i.status === 'comprometido' && <Badge variant="default">Comprometido</Badge>}
+                    {i.status === 'cancelado' && <Badge variant="outline" className="text-muted-foreground">Cancelado</Badge>}
                   </TableCell>
+                  <TableCell className="text-right font-mono">{fmtBRL(i.amount)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
-
-      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remover lançamento?</AlertDialogTitle>
-            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={async () => {
-              if (confirmDelete) await deleteMut.mutateAsync(confirmDelete);
-              setConfirmDelete(null);
-            }}>Remover</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
