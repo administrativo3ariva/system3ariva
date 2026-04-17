@@ -1,65 +1,56 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { OperationalBudget, MONTH_KEYS } from '@/lib/types';
+import { OperationalBudgetMonthly, OperationalMacrobloco } from '@/lib/types';
 
+/** Fetch all monthly budgets for a year (across all branches/categories). */
 export function useOperationalBudgets(year: number = 2026) {
   return useQuery({
-    queryKey: ['operational_budgets', year],
+    queryKey: ['operational_budgets_monthly', year],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('operational_budgets')
+        .from('operational_budgets_monthly')
         .select('*')
         .eq('year', year)
         .order('branch')
         .order('macrobloco')
-        .order('category');
+        .order('category')
+        .order('month');
       if (error) throw error;
-      return (data || []) as OperationalBudget[];
+      return (data || []) as unknown as OperationalBudgetMonthly[];
     },
   });
 }
 
 type UpsertInput = {
-  branch: string;
-  macrobloco: string;
-  category: string;
   year: number;
-  annual_amount: number;
-  /** When true, divide annual evenly across 12 months. Defaults to true. */
-  splitEvenly?: boolean;
-  monthly?: Partial<Record<typeof MONTH_KEYS[number], number>>;
+  month: number;
+  branch: string;
+  macrobloco: OperationalMacrobloco;
+  category: string;
+  amount: number;
   notes?: string | null;
 };
 
+/** Upsert a single (year, month, branch, macrobloco, category) row. */
 export function useUpsertBudget() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: UpsertInput) => {
-      const { splitEvenly = true, monthly = {}, ...rest } = input;
-      const monthlyValues: Record<string, number> = {};
-      if (splitEvenly) {
-        const per = +(rest.annual_amount / 12).toFixed(2);
-        MONTH_KEYS.forEach(k => { monthlyValues[`${k}_amount`] = per; });
-      } else {
-        MONTH_KEYS.forEach(k => { monthlyValues[`${k}_amount`] = monthly[k] ?? 0; });
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const payload = { ...rest, ...monthlyValues } as any;
-
       const { data: existing } = await supabase
-        .from('operational_budgets')
+        .from('operational_budgets_monthly')
         .select('id')
-        .eq('branch', rest.branch)
-        .eq('macrobloco', rest.macrobloco)
-        .eq('category', rest.category)
-        .eq('year', rest.year)
+        .eq('year', input.year)
+        .eq('month', input.month)
+        .eq('branch', input.branch)
+        .eq('macrobloco', input.macrobloco)
+        .eq('category', input.category)
         .maybeSingle();
 
       if (existing) {
         const { data, error } = await supabase
-          .from('operational_budgets')
-          .update(payload)
+          .from('operational_budgets_monthly')
+          .update({ amount: input.amount, notes: input.notes ?? null })
           .eq('id', existing.id)
           .select()
           .single();
@@ -67,36 +58,67 @@ export function useUpsertBudget() {
         return data;
       }
       const { data, error } = await supabase
-        .from('operational_budgets')
-        .insert(payload)
+        .from('operational_budgets_monthly')
+        .insert(input)
         .select()
         .single();
       if (error) throw error;
       return data;
     },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['operational_budgets_monthly'] }),
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Bulk upsert many monthly rows. Used to save a whole branch/month grid at once. */
+export function useBulkUpsertBudget() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (rows: UpsertInput[]) => {
+      if (rows.length === 0) return [];
+      // upsert in batches via onConflict
+      const { data, error } = await supabase
+        .from('operational_budgets_monthly')
+        .upsert(rows, { onConflict: 'year,month,branch,macrobloco,category' })
+        .select();
+      if (error) throw error;
+      return data;
+    },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['operational_budgets'] });
-      toast.success('Orçamento atualizado');
+      qc.invalidateQueries({ queryKey: ['operational_budgets_monthly'] });
+      toast.success('Orçamento salvo');
     },
     onError: (e: Error) => toast.error(e.message),
   });
 }
 
-export function useUpdateBudgetMonth() {
+/** Duplicate all budget rows of (year, sourceMonth, branch) into targetMonth. */
+export function useDuplicateMonth() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, field, value }: { id: string; field: string; value: number }) => {
-      const { data, error } = await supabase
-        .from('operational_budgets')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .update({ [field]: value } as any)
-        .eq('id', id)
-        .select()
-        .single();
+    mutationFn: async ({ year, branch, sourceMonth, targetMonth }: { year: number; branch: string; sourceMonth: number; targetMonth: number }) => {
+      const { data: source, error } = await supabase
+        .from('operational_budgets_monthly')
+        .select('*')
+        .eq('year', year)
+        .eq('branch', branch)
+        .eq('month', sourceMonth);
       if (error) throw error;
-      return data;
+      const rows = (source || []).map(r => ({
+        year, month: targetMonth, branch: r.branch,
+        macrobloco: r.macrobloco, category: r.category, amount: r.amount,
+      }));
+      if (rows.length === 0) return [];
+      const { error: upErr } = await supabase
+        .from('operational_budgets_monthly')
+        .upsert(rows, { onConflict: 'year,month,branch,macrobloco,category' });
+      if (upErr) throw upErr;
+      return rows;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['operational_budgets'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['operational_budgets_monthly'] });
+      toast.success('Orçamento duplicado');
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 }
@@ -105,13 +127,10 @@ export function useDeleteBudget() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('operational_budgets').delete().eq('id', id);
+      const { error } = await supabase.from('operational_budgets_monthly').delete().eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['operational_budgets'] });
-      toast.success('Orçamento removido');
-    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['operational_budgets_monthly'] }),
     onError: (e: Error) => toast.error(e.message),
   });
 }

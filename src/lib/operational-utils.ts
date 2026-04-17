@@ -1,8 +1,9 @@
-import { OperationalBudget, OperationalExpense, MONTH_KEYS, CATEGORY_TO_MACROBLOCO, ALL_OPERATIONAL_CATEGORIES } from '@/lib/types';
+import { OperationalBudgetMonthly, CATEGORY_TO_MACROBLOCO, ALL_OPERATIONAL_CATEGORIES, OperationalMacrobloco } from '@/lib/types';
 
-/** Maps a financial cost_center string to the operational branch label. */
+/** Maps a financial cost_center string to the operational branch label.
+ *  Note: FLO (cost_center) maps to FLN (branch label per spec). */
 export const COST_CENTER_TO_BRANCH: Record<string, string> = {
-  BH: 'BH-Matriz', SP: 'SP', RJ: 'RJ', PAG: 'PAG', VAG: 'VAG', FLO: 'FLO',
+  BH: 'BH-Matriz', SP: 'SP', RJ: 'RJ', PAG: 'PAG', VAG: 'VAG', FLO: 'FLN',
   JM: 'JM', ITA: 'ITA', CPN: 'CPN', LIM: 'LIM', JUN: 'JUN', SJC: 'SJC',
 };
 
@@ -15,69 +16,93 @@ export function fmtBRLk(v: number): string {
   return fmtBRL(v);
 }
 
+export type LaunchStatus = 'realizado' | 'comprometido' | 'cancelado';
+
 export type ConsumedItem = {
+  id: string;
   branch: string;
   macrobloco: string;
   category: string;
   amount: number;
   date: string;
-  source: 'card' | 'request' | 'operational';
+  source: 'card' | 'request';
+  status: LaunchStatus; // bucket for budget calc
+  rawStatus: string; // original status from source
   description: string;
+  supplier?: string | null;
+  company?: string | null;
+  cost_center?: string | null;
+  payment_method?: string | null;
 };
 
-/** Aggregates corporate-card expenses + paid payment_requests + operational expenses
- *  into a unified consumption list filtered by year. */
+/** Map a card expense status to a launch bucket. */
+function mapExpenseStatus(s: string): LaunchStatus {
+  if (s === 'rejeitado' || s === 'cancelado') return 'cancelado';
+  if (s === 'aprovado' || s === 'pendente') return 'comprometido';
+  return 'realizado'; // 'pago' or other final state
+}
+
+/** Map a payment_request status to a launch bucket. */
+function mapRequestStatus(s: string): LaunchStatus {
+  if (s === 'pago') return 'realizado';
+  if (s === 'rejeitado' || s === 'cancelado') return 'cancelado';
+  return 'comprometido'; // pendente, aprovado, etc.
+}
+
+/** Aggregates corporate-card expenses + payment_requests
+ *  into a unified consumption list filtered by year + optional month. */
 export function buildConsumedList(args: {
   year: number;
-  expenses: Array<{ description: string; amount: number; cost_center: string; category: string; expense_date: string; status: string }>;
-  payments: Array<{ description: string; amount: number; cost_center: string; category: string; status: string; payment_date?: string | null; request_date?: string | null; due_date?: string | null }>;
-  opExpenses: OperationalExpense[];
+  month?: number; // 1-12 optional
+  expenses: Array<{ id: string; description: string; amount: number; cost_center: string; category: string; expense_date: string; status: string; supplier?: string | null; company?: string; card_name?: string | null }>;
+  payments: Array<{ id: string; description: string; amount: number; cost_center: string; category: string; status: string; payment_date?: string | null; request_date?: string | null; due_date?: string | null; supplier?: string | null; company?: string; payment_method?: string | null }>;
 }): ConsumedItem[] {
-  const { year, expenses, payments, opExpenses } = args;
+  const { year, month, expenses, payments } = args;
   const list: ConsumedItem[] = [];
 
   expenses.forEach(e => {
     const d = new Date(e.expense_date);
     if (d.getFullYear() !== year) return;
+    if (month && d.getMonth() + 1 !== month) return;
     list.push({
+      id: e.id,
       branch: COST_CENTER_TO_BRANCH[e.cost_center] ?? e.cost_center,
       macrobloco: CATEGORY_TO_MACROBLOCO[e.category] ?? '—',
       category: e.category,
       amount: Number(e.amount) || 0,
       date: e.expense_date,
       source: 'card',
+      status: mapExpenseStatus(e.status),
+      rawStatus: e.status,
       description: e.description,
+      supplier: e.supplier ?? null,
+      company: e.company ?? null,
+      cost_center: e.cost_center,
+      payment_method: e.card_name ?? 'Cartão Corporativo',
     });
   });
 
   payments.forEach(p => {
-    if (p.status !== 'pago') return;
     const ref = p.payment_date || p.request_date || p.due_date;
     if (!ref) return;
     const d = new Date(ref);
     if (d.getFullYear() !== year) return;
+    if (month && d.getMonth() + 1 !== month) return;
     list.push({
+      id: p.id,
       branch: COST_CENTER_TO_BRANCH[p.cost_center] ?? p.cost_center,
       macrobloco: CATEGORY_TO_MACROBLOCO[p.category] ?? '—',
       category: p.category,
       amount: Number(p.amount) || 0,
       date: ref,
       source: 'request',
+      status: mapRequestStatus(p.status),
+      rawStatus: p.status,
       description: p.description,
-    });
-  });
-
-  opExpenses.forEach(o => {
-    const d = new Date(o.expense_date);
-    if (d.getFullYear() !== year) return;
-    list.push({
-      branch: o.branch,
-      macrobloco: o.macrobloco,
-      category: o.category,
-      amount: Number(o.amount) || 0,
-      date: o.expense_date,
-      source: 'operational',
-      description: o.description,
+      supplier: p.supplier ?? null,
+      company: p.company ?? null,
+      cost_center: p.cost_center,
+      payment_method: p.payment_method ?? null,
     });
   });
 
@@ -88,13 +113,26 @@ export function getMonthIndex(dateStr: string): number {
   return new Date(dateStr).getMonth();
 }
 
-/** Returns the monthly amount of a budget row for a given month index 0-11 */
-export function budgetMonthAmount(b: OperationalBudget, monthIdx: number): number {
-  const key = MONTH_KEYS[monthIdx];
-  return Number((b as unknown as Record<string, unknown>)[`${key}_amount`] ?? 0);
+/** Sum monthly budget rows matching a filter. */
+export function sumBudget(rows: OperationalBudgetMonthly[], filter?: Partial<{ branch: string; macrobloco: string; category: string; month: number }>): number {
+  return rows.filter(r =>
+    (!filter?.branch || r.branch === filter.branch) &&
+    (!filter?.macrobloco || r.macrobloco === filter.macrobloco) &&
+    (!filter?.category || r.category === filter.category) &&
+    (!filter?.month || r.month === filter.month)
+  ).reduce((s, r) => s + Number(r.amount), 0);
 }
 
 /** True if a category is recognized in the operational catalog. */
 export function isKnownCategory(c: string): boolean {
   return ALL_OPERATIONAL_CATEGORIES.includes(c);
 }
+
+/** Macroblocks that compose "Despesas Operacionais" subtela */
+export const OPERATIONAL_EXPENSES_MACROBLOCOS: OperationalMacrobloco[] = [
+  'Serviços e Apoio Operacional',
+  'Ocupação e Infraestrutura',
+];
+
+/** Macroblock considered as "comprometido fixo" (Ocupação e Infraestrutura) */
+export const COMMITTED_MACROBLOCO: OperationalMacrobloco = 'Ocupação e Infraestrutura';
