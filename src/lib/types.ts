@@ -146,6 +146,94 @@ export const EXPENSE_CATEGORIES = [
 ] as const;
 export type ExpenseCategory = typeof EXPENSE_CATEGORIES[number];
 
+// ===== Operacional / Orçamento =====
+export const OPERATIONAL_MACROBLOCOS = [
+  'Suprimentos',
+  'Patrimônio e Manutenção',
+  'Serviços e Apoio Operacional',
+  'Ocupação e Infraestrutura',
+] as const;
+export type OperationalMacrobloco = typeof OPERATIONAL_MACROBLOCOS[number];
+
+export const OPERATIONAL_CATEGORIES_BY_MACROBLOCO: Record<OperationalMacrobloco, string[]> = {
+  'Suprimentos': [
+    'Material de Escritório & TI',
+    'Material de Limpeza',
+    'Material de Uso & Consumo',
+  ],
+  'Patrimônio e Manutenção': [
+    'Eletrodoméstico',
+    'Reparo & Manutenção',
+    'Bens de Pequeno Valor & Patrimônio Leve',
+  ],
+  'Serviços e Apoio Operacional': [
+    'Serviços',
+    'Mobilidade & Deslocamento',
+    'Logística & Entregas',
+    'Assinaturas & Conteúdo',
+  ],
+  'Ocupação e Infraestrutura': [
+    'Ocupação Imobiliária',
+    'Infraestrutura Predial',
+    'Tributos Imobiliários',
+    'Seguros Patrimoniais',
+  ],
+};
+
+/** Reverse lookup: category -> macrobloco */
+export const CATEGORY_TO_MACROBLOCO: Record<string, OperationalMacrobloco> = Object.entries(
+  OPERATIONAL_CATEGORIES_BY_MACROBLOCO
+).reduce((acc, [macro, cats]) => {
+  cats.forEach(c => { acc[c] = macro as OperationalMacrobloco; });
+  return acc;
+}, {} as Record<string, OperationalMacrobloco>);
+
+export const ALL_OPERATIONAL_CATEGORIES = Object.values(OPERATIONAL_CATEGORIES_BY_MACROBLOCO).flat();
+
+export const MONTH_KEYS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'] as const;
+export const MONTH_LABELS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+export type MonthKey = typeof MONTH_KEYS[number];
+
+export interface OperationalBudget {
+  id: string;
+  branch: string;
+  macrobloco: OperationalMacrobloco;
+  category: string;
+  year: number;
+  annual_amount: number;
+  jan_amount: number;
+  feb_amount: number;
+  mar_amount: number;
+  apr_amount: number;
+  may_amount: number;
+  jun_amount: number;
+  jul_amount: number;
+  aug_amount: number;
+  sep_amount: number;
+  oct_amount: number;
+  nov_amount: number;
+  dec_amount: number;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OperationalExpense {
+  id: string;
+  description: string;
+  amount: number;
+  branch: string;
+  macrobloco: OperationalMacrobloco;
+  category: string;
+  expense_date: string;
+  supplier?: string | null;
+  supplier_id?: string | null;
+  notes?: string | null;
+  receipt_url?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export type ExpenseStatus = 'pendente' | 'aprovado' | 'rejeitado';
 export type PaymentRequestStatus = 'pendente' | 'aprovado' | 'pago' | 'rejeitado';
 
