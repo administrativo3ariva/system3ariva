@@ -27,7 +27,6 @@ export default function OperationalExpenses() {
   const [filterBranch, setFilterBranch] = useState<string>('all');
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [filterMacro, setFilterMacro] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('date');
   const [sortAsc, setSortAsc] = useState(false);
@@ -49,7 +48,7 @@ export default function OperationalExpenses() {
     if (filterBranch !== 'all') list = list.filter(i => i.branch === filterBranch);
     if (filterMonth !== 'all') list = list.filter(i => new Date(i.date).getMonth() + 1 === Number(filterMonth));
     if (filterMacro !== 'all') list = list.filter(i => i.macrobloco === filterMacro);
-    if (filterStatus !== 'all') list = list.filter(i => i.status === filterStatus);
+    
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(i =>
@@ -68,7 +67,7 @@ export default function OperationalExpenses() {
       return sortAsc ? cmp : -cmp;
     });
     return list;
-  }, [opOnly, filterBranch, filterMonth, filterMacro, filterStatus, search, sortKey, sortAsc]);
+  }, [opOnly, filterBranch, filterMonth, filterMacro, search, sortKey, sortAsc]);
 
   const realizado = filtered.filter(i => i.status === 'realizado').reduce((s, i) => s + i.amount, 0);
   const comprometido = filtered.filter(i => i.status === 'comprometido').reduce((s, i) => s + i.amount, 0);
@@ -132,15 +131,6 @@ export default function OperationalExpenses() {
             <SelectContent>
               <SelectItem value="all">Todos macroblocos</SelectItem>
               {OPERATIONAL_EXPENSES_MACROBLOCOS.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos status</SelectItem>
-              <SelectItem value="realizado">Realizado</SelectItem>
-              <SelectItem value="comprometido">Comprometido</SelectItem>
-              <SelectItem value="cancelado">Cancelado</SelectItem>
             </SelectContent>
           </Select>
         </CardContent>

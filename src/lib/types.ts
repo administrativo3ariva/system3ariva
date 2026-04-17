@@ -113,7 +113,7 @@ export interface NfItem {
 export type AppModule = 'stock' | 'inventory' | 'facilities' | 'financial';
 
 export const FINANCIAL_COST_CENTERS = [
-  'BH', 'SP', 'RJ', 'PAG', 'VAG', 'FLO', 'JM', 'ITA', 'CPN', 'LIM', 'JUN', 'SJC',
+  'BH', 'SP', 'RJ', 'PAG', 'VAG', 'FLO', 'ITA', 'CPN', 'LIM', 'JUN', 'SJC',
 ] as const;
 export type FinancialCostCenter = typeof FINANCIAL_COST_CENTERS[number];
 
