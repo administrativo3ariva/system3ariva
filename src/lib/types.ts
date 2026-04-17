@@ -136,13 +136,26 @@ export const COMPANY_CARD_MAP: Partial<Record<FinancialCompany, string>> = {
   'RVCS': 'Cartão Final 6498',
 };
 
+// Aligned with operational macroblocos taxonomy (see OPERATIONAL_CATEGORIES_BY_MACROBLOCO below)
 export const EXPENSE_CATEGORIES = [
-  'Material de Uso & Consumo',
-  'Material de Limpeza',
+  // Suprimentos
   'Material de Escritório & TI',
+  'Material de Limpeza',
+  'Material de Uso & Consumo',
+  // Patrimônio e Manutenção
   'Eletrodoméstico',
   'Reparo & Manutenção',
+  'Bens de Pequeno Valor & Patrimônio Leve',
+  // Serviços e Apoio Operacional
   'Serviços',
+  'Mobilidade & Deslocamento',
+  'Logística & Entregas',
+  'Assinaturas & Conteúdo',
+  // Ocupação e Infraestrutura
+  'Ocupação Imobiliária',
+  'Infraestrutura Predial',
+  'Tributos Imobiliários',
+  'Seguros Patrimoniais',
 ] as const;
 export type ExpenseCategory = typeof EXPENSE_CATEGORIES[number];
 

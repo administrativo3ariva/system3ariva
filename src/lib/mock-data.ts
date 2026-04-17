@@ -55,7 +55,15 @@ export const mockNfUploads: NfUpload[] = [
   },
 ];
 
-export const PRODUCT_CATEGORIES = ['Papelaria', 'Informática', 'Copa', 'Limpeza', 'Escritório', 'Elétrica'];
+// Aligned with Suprimentos + Patrimônio macroblocos (operational taxonomy)
+export const PRODUCT_CATEGORIES = [
+  'Material de Escritório & TI',
+  'Material de Limpeza',
+  'Material de Uso & Consumo',
+  'Eletrodoméstico',
+  'Reparo & Manutenção',
+  'Bens de Pequeno Valor & Patrimônio Leve',
+];
 export const ASSET_CATEGORIES = ['Climatização', 'Móveis', 'Eletrodomésticos', 'Utensílios', 'Infraestrutura', 'Informática'];
 export const ASSET_CONDITIONS = ['Novo', 'Bom', 'Regular', 'Ruim', 'Inservível'] as const;
 export type AssetCondition = typeof ASSET_CONDITIONS[number];
