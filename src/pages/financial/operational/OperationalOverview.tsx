@@ -9,7 +9,25 @@ import { usePaymentRequests } from '@/hooks/use-payment-requests';
 import { ALL_BRANCHES, BRANCH_LABELS, OPERATIONAL_MACROBLOCOS, MONTH_LABELS_PT } from '@/lib/types';
 import { buildConsumedList, fmtBRL, fmtBRLk, isKnownCategory, sumBudget, COMMITTED_MACROBLOCO } from '@/lib/operational-utils';
 import { AlertTriangle, TrendingUp, Wallet, CircleDollarSign, AlertCircle, Receipt, Lock } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, LineChart, Line, PieChart as RPieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ComposedChart, Area, Line, PieChart as RPieChart, Pie, Cell, LabelList, ReferenceLine } from 'recharts';
+
+// Shared tooltip with currency formatting
+type TooltipPayload = { name: string; value: number; color?: string; dataKey?: string };
+const CurrencyTooltip = ({ active, payload, label }: { active?: boolean; payload?: TooltipPayload[]; label?: string }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-md border border-border bg-popover px-3 py-2 shadow-lg text-xs">
+      {label && <div className="font-medium text-foreground mb-1">{label}</div>}
+      {payload.map((p, i) => (
+        <div key={i} className="flex items-center gap-2">
+          <span className="inline-block h-2 w-2 rounded-sm" style={{ background: p.color }} />
+          <span className="text-muted-foreground">{p.name}:</span>
+          <span className="font-mono font-medium text-foreground">{fmtBRL(Number(p.value) || 0)}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const YEAR = 2026;
 const NOW_MONTH = new Date().getMonth() + 1; // 1-12
