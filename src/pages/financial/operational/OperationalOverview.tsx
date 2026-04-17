@@ -125,12 +125,6 @@ export default function OperationalOverview() {
     return { macro: m, Orçamento: +bud.toFixed(2), Realizado: +sp.toFixed(2) };
   });
 
-  // By branch (month) — only when "all"
-  const branchData = ALL_BRANCHES.map(br => {
-    const sp = consumedYear.filter(c => c.branch === br && c.status === 'realizado' && new Date(c.date).getMonth() + 1 === monthFilter).reduce((s, c) => s + c.amount, 0);
-    return { branch: br, Realizado: +sp.toFixed(2) };
-  }).filter(b => b.Realizado > 0);
-
   // Distribution by category (month) — for pie when filial selected
   const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--warning))', 'hsl(var(--destructive))', 'hsl(var(--muted-foreground))', '#8b5cf6', '#ec4899', '#10b981'];
   const distByCategory = Array.from(byCategoryMonth.entries())
