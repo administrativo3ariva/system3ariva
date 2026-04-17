@@ -1,4 +1,4 @@
-export type Branch = 'BH-Matriz' | 'Vêneto-BH' | 'Vêneto-SP' | 'SP' | 'RJ' | 'PAG' | 'VAG' | 'FLO' | 'JM' | 'ITA' | 'CPN' | 'LIM' | 'JUN' | 'SJC';
+export type Branch = 'BH-Matriz' | 'Vêneto-BH' | 'Vêneto-SP' | 'SP' | 'RJ' | 'PAG' | 'VAG' | 'FLO' | 'ITA' | 'CPN' | 'LIM' | 'JUN' | 'SJC';
 
 export const STOCK_BRANCHES = [
   'BH-Matriz', 'Vêneto-BH', 'Vêneto-SP',
