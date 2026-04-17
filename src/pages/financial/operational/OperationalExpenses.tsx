@@ -87,10 +87,17 @@ export default function OperationalExpenses() {
       <div>
         <h1 className="text-2xl font-bold">Despesas Operacionais</h1>
         <p className="text-sm text-muted-foreground">
-          Visão automática dos lançamentos classificados em <strong>Serviços e Apoio Operacional</strong> e <strong>Ocupação e Infraestrutura</strong>, vindos de Cartão Corporativo e Solicitações de Pagamento.
+          Visão automática dos lançamentos classificados em <strong>Serviços e Apoio Operacional</strong> e <strong>Ocupação e Infraestrutura</strong>, mais a gestão de despesas recorrentes mensais.
         </p>
       </div>
 
+      <Tabs defaultValue="entries" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="entries"><Receipt className="h-4 w-4 mr-2" />Lançamentos</TabsTrigger>
+          <TabsTrigger value="recurring"><Repeat className="h-4 w-4 mr-2" />Recorrentes</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="entries" className="space-y-6 mt-0">
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card><CardHeader className="pb-2"><CardTitle className="text-sm text-muted-foreground">Realizado (Pagos)</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{fmtBRL(realizado)}</div></CardContent></Card>
