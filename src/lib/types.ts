@@ -194,25 +194,15 @@ export const MONTH_KEYS = ['jan','feb','mar','apr','may','jun','jul','aug','sep'
 export const MONTH_LABELS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 export type MonthKey = typeof MONTH_KEYS[number];
 
-export interface OperationalBudget {
+/** Monthly budget row: one record per (year, month, branch, macrobloco, category) */
+export interface OperationalBudgetMonthly {
   id: string;
+  year: number;
+  month: number; // 1-12
   branch: string;
   macrobloco: OperationalMacrobloco;
   category: string;
-  year: number;
-  annual_amount: number;
-  jan_amount: number;
-  feb_amount: number;
-  mar_amount: number;
-  apr_amount: number;
-  may_amount: number;
-  jun_amount: number;
-  jul_amount: number;
-  aug_amount: number;
-  sep_amount: number;
-  oct_amount: number;
-  nov_amount: number;
-  dec_amount: number;
+  amount: number;
   notes?: string | null;
   created_at: string;
   updated_at: string;
