@@ -339,73 +339,40 @@ export type Database = {
         }
         Relationships: []
       }
-      operational_budgets: {
+      operational_budgets_monthly: {
         Row: {
-          annual_amount: number
-          apr_amount: number
-          aug_amount: number
+          amount: number
           branch: string
           category: string
           created_at: string
-          dec_amount: number
-          feb_amount: number
           id: string
-          jan_amount: number
-          jul_amount: number
-          jun_amount: number
           macrobloco: string
-          mar_amount: number
-          may_amount: number
+          month: number
           notes: string | null
-          nov_amount: number
-          oct_amount: number
-          sep_amount: number
           updated_at: string
           year: number
         }
         Insert: {
-          annual_amount?: number
-          apr_amount?: number
-          aug_amount?: number
+          amount?: number
           branch: string
           category: string
           created_at?: string
-          dec_amount?: number
-          feb_amount?: number
           id?: string
-          jan_amount?: number
-          jul_amount?: number
-          jun_amount?: number
           macrobloco: string
-          mar_amount?: number
-          may_amount?: number
+          month: number
           notes?: string | null
-          nov_amount?: number
-          oct_amount?: number
-          sep_amount?: number
           updated_at?: string
-          year?: number
+          year: number
         }
         Update: {
-          annual_amount?: number
-          apr_amount?: number
-          aug_amount?: number
+          amount?: number
           branch?: string
           category?: string
           created_at?: string
-          dec_amount?: number
-          feb_amount?: number
           id?: string
-          jan_amount?: number
-          jul_amount?: number
-          jun_amount?: number
           macrobloco?: string
-          mar_amount?: number
-          may_amount?: number
+          month?: number
           notes?: string | null
-          nov_amount?: number
-          oct_amount?: number
-          sep_amount?: number
           updated_at?: string
           year?: number
         }
