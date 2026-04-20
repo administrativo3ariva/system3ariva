@@ -35,11 +35,13 @@ export type ConsumedItem = {
   payment_method?: string | null;
 };
 
-/** Map a card expense status to a launch bucket. */
+/** Map a card expense status to a launch bucket.
+ *  Card transactions are ALWAYS "realizado" once posted — the gasto already happened.
+ *  Only rejeitado/cancelado is excluded. The pendente/aprovado/pago is just an internal
+ *  reconciliation/approval flow and must NOT block budget consumption. */
 function mapExpenseStatus(s: string): LaunchStatus {
   if (s === 'rejeitado' || s === 'cancelado') return 'cancelado';
-  if (s === 'aprovado' || s === 'pendente') return 'comprometido';
-  return 'realizado'; // 'pago' or other final state
+  return 'realizado';
 }
 
 /** Map a payment_request status to a launch bucket. */
