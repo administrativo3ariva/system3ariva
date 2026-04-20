@@ -72,6 +72,10 @@ export default function NfUploadPage() {
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
     Array.from(files).forEach(file => {
+      if (file.size > 50 * 1024 * 1024) {
+        import('sonner').then(({ toast }) => toast.error(`Arquivo muito grande: ${file.name}. Máximo 50MB.`));
+        return;
+      }
       if (file.type === 'application/pdf' || file.type.startsWith('image/')) {
         uploadNf.mutate({ file, unit: selectedBranch });
       } else {
