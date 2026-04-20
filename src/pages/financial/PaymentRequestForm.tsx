@@ -163,8 +163,8 @@ export default function PaymentRequestForm() {
   const handleFileChange = (setter: (f: File | null) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error('Arquivo muito grande. Máximo 10MB.');
+      if (file.size > 50 * 1024 * 1024) {
+        toast.error('Arquivo muito grande. Máximo 50MB.');
         return;
       }
       setter(file);
@@ -248,7 +248,7 @@ export default function PaymentRequestForm() {
         )}>
           <Upload className="h-6 w-6 mx-auto text-muted-foreground/50 mb-2" />
           <p className="text-sm font-medium text-foreground">{label}</p>
-          <p className="text-xs text-muted-foreground mt-1">{accept} • Máx 10MB</p>
+          <p className="text-xs text-muted-foreground mt-1">{accept} • Máx 50MB</p>
         </div>
       ) : (
         <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">

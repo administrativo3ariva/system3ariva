@@ -132,8 +132,8 @@ export default function ExpenseForm() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error('Arquivo muito grande. Máximo 10MB.');
+      if (file.size > 50 * 1024 * 1024) {
+        toast.error('Arquivo muito grande. Máximo 50MB.');
         return;
       }
       setReceiptFile(file);
@@ -432,7 +432,7 @@ export default function ExpenseForm() {
                 >
                   <Upload className="h-8 w-8 mx-auto text-muted-foreground/50 mb-3" />
                   <p className="text-sm font-medium text-foreground">Clique para anexar o comprovante</p>
-                  <p className="text-xs text-muted-foreground mt-1">PDF, JPG ou PNG • Máx 10MB</p>
+                  <p className="text-xs text-muted-foreground mt-1">PDF, JPG ou PNG • Máx 50MB</p>
                 </div>
               ) : (
                 <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-4">
