@@ -8,7 +8,7 @@ import { useExpenses } from '@/hooks/use-expenses';
 import { usePaymentRequests } from '@/hooks/use-payment-requests';
 import { ALL_BRANCHES, BRANCH_LABELS, OPERATIONAL_MACROBLOCOS, MONTH_LABELS_PT } from '@/lib/types';
 import { buildConsumedList, fmtBRL, fmtBRLk, isKnownCategory, sumBudget, COMMITTED_MACROBLOCO } from '@/lib/operational-utils';
-import { AlertTriangle, TrendingUp, Wallet, CircleDollarSign, AlertCircle, Receipt, Lock } from 'lucide-react';
+import { AlertTriangle, TrendingUp, Wallet, CircleDollarSign, AlertCircle, Receipt, Lock, CreditCard, FileText } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, LabelList, ReferenceLine } from 'recharts';
 
 // Shared tooltip with currency formatting
@@ -31,6 +31,13 @@ const CurrencyTooltip = ({ active, payload, label }: { active?: boolean; payload
 
 const YEAR = 2026;
 const NOW_MONTH = new Date().getMonth() + 1; // 1-12
+const CHART_COLORS = {
+  budget: 'hsl(var(--primary))',
+  budgetMuted: 'hsl(var(--primary) / 0.32)',
+  realized: 'hsl(var(--success))',
+  realizedMuted: 'hsl(var(--success) / 0.72)',
+  committed: 'hsl(var(--warning))',
+} as const;
 
 export default function OperationalOverview() {
   const [branchFilter, setBranchFilter] = useState<string>('all');
@@ -99,8 +106,10 @@ export default function OperationalOverview() {
     });
   }
 
-  const unclassified = consumedMonth.filter(c => !isKnownCategory(c.category));
   const launchCount = consumedMonth.length;
+  const cardRealized = consumedMonth.filter(c => c.status === 'realizado' && c.source === 'card').reduce((s, c) => s + c.amount, 0);
+  const requestRealized = consumedMonth.filter(c => c.status === 'realizado' && c.source === 'request').reduce((s, c) => s + c.amount, 0);
+  const categoriesWithRealized = byCategoryMonth.size;
 
   // Charts: monthly evolution (12 months)
   const monthly = MONTH_LABELS_PT.map((label, i) => {
@@ -124,11 +133,27 @@ export default function OperationalOverview() {
     .sort((a, b) => (b.pct - a.pct) || (b.Realizado - a.Realizado))
     .slice(0, 8);
 
+  const topCategoriesBySpend = Array.from(byCategoryMonth.entries())
+    .map(([category, spent]) => ({ category, spent, share: realizadoMonth > 0 ? (spent / realizadoMonth) * 100 : 0 }))
+    .sort((a, b) => b.spent - a.spent)
+    .slice(0, 5);
+
+  const largestAvailableBalances = budgetsMonth
+    .map(b => {
+      const spent = byCategoryMonth.get(b.category) || 0;
+      const balance = Number(b.amount) - spent;
+      return { category: b.category, budget: Number(b.amount), spent, balance };
+    })
+    .filter(item => item.budget > 0 && item.balance > 0)
+    .sort((a, b) => b.balance - a.balance)
+    .slice(0, 5);
+
   // By macrobloco (month)
   const macroData = OPERATIONAL_MACROBLOCOS.map(m => {
     const bud = sumBudget(budgetsMonth, { macrobloco: m });
     const sp = consumedMonth.filter(c => c.status === 'realizado' && c.macrobloco === m).reduce((s, c) => s + c.amount, 0);
-    return { macro: m, Orçamento: +bud.toFixed(2), Realizado: +sp.toFixed(2) };
+    const cp = consumedMonth.filter(c => c.status === 'comprometido' && c.macrobloco === m).reduce((s, c) => s + c.amount, 0);
+    return { macro: m, Orçamento: +bud.toFixed(2), Realizado: +sp.toFixed(2), Comprometido: +cp.toFixed(2) };
   });
 
   // Macroblock data with % consumed for label
