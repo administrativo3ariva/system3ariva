@@ -7,8 +7,8 @@ import { useOperationalBudgets } from '@/hooks/use-operational-budgets';
 import { useExpenses } from '@/hooks/use-expenses';
 import { usePaymentRequests } from '@/hooks/use-payment-requests';
 import { ALL_BRANCHES, BRANCH_LABELS, OPERATIONAL_MACROBLOCOS, MONTH_LABELS_PT } from '@/lib/types';
-import { buildConsumedList, fmtBRL, fmtBRLk, isKnownCategory, sumBudget, COMMITTED_MACROBLOCO } from '@/lib/operational-utils';
-import { AlertTriangle, TrendingUp, Wallet, CircleDollarSign, AlertCircle, Receipt, Lock } from 'lucide-react';
+import { buildConsumedList, fmtBRL, fmtBRLk, sumBudget, COMMITTED_MACROBLOCO } from '@/lib/operational-utils';
+import { AlertTriangle, TrendingUp, Wallet, CircleDollarSign, AlertCircle, Receipt, Lock, CreditCard, FileText } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, LabelList, ReferenceLine } from 'recharts';
 
 // Shared tooltip with currency formatting
@@ -31,6 +31,13 @@ const CurrencyTooltip = ({ active, payload, label }: { active?: boolean; payload
 
 const YEAR = 2026;
 const NOW_MONTH = new Date().getMonth() + 1; // 1-12
+const CHART_COLORS = {
+  budget: 'hsl(var(--primary))',
+  budgetMuted: 'hsl(var(--primary) / 0.32)',
+  realized: 'hsl(var(--success))',
+  realizedMuted: 'hsl(var(--success) / 0.72)',
+  committed: 'hsl(var(--warning))',
+} as const;
 
 export default function OperationalOverview() {
   const [branchFilter, setBranchFilter] = useState<string>('all');
@@ -81,26 +88,10 @@ export default function OperationalOverview() {
     else if (p >= 80) nearLimitCats.push({ category: cat, spent, budget: bud, pct: p });
   });
 
-  // Categories with expense but no budget
-  const categoriesWithoutBudget: { category: string; spent: number }[] = [];
-  byCategoryMonth.forEach((spent, cat) => {
-    if (!budgetByCategoryMonth.has(cat) && isKnownCategory(cat)) {
-      categoriesWithoutBudget.push({ category: cat, spent });
-    }
-  });
-
-  // Branches at risk: > 80% in their month budget
-  const branchRisk: { branch: string; spent: number; budget: number; pct: number }[] = [];
-  if (branchFilter === 'all') {
-    ALL_BRANCHES.forEach(br => {
-      const bb = sumBudget(budgets, { branch: br, month: monthFilter });
-      const sp = consumedYear.filter(c => c.branch === br && c.status === 'realizado' && new Date(c.date).getMonth() + 1 === monthFilter).reduce((s, c) => s + c.amount, 0);
-      if (bb > 0 && sp / bb >= 0.8) branchRisk.push({ branch: br, spent: sp, budget: bb, pct: (sp / bb) * 100 });
-    });
-  }
-
-  const unclassified = consumedMonth.filter(c => !isKnownCategory(c.category));
   const launchCount = consumedMonth.length;
+  const cardRealized = consumedMonth.filter(c => c.status === 'realizado' && c.source === 'card').reduce((s, c) => s + c.amount, 0);
+  const requestRealized = consumedMonth.filter(c => c.status === 'realizado' && c.source === 'request').reduce((s, c) => s + c.amount, 0);
+  const categoriesWithRealized = byCategoryMonth.size;
 
   // Charts: monthly evolution (12 months)
   const monthly = MONTH_LABELS_PT.map((label, i) => {
@@ -124,11 +115,27 @@ export default function OperationalOverview() {
     .sort((a, b) => (b.pct - a.pct) || (b.Realizado - a.Realizado))
     .slice(0, 8);
 
+  const topCategoriesBySpend = Array.from(byCategoryMonth.entries())
+    .map(([category, spent]) => ({ category, spent, share: realizadoMonth > 0 ? (spent / realizadoMonth) * 100 : 0 }))
+    .sort((a, b) => b.spent - a.spent)
+    .slice(0, 5);
+
+  const largestAvailableBalances = budgetsMonth
+    .map(b => {
+      const spent = byCategoryMonth.get(b.category) || 0;
+      const balance = Number(b.amount) - spent;
+      return { category: b.category, budget: Number(b.amount), spent, balance };
+    })
+    .filter(item => item.budget > 0 && item.balance > 0)
+    .sort((a, b) => b.balance - a.balance)
+    .slice(0, 5);
+
   // By macrobloco (month)
   const macroData = OPERATIONAL_MACROBLOCOS.map(m => {
     const bud = sumBudget(budgetsMonth, { macrobloco: m });
     const sp = consumedMonth.filter(c => c.status === 'realizado' && c.macrobloco === m).reduce((s, c) => s + c.amount, 0);
-    return { macro: m, Orçamento: +bud.toFixed(2), Realizado: +sp.toFixed(2) };
+    const cp = consumedMonth.filter(c => c.status === 'comprometido' && c.macrobloco === m).reduce((s, c) => s + c.amount, 0);
+    return { macro: m, Orçamento: +bud.toFixed(2), Realizado: +sp.toFixed(2), Comprometido: +cp.toFixed(2) };
   });
 
   // Macroblock data with % consumed for label
@@ -226,12 +233,12 @@ export default function OperationalOverview() {
               <BarChart data={monthly} margin={{ top: 8, right: 12, left: 0, bottom: 0 }} barCategoryGap="20%">
                 <defs>
                   <linearGradient id="gradBudget" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.9} />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
+                    <stop offset="0%" stopColor={CHART_COLORS.budget} stopOpacity={0.9} />
+                    <stop offset="100%" stopColor={CHART_COLORS.budget} stopOpacity={0.45} />
                   </linearGradient>
                   <linearGradient id="gradReal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.95} />
-                    <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0.6} />
+                    <stop offset="0%" stopColor={CHART_COLORS.realized} stopOpacity={0.95} />
+                    <stop offset="100%" stopColor={CHART_COLORS.realized} stopOpacity={0.62} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -242,6 +249,7 @@ export default function OperationalOverview() {
                 <ReferenceLine x={MONTH_LABELS_PT[monthFilter - 1]} stroke="hsl(var(--warning))" strokeDasharray="3 3" label={{ value: 'Mês', fill: 'hsl(var(--warning))', fontSize: 10, position: 'top' }} />
                 <Bar dataKey="Orçamento" fill="url(#gradBudget)" radius={[4, 4, 0, 0]} maxBarSize={28} />
                 <Bar dataKey="Realizado" fill="url(#gradReal)" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                <Bar dataKey="Comprometido" fill={CHART_COLORS.committed} radius={[4, 4, 0, 0]} maxBarSize={28} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -264,11 +272,11 @@ export default function OperationalOverview() {
                   <YAxis type="category" dataKey="category" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} width={165} axisLine={false} tickLine={false} />
                   <Tooltip content={<CurrencyTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
                   <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" />
-                  <Bar dataKey="Orçamento" fill="hsl(var(--primary) / 0.35)" radius={[0, 4, 4, 0]} maxBarSize={18} />
-                  <Bar dataKey="Realizado" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} maxBarSize={18}>
+                  <Bar dataKey="Orçamento" fill={CHART_COLORS.budgetMuted} radius={[0, 4, 4, 0]} maxBarSize={18} />
+                  <Bar dataKey="Realizado" fill={CHART_COLORS.realized} radius={[0, 4, 4, 0]} maxBarSize={18}>
                     <LabelList dataKey="pct" position="right" formatter={(v: number) => v >= 999 ? 's/orç.' : `${v.toFixed(0)}%`} style={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
                   </Bar>
-                  <Bar dataKey="Comprometido" fill="hsl(var(--warning))" radius={[0, 4, 4, 0]} maxBarSize={18} />
+                  <Bar dataKey="Comprometido" fill={CHART_COLORS.committed} radius={[0, 4, 4, 0]} maxBarSize={18} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -292,10 +300,11 @@ export default function OperationalOverview() {
                   <YAxis type="category" dataKey="macro" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} width={170} axisLine={false} tickLine={false} />
                   <Tooltip content={<CurrencyTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
                   <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" />
-                  <Bar dataKey="Orçamento" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} maxBarSize={18} />
-                  <Bar dataKey="Realizado" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} maxBarSize={18}>
+                  <Bar dataKey="Orçamento" fill={CHART_COLORS.budgetMuted} radius={[0, 4, 4, 0]} maxBarSize={18} />
+                  <Bar dataKey="Realizado" fill={CHART_COLORS.realized} radius={[0, 4, 4, 0]} maxBarSize={18}>
                     <LabelList dataKey="pct" position="right" formatter={(v: number) => `${v.toFixed(0)}%`} style={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
                   </Bar>
+                  <Bar dataKey="Comprometido" fill={CHART_COLORS.committed} radius={[0, 4, 4, 0]} maxBarSize={18} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -321,9 +330,9 @@ export default function OperationalOverview() {
                   <YAxis tickFormatter={fmtBRLk} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={60} />
                   <Tooltip content={<CurrencyTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
                   <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" />
-                  <Bar dataKey="Orçamento" fill="hsl(var(--primary) / 0.35)" radius={[4, 4, 0, 0]} maxBarSize={26} />
-                  <Bar dataKey="Realizado" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} maxBarSize={26} />
-                  <Bar dataKey="Comprometido" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} maxBarSize={26} />
+                  <Bar dataKey="Orçamento" fill={CHART_COLORS.budgetMuted} radius={[4, 4, 0, 0]} maxBarSize={26} />
+                  <Bar dataKey="Realizado" fill={CHART_COLORS.realized} radius={[4, 4, 0, 0]} maxBarSize={26} />
+                  <Bar dataKey="Comprometido" fill={CHART_COLORS.committed} radius={[4, 4, 0, 0]} maxBarSize={26} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -350,64 +359,53 @@ export default function OperationalOverview() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2 text-warning"><AlertTriangle className="h-4 w-4" />Acima de 80%</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><TrendingUp className="h-4 w-4 text-success" />Maiores Gastos do Mês</CardTitle></CardHeader>
           <CardContent className="space-y-2">
-            {nearLimitCats.length === 0 && <p className="text-sm text-muted-foreground">Tudo sob controle.</p>}
-            {nearLimitCats.map(o => (
-              <div key={o.category} className="flex items-center justify-between rounded-md border border-warning/30 bg-warning/5 p-2">
-                <div>
-                  <p className="text-sm font-medium">{o.category}</p>
-                  <p className="text-xs text-muted-foreground">{fmtBRL(o.spent)} / {fmtBRL(o.budget)}</p>
+            {topCategoriesBySpend.length === 0 && <p className="text-sm text-muted-foreground">Nenhum realizado neste mês.</p>}
+            {topCategoriesBySpend.map(item => (
+              <div key={item.category} className="rounded-md border bg-muted/20 p-2">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium truncate">{item.category}</p>
+                  <Badge variant="outline">{fmtBRL(item.spent)}</Badge>
                 </div>
-                <Badge className="bg-warning/20 text-warning hover:bg-warning/20">{o.pct.toFixed(0)}%</Badge>
+                <Progress value={Math.min(item.share, 100)} className="mt-2 h-1.5" />
               </div>
             ))}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Filiais em Risco</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><CircleDollarSign className="h-4 w-4 text-primary" />Maiores Saldos Disponíveis</CardTitle></CardHeader>
           <CardContent className="space-y-2">
-            {branchFilter !== 'all' && <p className="text-sm text-muted-foreground">Selecione "Todas as filiais" para ver este alerta.</p>}
-            {branchFilter === 'all' && branchRisk.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma filial em risco neste mês.</p>}
-            {branchFilter === 'all' && branchRisk.map(b => (
-              <div key={b.branch} className="flex items-center justify-between rounded-md border bg-muted/30 p-2">
-                <div>
-                  <p className="text-sm font-medium">{BRANCH_LABELS[b.branch] || b.branch}</p>
-                  <p className="text-xs text-muted-foreground">{fmtBRL(b.spent)} / {fmtBRL(b.budget)}</p>
+            {largestAvailableBalances.length === 0 && <p className="text-sm text-muted-foreground">Sem saldo positivo nas categorias orçadas.</p>}
+            {largestAvailableBalances.map(item => (
+              <div key={item.category} className="flex items-center justify-between rounded-md border bg-muted/20 p-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{item.category}</p>
+                  <p className="text-xs text-muted-foreground">Usado {fmtBRL(item.spent)} de {fmtBRL(item.budget)}</p>
                 </div>
-                <Badge variant={b.pct > 100 ? 'destructive' : 'default'}>{b.pct.toFixed(0)}%</Badge>
+                <Badge className="bg-primary/15 text-primary hover:bg-primary/15">{fmtBRL(item.balance)}</Badge>
               </div>
             ))}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Sem Classificação / Sem Orçamento</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Receipt className="h-4 w-4 text-success" />Composição do Realizado</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">Lançamentos sem categoria conhecida</p>
-              {unclassified.length === 0 && <p className="text-sm text-muted-foreground">Nenhum.</p>}
-              {unclassified.slice(0, 4).map((u) => (
-                <div key={u.id} className="flex items-center justify-between rounded-md border bg-muted/30 p-2 mb-1">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{u.description}</p>
-                    <p className="text-xs text-muted-foreground">{u.category || '—'} · {u.branch}</p>
-                  </div>
-                  <Badge variant="outline">{fmtBRL(u.amount)}</Badge>
-                </div>
-              ))}
-              {unclassified.length > 4 && <p className="text-xs text-muted-foreground">+{unclassified.length - 4} outros</p>}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-md border bg-muted/20 p-3">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground"><CreditCard className="h-3.5 w-3.5" />Cartão</div>
+                <div className="mt-1 text-lg font-semibold">{fmtBRL(cardRealized)}</div>
+              </div>
+              <div className="rounded-md border bg-muted/20 p-3">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground"><FileText className="h-3.5 w-3.5" />Solicitações</div>
+                <div className="mt-1 text-lg font-semibold">{fmtBRL(requestRealized)}</div>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">Categorias com despesa, mas sem orçamento</p>
-              {categoriesWithoutBudget.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma.</p>}
-              {categoriesWithoutBudget.map(c => (
-                <div key={c.category} className="flex items-center justify-between rounded-md border bg-muted/30 p-2 mb-1">
-                  <p className="text-sm font-medium">{c.category}</p>
-                  <Badge variant="outline">{fmtBRL(c.spent)}</Badge>
-                </div>
-              ))}
+            <div className="flex items-center justify-between rounded-md border bg-muted/20 p-2">
+              <span className="text-sm text-muted-foreground">Categorias com realizado</span>
+              <Badge variant="outline">{categoriesWithRealized}</Badge>
             </div>
           </CardContent>
         </Card>
