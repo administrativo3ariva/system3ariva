@@ -181,20 +181,20 @@ export default function OperationalOverview() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><Wallet className="h-4 w-4" />Orçamento do Mês</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{fmtBRL(totalBudgetMonth)}</div></CardContent>
+          <CardContent><div className="number-safe text-2xl font-bold">{fmtBRL(totalBudgetMonth)}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><TrendingUp className="h-4 w-4" />Realizado</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{fmtBRL(realizadoMonth)}</div></CardContent>
+          <CardContent><div className="number-safe text-2xl font-bold">{fmtBRL(realizadoMonth)}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><CircleDollarSign className="h-4 w-4" />Saldo</CardTitle></CardHeader>
-          <CardContent><div className={`text-2xl font-bold ${balanceMonth < 0 ? 'text-destructive' : ''}`}>{fmtBRL(balanceMonth)}</div></CardContent>
+          <CardContent><div className={`number-safe text-2xl font-bold ${balanceMonth < 0 ? 'text-destructive' : ''}`}>{fmtBRL(balanceMonth)}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><TrendingUp className="h-4 w-4" />% Consumido</CardTitle></CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${pctMonth > 100 ? 'text-destructive' : pctMonth >= 80 ? 'text-warning' : ''}`}>{pctMonth.toFixed(1)}%</div>
+            <div className={`number-safe text-2xl font-bold ${pctMonth > 100 ? 'text-destructive' : pctMonth >= 80 ? 'text-warning' : ''}`}>{pctMonth.toFixed(1)}%</div>
             <Progress value={Math.min(pctMonth, 100)} className="mt-2" />
           </CardContent>
         </Card>
@@ -204,19 +204,19 @@ export default function OperationalOverview() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><Lock className="h-4 w-4" />Comprometido (Ocupação)</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{fmtBRL(comprometidoFixo)}</div></CardContent>
+          <CardContent><div className="number-safe text-2xl font-bold">{fmtBRL(comprometidoFixo)}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><AlertTriangle className="h-4 w-4" />Comprometido (Pendente/Aprovado)</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{fmtBRL(comprometidoMonth)}</div></CardContent>
+          <CardContent><div className="number-safe text-2xl font-bold">{fmtBRL(comprometidoMonth)}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><Receipt className="h-4 w-4" />Lançamentos no Mês</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{launchCount}</div></CardContent>
+          <CardContent><div className="number-safe text-2xl font-bold">{launchCount}</div></CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><AlertCircle className="h-4 w-4" />Cat. Estouradas / 80%+</CardTitle></CardHeader>
-          <CardContent><div className="text-2xl font-bold">{overBudgetCats.length} / {nearLimitCats.length}</div></CardContent>
+          <CardContent><div className="number-safe text-2xl font-bold">{overBudgetCats.length} / {nearLimitCats.length}</div></CardContent>
         </Card>
       </div>
 
@@ -366,7 +366,7 @@ export default function OperationalOverview() {
               <div key={item.category} className="rounded-md border bg-muted/20 p-2">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-medium truncate">{item.category}</p>
-                  <Badge variant="outline">{fmtBRL(item.spent)}</Badge>
+                  <Badge variant="outline" className="number-safe shrink min-w-0 justify-end text-right">{fmtBRL(item.spent)}</Badge>
                 </div>
                 <Progress value={Math.min(item.share, 100)} className="mt-2 h-1.5" />
               </div>
@@ -384,7 +384,7 @@ export default function OperationalOverview() {
                   <p className="text-sm font-medium truncate">{item.category}</p>
                   <p className="text-xs text-muted-foreground">Usado {fmtBRL(item.spent)} de {fmtBRL(item.budget)}</p>
                 </div>
-                <Badge className="bg-primary/15 text-primary hover:bg-primary/15">{fmtBRL(item.balance)}</Badge>
+                <Badge className="number-safe shrink min-w-0 justify-end bg-primary/15 text-right text-primary hover:bg-primary/15">{fmtBRL(item.balance)}</Badge>
               </div>
             ))}
           </CardContent>
@@ -396,11 +396,11 @@ export default function OperationalOverview() {
             <div className="grid grid-cols-2 gap-2">
               <div className="rounded-md border bg-muted/20 p-3">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground"><CreditCard className="h-3.5 w-3.5" />Cartão</div>
-                <div className="mt-1 text-lg font-semibold">{fmtBRL(cardRealized)}</div>
+                <div className="number-safe mt-1 text-lg font-semibold">{fmtBRL(cardRealized)}</div>
               </div>
               <div className="rounded-md border bg-muted/20 p-3">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground"><FileText className="h-3.5 w-3.5" />Solicitações</div>
-                <div className="mt-1 text-lg font-semibold">{fmtBRL(requestRealized)}</div>
+                <div className="number-safe mt-1 text-lg font-semibold">{fmtBRL(requestRealized)}</div>
               </div>
             </div>
             <div className="flex items-center justify-between rounded-md border bg-muted/20 p-2">

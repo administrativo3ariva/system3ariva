@@ -21,12 +21,12 @@ export function KpiCard({ title, value, subtitle, icon: Icon, variant = 'default
   return (
     <div className="kpi-card animate-fade-in">
       <div className="flex items-start justify-between">
-        <div className="space-y-1">
+        <div className="min-w-0 space-y-1">
           <p className="text-sm text-muted-foreground">{title}</p>
           <p className="stat-value">{value}</p>
           {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
         </div>
-        <div className={`rounded-lg p-2.5 ${variantStyles[variant]}`}>
+        <div className={`shrink-0 rounded-lg p-2.5 ${variantStyles[variant]}`}>
           <Icon className="h-5 w-5" />
         </div>
       </div>
