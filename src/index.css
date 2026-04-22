@@ -101,7 +101,7 @@
 
 @layer components {
   .kpi-card {
-    @apply bg-card rounded-lg border p-5 transition-shadow hover:shadow-md;
+    @apply min-w-0 bg-card rounded-lg border p-5 transition-shadow hover:shadow-md;
   }
   .badge-location {
     @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
@@ -134,6 +134,38 @@
   }
   .stat-value {
     font-family: var(--font-display);
-    @apply text-2xl font-bold text-foreground;
+    @apply min-w-0 max-w-full text-2xl font-bold leading-tight text-foreground;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer utilities {
+  .number-safe {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
+  }
+
+  :where(.bg-card, .kpi-card, [class*="CardContent"]) :where(.text-2xl.font-bold, .text-lg.font-semibold, .font-mono, .tabular-nums),
+  :where(td, th) :where(.font-mono, .tabular-nums),
+  :where(td, th).text-right {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    font-variant-numeric: tabular-nums;
+  }
+
+  @container (max-width: 180px) {
+    .stat-value,
+    :where(.bg-card, .kpi-card) :where(.text-2xl.font-bold) {
+      font-size: 1.125rem;
+      line-height: 1.2;
+    }
   }
 }
