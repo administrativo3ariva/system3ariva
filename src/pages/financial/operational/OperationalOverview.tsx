@@ -377,64 +377,53 @@ export default function OperationalOverview() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2 text-warning"><AlertTriangle className="h-4 w-4" />Acima de 80%</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><TrendingUp className="h-4 w-4 text-success" />Maiores Gastos do Mês</CardTitle></CardHeader>
           <CardContent className="space-y-2">
-            {nearLimitCats.length === 0 && <p className="text-sm text-muted-foreground">Tudo sob controle.</p>}
-            {nearLimitCats.map(o => (
-              <div key={o.category} className="flex items-center justify-between rounded-md border border-warning/30 bg-warning/5 p-2">
-                <div>
-                  <p className="text-sm font-medium">{o.category}</p>
-                  <p className="text-xs text-muted-foreground">{fmtBRL(o.spent)} / {fmtBRL(o.budget)}</p>
+            {topCategoriesBySpend.length === 0 && <p className="text-sm text-muted-foreground">Nenhum realizado neste mês.</p>}
+            {topCategoriesBySpend.map(item => (
+              <div key={item.category} className="rounded-md border bg-muted/20 p-2">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-medium truncate">{item.category}</p>
+                  <Badge variant="outline">{fmtBRL(item.spent)}</Badge>
                 </div>
-                <Badge className="bg-warning/20 text-warning hover:bg-warning/20">{o.pct.toFixed(0)}%</Badge>
+                <Progress value={Math.min(item.share, 100)} className="mt-2 h-1.5" />
               </div>
             ))}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Filiais em Risco</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><CircleDollarSign className="h-4 w-4 text-primary" />Maiores Saldos Disponíveis</CardTitle></CardHeader>
           <CardContent className="space-y-2">
-            {branchFilter !== 'all' && <p className="text-sm text-muted-foreground">Selecione "Todas as filiais" para ver este alerta.</p>}
-            {branchFilter === 'all' && branchRisk.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma filial em risco neste mês.</p>}
-            {branchFilter === 'all' && branchRisk.map(b => (
-              <div key={b.branch} className="flex items-center justify-between rounded-md border bg-muted/30 p-2">
-                <div>
-                  <p className="text-sm font-medium">{BRANCH_LABELS[b.branch] || b.branch}</p>
-                  <p className="text-xs text-muted-foreground">{fmtBRL(b.spent)} / {fmtBRL(b.budget)}</p>
+            {largestAvailableBalances.length === 0 && <p className="text-sm text-muted-foreground">Sem saldo positivo nas categorias orçadas.</p>}
+            {largestAvailableBalances.map(item => (
+              <div key={item.category} className="flex items-center justify-between rounded-md border bg-muted/20 p-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{item.category}</p>
+                  <p className="text-xs text-muted-foreground">Usado {fmtBRL(item.spent)} de {fmtBRL(item.budget)}</p>
                 </div>
-                <Badge variant={b.pct > 100 ? 'destructive' : 'default'}>{b.pct.toFixed(0)}%</Badge>
+                <Badge className="bg-primary/15 text-primary hover:bg-primary/15">{fmtBRL(item.balance)}</Badge>
               </div>
             ))}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Sem Classificação / Sem Orçamento</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Receipt className="h-4 w-4 text-success" />Composição do Realizado</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">Lançamentos sem categoria conhecida</p>
-              {unclassified.length === 0 && <p className="text-sm text-muted-foreground">Nenhum.</p>}
-              {unclassified.slice(0, 4).map((u) => (
-                <div key={u.id} className="flex items-center justify-between rounded-md border bg-muted/30 p-2 mb-1">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{u.description}</p>
-                    <p className="text-xs text-muted-foreground">{u.category || '—'} · {u.branch}</p>
-                  </div>
-                  <Badge variant="outline">{fmtBRL(u.amount)}</Badge>
-                </div>
-              ))}
-              {unclassified.length > 4 && <p className="text-xs text-muted-foreground">+{unclassified.length - 4} outros</p>}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-md border bg-muted/20 p-3">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground"><CreditCard className="h-3.5 w-3.5" />Cartão</div>
+                <div className="mt-1 text-lg font-semibold">{fmtBRL(cardRealized)}</div>
+              </div>
+              <div className="rounded-md border bg-muted/20 p-3">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground"><FileText className="h-3.5 w-3.5" />Solicitações</div>
+                <div className="mt-1 text-lg font-semibold">{fmtBRL(requestRealized)}</div>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">Categorias com despesa, mas sem orçamento</p>
-              {categoriesWithoutBudget.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma.</p>}
-              {categoriesWithoutBudget.map(c => (
-                <div key={c.category} className="flex items-center justify-between rounded-md border bg-muted/30 p-2 mb-1">
-                  <p className="text-sm font-medium">{c.category}</p>
-                  <Badge variant="outline">{fmtBRL(c.spent)}</Badge>
-                </div>
-              ))}
+            <div className="flex items-center justify-between rounded-md border bg-muted/20 p-2">
+              <span className="text-sm text-muted-foreground">Categorias com realizado</span>
+              <Badge variant="outline">{categoriesWithRealized}</Badge>
             </div>
           </CardContent>
         </Card>
