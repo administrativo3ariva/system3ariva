@@ -7,7 +7,7 @@ import { useOperationalBudgets } from '@/hooks/use-operational-budgets';
 import { useExpenses } from '@/hooks/use-expenses';
 import { usePaymentRequests } from '@/hooks/use-payment-requests';
 import { ALL_BRANCHES, BRANCH_LABELS, OPERATIONAL_MACROBLOCOS, MONTH_LABELS_PT } from '@/lib/types';
-import { buildConsumedList, fmtBRL, fmtBRLk, isKnownCategory, sumBudget, COMMITTED_MACROBLOCO } from '@/lib/operational-utils';
+import { buildConsumedList, fmtBRL, fmtBRLk, sumBudget, COMMITTED_MACROBLOCO } from '@/lib/operational-utils';
 import { AlertTriangle, TrendingUp, Wallet, CircleDollarSign, AlertCircle, Receipt, Lock, CreditCard, FileText } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, LabelList, ReferenceLine } from 'recharts';
 
@@ -87,24 +87,6 @@ export default function OperationalOverview() {
     if (p > 100) overBudgetCats.push({ category: cat, spent, budget: bud });
     else if (p >= 80) nearLimitCats.push({ category: cat, spent, budget: bud, pct: p });
   });
-
-  // Categories with expense but no budget
-  const categoriesWithoutBudget: { category: string; spent: number }[] = [];
-  byCategoryMonth.forEach((spent, cat) => {
-    if (!budgetByCategoryMonth.has(cat) && isKnownCategory(cat)) {
-      categoriesWithoutBudget.push({ category: cat, spent });
-    }
-  });
-
-  // Branches at risk: > 80% in their month budget
-  const branchRisk: { branch: string; spent: number; budget: number; pct: number }[] = [];
-  if (branchFilter === 'all') {
-    ALL_BRANCHES.forEach(br => {
-      const bb = sumBudget(budgets, { branch: br, month: monthFilter });
-      const sp = consumedYear.filter(c => c.branch === br && c.status === 'realizado' && new Date(c.date).getMonth() + 1 === monthFilter).reduce((s, c) => s + c.amount, 0);
-      if (bb > 0 && sp / bb >= 0.8) branchRisk.push({ branch: br, spent: sp, budget: bb, pct: (sp / bb) * 100 });
-    });
-  }
 
   const launchCount = consumedMonth.length;
   const cardRealized = consumedMonth.filter(c => c.status === 'realizado' && c.source === 'card').reduce((s, c) => s + c.amount, 0);
