@@ -318,10 +318,11 @@ export default function OperationalOverview() {
                   <YAxis type="category" dataKey="macro" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} width={170} axisLine={false} tickLine={false} />
                   <Tooltip content={<CurrencyTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
                   <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" />
-                  <Bar dataKey="Orçamento" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} maxBarSize={18} />
-                  <Bar dataKey="Realizado" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} maxBarSize={18}>
+                  <Bar dataKey="Orçamento" fill={CHART_COLORS.budgetMuted} radius={[0, 4, 4, 0]} maxBarSize={18} />
+                  <Bar dataKey="Realizado" fill={CHART_COLORS.realized} radius={[0, 4, 4, 0]} maxBarSize={18}>
                     <LabelList dataKey="pct" position="right" formatter={(v: number) => `${v.toFixed(0)}%`} style={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
                   </Bar>
+                  <Bar dataKey="Comprometido" fill={CHART_COLORS.committed} radius={[0, 4, 4, 0]} maxBarSize={18} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -347,9 +348,9 @@ export default function OperationalOverview() {
                   <YAxis tickFormatter={fmtBRLk} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={60} />
                   <Tooltip content={<CurrencyTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
                   <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" />
-                  <Bar dataKey="Orçamento" fill="hsl(var(--primary) / 0.35)" radius={[4, 4, 0, 0]} maxBarSize={26} />
-                  <Bar dataKey="Realizado" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} maxBarSize={26} />
-                  <Bar dataKey="Comprometido" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} maxBarSize={26} />
+                  <Bar dataKey="Orçamento" fill={CHART_COLORS.budgetMuted} radius={[4, 4, 0, 0]} maxBarSize={26} />
+                  <Bar dataKey="Realizado" fill={CHART_COLORS.realized} radius={[4, 4, 0, 0]} maxBarSize={26} />
+                  <Bar dataKey="Comprometido" fill={CHART_COLORS.committed} radius={[4, 4, 0, 0]} maxBarSize={26} />
                 </BarChart>
               </ResponsiveContainer>
             )}
