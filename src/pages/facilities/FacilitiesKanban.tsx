@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { CurrencyInput } from '@/components/CurrencyInput';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, Trash2, Calendar, CheckCircle2, Clock3, AlertTriangle, Wrench, Search, PlayCircle, ClipboardCheck, RotateCcw, Building2 } from 'lucide-react';
 import { BRANCH_LABELS, ALL_BRANCHES, MAINTENANCE_CATEGORIES, MAINTENANCE_RECURRENCE, MaintenanceTask, MaintenanceStatus, MaintenancePriority, MaintenanceType } from '@/lib/types';
@@ -22,6 +23,19 @@ const STATUS_OPTIONS: { key: MaintenanceStatus | 'all'; label: string }[] = [
   { key: 'in_progress', label: 'Execução' },
   { key: 'done', label: 'Finalizadas' },
 ];
+
+const STATUS_STEPS: { key: MaintenanceStatus; label: string }[] = STATUS_OPTIONS.filter(
+  (option): option is { key: MaintenanceStatus; label: string } => option.key !== 'all',
+);
+
+const RECURRENCE_PRESETS = [
+  { value: '0', label: 'Sem recorrência' },
+  { value: '1', label: 'Mensal' },
+  { value: '3', label: 'Trimestral' },
+  { value: '6', label: 'Semestral' },
+  { value: '12', label: 'Anual' },
+  { value: 'custom', label: 'Personalizada' },
+] as const;
 
 const statusLabels: Record<MaintenanceStatus, string> = {
   todo: 'A fazer',
@@ -63,11 +77,15 @@ type FormData = {
   category: string;
   branch: string;
   description: string;
+  status: MaintenanceStatus;
   priority: MaintenancePriority;
   maintenance_type: 'preventiva' | 'corretiva';
   due_date: string;
+  estimated_cost: number;
+  actual_cost: number;
   supplier: string;
   notes: string;
+  recurrence_preset: string;
   recurrence_months: string;
 };
 
@@ -76,12 +94,24 @@ const emptyForm: FormData = {
   category: '',
   branch: 'BH-Matriz',
   description: '',
+  status: 'todo',
   priority: 'media',
   maintenance_type: 'preventiva',
   due_date: '',
+  estimated_cost: 0,
+  actual_cost: 0,
   supplier: '',
   notes: '',
+  recurrence_preset: '0',
   recurrence_months: '',
+};
+
+const fmtBRL = (value?: number | null) =>
+  Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const getRecurrencePreset = (months?: number | null) => {
+  if (!months) return '0';
+  return RECURRENCE_PRESETS.some(preset => preset.value === String(months)) ? String(months) : 'custom';
 };
 
 function getDueState(task: MaintenanceTask) {
