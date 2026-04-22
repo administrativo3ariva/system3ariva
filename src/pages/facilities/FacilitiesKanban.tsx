@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { CurrencyInput } from '@/components/CurrencyInput';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Plus, Trash2, Calendar, CheckCircle2, Clock3, AlertTriangle, Wrench, Search, PlayCircle, ClipboardCheck, RotateCcw, Building2 } from 'lucide-react';
 import { BRANCH_LABELS, ALL_BRANCHES, MAINTENANCE_CATEGORIES, MAINTENANCE_RECURRENCE, MaintenanceTask, MaintenanceStatus, MaintenancePriority, MaintenanceType } from '@/lib/types';
@@ -22,6 +23,19 @@ const STATUS_OPTIONS: { key: MaintenanceStatus | 'all'; label: string }[] = [
   { key: 'in_progress', label: 'Execução' },
   { key: 'done', label: 'Finalizadas' },
 ];
+
+const STATUS_STEPS: { key: MaintenanceStatus; label: string }[] = STATUS_OPTIONS.filter(
+  (option): option is { key: MaintenanceStatus; label: string } => option.key !== 'all',
+);
+
+const RECURRENCE_PRESETS = [
+  { value: '0', label: 'Sem recorrência' },
+  { value: '1', label: 'Mensal' },
+  { value: '3', label: 'Trimestral' },
+  { value: '6', label: 'Semestral' },
+  { value: '12', label: 'Anual' },
+  { value: 'custom', label: 'Personalizada' },
+] as const;
 
 const statusLabels: Record<MaintenanceStatus, string> = {
   todo: 'A fazer',
@@ -63,11 +77,15 @@ type FormData = {
   category: string;
   branch: string;
   description: string;
+  status: MaintenanceStatus;
   priority: MaintenancePriority;
   maintenance_type: 'preventiva' | 'corretiva';
   due_date: string;
+  estimated_cost: number;
+  actual_cost: number;
   supplier: string;
   notes: string;
+  recurrence_preset: string;
   recurrence_months: string;
 };
 
@@ -76,12 +94,24 @@ const emptyForm: FormData = {
   category: '',
   branch: 'BH-Matriz',
   description: '',
+  status: 'todo',
   priority: 'media',
   maintenance_type: 'preventiva',
   due_date: '',
+  estimated_cost: 0,
+  actual_cost: 0,
   supplier: '',
   notes: '',
+  recurrence_preset: '0',
   recurrence_months: '',
+};
+
+const fmtBRL = (value?: number | null) =>
+  Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const getRecurrencePreset = (months?: number | null) => {
+  if (!months) return '0';
+  return RECURRENCE_PRESETS.some(preset => preset.value === String(months)) ? String(months) : 'custom';
 };
 
 function getDueState(task: MaintenanceTask) {
@@ -161,11 +191,15 @@ export default function FacilitiesKanban() {
       category: task.category,
       branch: task.branch,
       description: task.description || '',
+      status: task.status,
       priority: task.priority,
       maintenance_type: task.maintenance_type || 'preventiva',
       due_date: task.due_date || '',
+      estimated_cost: Number(task.estimated_cost) || 0,
+      actual_cost: Number(task.actual_cost) || 0,
       supplier: task.supplier || '',
       notes: task.notes || '',
+      recurrence_preset: getRecurrencePreset(task.recurrence_months),
       recurrence_months: task.recurrence_months?.toString() || '',
     });
     setDialogOpen(true);
@@ -176,7 +210,16 @@ export default function FacilitiesKanban() {
     setForm(f => ({
       ...f,
       category: cat,
+      recurrence_preset: getRecurrencePreset(rec?.months),
       recurrence_months: rec?.months?.toString() || '',
+    }));
+  };
+
+  const handleRecurrencePresetChange = (value: string) => {
+    setForm(f => ({
+      ...f,
+      recurrence_preset: value,
+      recurrence_months: value === 'custom' ? f.recurrence_months : value === '0' ? '' : value,
     }));
   };
 
@@ -186,9 +229,13 @@ export default function FacilitiesKanban() {
       category: form.category,
       branch: form.branch,
       description: form.description || null,
+      status: form.status,
       priority: form.priority,
       maintenance_type: form.maintenance_type,
       due_date: form.due_date || null,
+      completed_date: form.status === 'done' ? (editingTask?.completed_date || new Date().toISOString().split('T')[0]) : null,
+      estimated_cost: form.estimated_cost || 0,
+      actual_cost: form.actual_cost || null,
       supplier: form.supplier || null,
       notes: form.notes || null,
       recurrence_months: form.recurrence_months ? parseInt(form.recurrence_months) : null,
@@ -197,7 +244,6 @@ export default function FacilitiesKanban() {
     if (editingTask) {
       updateTask.mutate({ id: editingTask.id, ...payload });
     } else {
-      payload.status = 'todo';
       createTask.mutate(payload);
     }
     setDialogOpen(false);
@@ -207,7 +253,7 @@ export default function FacilitiesKanban() {
     updateTask.mutate({
       id: task.id,
       status: newStatus,
-      ...(newStatus === 'done' ? { completed_date: new Date().toISOString().split('T')[0] } : {}),
+      completed_date: newStatus === 'done' ? new Date().toISOString().split('T')[0] : null,
     }, {
       onSuccess: () => {
         if (newStatus === 'done' && task.recurrence_months && task.recurrence_months > 0) {
@@ -412,6 +458,8 @@ export default function FacilitiesKanban() {
                     <div className="flex justify-between gap-3"><span className="text-muted-foreground">Filial</span><span className="text-right">{BRANCH_LABELS[selectedTask.branch] || selectedTask.branch}</span></div>
                     <div className="flex justify-between gap-3"><span className="text-muted-foreground">Vencimento</span><span className={getDueState(selectedTask).className}>{selectedTask.due_date ? format(parseISO(selectedTask.due_date), 'dd/MM/yyyy') : 'Sem data'}</span></div>
                     <div className="flex justify-between gap-3"><span className="text-muted-foreground">Recorrência</span><span>{selectedTask.recurrence_months ? `${selectedTask.recurrence_months} meses` : 'Sob demanda'}</span></div>
+                    <div className="flex justify-between gap-3"><span className="text-muted-foreground">Estimado</span><span className="number-safe text-right">{fmtBRL(selectedTask.estimated_cost)}</span></div>
+                    <div className="flex justify-between gap-3"><span className="text-muted-foreground">Realizado</span><span className="number-safe text-right">{fmtBRL(selectedTask.actual_cost)}</span></div>
                     {selectedTask.supplier && <div className="flex justify-between gap-3"><span className="text-muted-foreground">Fornecedor</span><span className="text-right">{selectedTask.supplier}</span></div>}
                   </div>
                   {selectedTask.description && <p className="rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">{selectedTask.description}</p>}
@@ -436,80 +484,126 @@ export default function FacilitiesKanban() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingTask ? 'Editar Manutenção' : 'Nova Manutenção'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Título</Label>
-              <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Manutenção preventiva do ar-condicionado" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Categoria</Label>
-                <Select value={form.category} onValueChange={handleCategoryChange}>
-                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>
-                    {MAINTENANCE_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Tipo</Label>
-                <Select value={form.maintenance_type} onValueChange={v => setForm(f => ({ ...f, maintenance_type: v as MaintenanceType }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="preventiva">Preventiva</SelectItem>
-                    <SelectItem value="corretiva">Corretiva</SelectItem>
-                  </SelectContent>
-                </Select>
+          <div className="space-y-5">
+            <div className="rounded-md border bg-muted/20 p-3">
+              <Label className="mb-2 block">Status</Label>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {STATUS_STEPS.map(step => (
+                  <Button
+                    key={step.key}
+                    type="button"
+                    variant={form.status === step.key ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setForm(f => ({ ...f, status: step.key }))}
+                  >
+                    {step.label}
+                  </Button>
+                ))}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Filial</Label>
-                <Select value={form.branch} onValueChange={v => setForm(f => ({ ...f, branch: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {ALL_BRANCHES.map(b => <SelectItem key={b} value={b}>{BRANCH_LABELS[b] || b}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(260px,0.8fr)]">
+              <div className="space-y-4">
+                <div>
+                  <Label>Título</Label>
+                  <Input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="Ex: Manutenção preventiva do ar-condicionado" />
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <Label>Categoria</Label>
+                    <Select value={form.category} onValueChange={handleCategoryChange}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent>
+                        {MAINTENANCE_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Tipo</Label>
+                    <Select value={form.maintenance_type} onValueChange={v => setForm(f => ({ ...f, maintenance_type: v as MaintenanceType }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="preventiva">Preventiva</SelectItem>
+                        <SelectItem value="corretiva">Corretiva</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <Label>Filial</Label>
+                    <Select value={form.branch} onValueChange={v => setForm(f => ({ ...f, branch: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {ALL_BRANCHES.map(b => <SelectItem key={b} value={b}>{BRANCH_LABELS[b] || b}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Prioridade</Label>
+                    <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v as MaintenancePriority }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="baixa">Baixa</SelectItem>
+                        <SelectItem value="media">Média</SelectItem>
+                        <SelectItem value="alta">Alta</SelectItem>
+                        <SelectItem value="urgente">Urgente</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label>Fornecedor</Label>
+                  <Input value={form.supplier} onChange={e => setForm(f => ({ ...f, supplier: e.target.value }))} placeholder="Nome do fornecedor" />
+                </div>
               </div>
-              <div>
-                <Label>Prioridade</Label>
-                <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v as MaintenancePriority }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="baixa">Baixa</SelectItem>
-                    <SelectItem value="media">Média</SelectItem>
-                    <SelectItem value="alta">Alta</SelectItem>
-                    <SelectItem value="urgente">Urgente</SelectItem>
-                  </SelectContent>
-                </Select>
+
+              <div className="space-y-4 rounded-md border bg-muted/20 p-3">
+                <div>
+                  <Label>Data Prevista</Label>
+                  <Input type="date" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} />
+                </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                  <div>
+                    <Label>Valor estimado</Label>
+                    <CurrencyInput value={form.estimated_cost} onChange={value => setForm(f => ({ ...f, estimated_cost: value }))} />
+                  </div>
+                  <div>
+                    <Label>Valor realizado</Label>
+                    <CurrencyInput value={form.actual_cost} onChange={value => setForm(f => ({ ...f, actual_cost: value }))} />
+                  </div>
+                </div>
+                <div>
+                  <Label>Recorrência</Label>
+                  <Select value={form.recurrence_preset} onValueChange={handleRecurrencePresetChange}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {RECURRENCE_PRESETS.map(preset => <SelectItem key={preset.value} value={preset.value}>{preset.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {form.recurrence_preset === 'custom' && (
+                    <Input className="mt-2" type="number" min="1" value={form.recurrence_months} onChange={e => setForm(f => ({ ...f, recurrence_months: e.target.value }))} placeholder="Intervalo em meses" />
+                  )}
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Ao finalizar, uma nova manutenção será criada automaticamente para o próximo ciclo.
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <Label>Data Prevista</Label>
-                <Input type="date" value={form.due_date} onChange={e => setForm(f => ({ ...f, due_date: e.target.value }))} />
+                <Label>Descrição</Label>
+                <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={3} />
               </div>
               <div>
-                <Label>Recorrência (meses)</Label>
-                <Input type="number" min="0" value={form.recurrence_months} onChange={e => setForm(f => ({ ...f, recurrence_months: e.target.value }))} placeholder="Ex: 3" />
+                <Label>Observações</Label>
+                <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={3} />
               </div>
-            </div>
-            <div>
-              <Label>Fornecedor</Label>
-              <Input value={form.supplier} onChange={e => setForm(f => ({ ...f, supplier: e.target.value }))} placeholder="Nome do fornecedor" />
-            </div>
-            <div>
-              <Label>Descrição</Label>
-              <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} />
-            </div>
-            <div>
-              <Label>Observações</Label>
-              <Textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} rows={2} />
             </div>
           </div>
           <DialogFooter className="flex justify-between">
