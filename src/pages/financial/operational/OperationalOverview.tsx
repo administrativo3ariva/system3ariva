@@ -251,12 +251,12 @@ export default function OperationalOverview() {
               <BarChart data={monthly} margin={{ top: 8, right: 12, left: 0, bottom: 0 }} barCategoryGap="20%">
                 <defs>
                   <linearGradient id="gradBudget" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.9} />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
+                    <stop offset="0%" stopColor={CHART_COLORS.budget} stopOpacity={0.9} />
+                    <stop offset="100%" stopColor={CHART_COLORS.budget} stopOpacity={0.45} />
                   </linearGradient>
                   <linearGradient id="gradReal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.95} />
-                    <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0.6} />
+                    <stop offset="0%" stopColor={CHART_COLORS.realized} stopOpacity={0.95} />
+                    <stop offset="100%" stopColor={CHART_COLORS.realized} stopOpacity={0.62} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -267,6 +267,7 @@ export default function OperationalOverview() {
                 <ReferenceLine x={MONTH_LABELS_PT[monthFilter - 1]} stroke="hsl(var(--warning))" strokeDasharray="3 3" label={{ value: 'Mês', fill: 'hsl(var(--warning))', fontSize: 10, position: 'top' }} />
                 <Bar dataKey="Orçamento" fill="url(#gradBudget)" radius={[4, 4, 0, 0]} maxBarSize={28} />
                 <Bar dataKey="Realizado" fill="url(#gradReal)" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                <Bar dataKey="Comprometido" fill={CHART_COLORS.committed} radius={[4, 4, 0, 0]} maxBarSize={28} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -289,11 +290,11 @@ export default function OperationalOverview() {
                   <YAxis type="category" dataKey="category" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} width={165} axisLine={false} tickLine={false} />
                   <Tooltip content={<CurrencyTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
                   <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" />
-                  <Bar dataKey="Orçamento" fill="hsl(var(--primary) / 0.35)" radius={[0, 4, 4, 0]} maxBarSize={18} />
-                  <Bar dataKey="Realizado" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} maxBarSize={18}>
+                  <Bar dataKey="Orçamento" fill={CHART_COLORS.budgetMuted} radius={[0, 4, 4, 0]} maxBarSize={18} />
+                  <Bar dataKey="Realizado" fill={CHART_COLORS.realized} radius={[0, 4, 4, 0]} maxBarSize={18}>
                     <LabelList dataKey="pct" position="right" formatter={(v: number) => v >= 999 ? 's/orç.' : `${v.toFixed(0)}%`} style={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
                   </Bar>
-                  <Bar dataKey="Comprometido" fill="hsl(var(--warning))" radius={[0, 4, 4, 0]} maxBarSize={18} />
+                  <Bar dataKey="Comprometido" fill={CHART_COLORS.committed} radius={[0, 4, 4, 0]} maxBarSize={18} />
                 </BarChart>
               </ResponsiveContainer>
             )}
