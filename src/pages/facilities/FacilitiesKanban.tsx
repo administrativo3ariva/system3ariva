@@ -458,6 +458,8 @@ export default function FacilitiesKanban() {
                     <div className="flex justify-between gap-3"><span className="text-muted-foreground">Filial</span><span className="text-right">{BRANCH_LABELS[selectedTask.branch] || selectedTask.branch}</span></div>
                     <div className="flex justify-between gap-3"><span className="text-muted-foreground">Vencimento</span><span className={getDueState(selectedTask).className}>{selectedTask.due_date ? format(parseISO(selectedTask.due_date), 'dd/MM/yyyy') : 'Sem data'}</span></div>
                     <div className="flex justify-between gap-3"><span className="text-muted-foreground">Recorrência</span><span>{selectedTask.recurrence_months ? `${selectedTask.recurrence_months} meses` : 'Sob demanda'}</span></div>
+                    <div className="flex justify-between gap-3"><span className="text-muted-foreground">Estimado</span><span className="number-safe text-right">{fmtBRL(selectedTask.estimated_cost)}</span></div>
+                    <div className="flex justify-between gap-3"><span className="text-muted-foreground">Realizado</span><span className="number-safe text-right">{fmtBRL(selectedTask.actual_cost)}</span></div>
                     {selectedTask.supplier && <div className="flex justify-between gap-3"><span className="text-muted-foreground">Fornecedor</span><span className="text-right">{selectedTask.supplier}</span></div>}
                   </div>
                   {selectedTask.description && <p className="rounded-md border bg-muted/20 p-3 text-sm text-muted-foreground">{selectedTask.description}</p>}
