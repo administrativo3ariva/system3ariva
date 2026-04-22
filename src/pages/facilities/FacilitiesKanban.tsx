@@ -191,11 +191,15 @@ export default function FacilitiesKanban() {
       category: task.category,
       branch: task.branch,
       description: task.description || '',
+      status: task.status,
       priority: task.priority,
       maintenance_type: task.maintenance_type || 'preventiva',
       due_date: task.due_date || '',
+      estimated_cost: Number(task.estimated_cost) || 0,
+      actual_cost: Number(task.actual_cost) || 0,
       supplier: task.supplier || '',
       notes: task.notes || '',
+      recurrence_preset: getRecurrencePreset(task.recurrence_months),
       recurrence_months: task.recurrence_months?.toString() || '',
     });
     setDialogOpen(true);
@@ -206,7 +210,16 @@ export default function FacilitiesKanban() {
     setForm(f => ({
       ...f,
       category: cat,
+      recurrence_preset: getRecurrencePreset(rec?.months),
       recurrence_months: rec?.months?.toString() || '',
+    }));
+  };
+
+  const handleRecurrencePresetChange = (value: string) => {
+    setForm(f => ({
+      ...f,
+      recurrence_preset: value,
+      recurrence_months: value === 'custom' ? f.recurrence_months : value === '0' ? '' : value,
     }));
   };
 
@@ -216,9 +229,13 @@ export default function FacilitiesKanban() {
       category: form.category,
       branch: form.branch,
       description: form.description || null,
+      status: form.status,
       priority: form.priority,
       maintenance_type: form.maintenance_type,
       due_date: form.due_date || null,
+      completed_date: form.status === 'done' ? (editingTask?.completed_date || new Date().toISOString().split('T')[0]) : null,
+      estimated_cost: form.estimated_cost || 0,
+      actual_cost: form.actual_cost || null,
       supplier: form.supplier || null,
       notes: form.notes || null,
       recurrence_months: form.recurrence_months ? parseInt(form.recurrence_months) : null,
