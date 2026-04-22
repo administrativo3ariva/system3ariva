@@ -244,7 +244,6 @@ export default function FacilitiesKanban() {
     if (editingTask) {
       updateTask.mutate({ id: editingTask.id, ...payload });
     } else {
-      payload.status = 'todo';
       createTask.mutate(payload);
     }
     setDialogOpen(false);
@@ -254,7 +253,7 @@ export default function FacilitiesKanban() {
     updateTask.mutate({
       id: task.id,
       status: newStatus,
-      ...(newStatus === 'done' ? { completed_date: new Date().toISOString().split('T')[0] } : {}),
+      completed_date: newStatus === 'done' ? new Date().toISOString().split('T')[0] : null,
     }, {
       onSuccess: () => {
         if (newStatus === 'done' && task.recurrence_months && task.recurrence_months > 0) {
