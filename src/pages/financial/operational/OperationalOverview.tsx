@@ -247,30 +247,31 @@ export default function OperationalOverview() {
           </CardContent>
         </Card>
 
-        {/* Tendência Acumulada — área + linha */}
+        {/* Categorias Críticas — execução do mês */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Tendência Acumulada</CardTitle>
-            <p className="text-xs text-muted-foreground">Orçado vs realizado acumulados ao longo do ano</p>
+            <CardTitle className="text-base">Categorias Críticas · {MONTH_LABELS_PT[monthFilter - 1]}</CardTitle>
+            <p className="text-xs text-muted-foreground">Top categorias por consumo do orçamento mensal</p>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <ComposedChart data={trend} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="areaReal" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.4} />
-                    <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={fmtBRLk} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={60} />
-                <Tooltip content={<CurrencyTooltip />} />
-                <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" />
-                <Area type="monotone" dataKey="Realizado" stroke="hsl(var(--accent))" strokeWidth={2.5} fill="url(#areaReal)" dot={false} activeDot={{ r: 4 }} />
-                <Line type="monotone" dataKey="Orçado" stroke="hsl(var(--primary))" strokeWidth={2} strokeDasharray="5 4" dot={false} activeDot={{ r: 4 }} />
-              </ComposedChart>
-            </ResponsiveContainer>
+            {categoryExecution.length === 0 ? (
+              <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">Sem dados para o mês selecionado</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={categoryExecution} layout="vertical" margin={{ top: 8, right: 56, left: 0, bottom: 0 }} barCategoryGap="25%">
+                  <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis type="number" tickFormatter={fmtBRLk} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="category" tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} width={165} axisLine={false} tickLine={false} />
+                  <Tooltip content={<CurrencyTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
+                  <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" />
+                  <Bar dataKey="Orçamento" fill="hsl(var(--primary) / 0.35)" radius={[0, 4, 4, 0]} maxBarSize={18} />
+                  <Bar dataKey="Realizado" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} maxBarSize={18}>
+                    <LabelList dataKey="pct" position="right" formatter={(v: number) => v >= 999 ? 's/orç.' : `${v.toFixed(0)}%`} style={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
+                  </Bar>
+                  <Bar dataKey="Comprometido" fill="hsl(var(--warning))" radius={[0, 4, 4, 0]} maxBarSize={18} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -301,50 +302,29 @@ export default function OperationalOverview() {
           </CardContent>
         </Card>
 
-        {/* Filial (mês) com Orçamento vs Realizado OU Pizza por categoria */}
+        {/* Filial (mês) com Orçamento vs Realizado */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">{branchFilter === 'all' ? `Por Filial · ${MONTH_LABELS_PT[monthFilter - 1]}` : `Top Categorias · ${MONTH_LABELS_PT[monthFilter - 1]}`}</CardTitle>
-            <p className="text-xs text-muted-foreground">{branchFilter === 'all' ? 'Realizado e orçamento por filial' : 'Distribuição do realizado por categoria (top 8)'}</p>
+            <CardTitle className="text-base">Por Filial · {MONTH_LABELS_PT[monthFilter - 1]}</CardTitle>
+            <p className="text-xs text-muted-foreground">Orçamento, realizado e comprometido por filial</p>
           </CardHeader>
           <CardContent>
-            {branchFilter === 'all' ? (
-              branchDataFull.length === 0 ? (
-                <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">Sem lançamentos no mês</div>
-              ) : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={branchDataFull} margin={{ top: 8, right: 12, left: 0, bottom: 0 }} barCategoryGap="20%">
-                    <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="branch" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-                    <YAxis tickFormatter={fmtBRLk} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={60} />
-                    <Tooltip content={<CurrencyTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
-                    <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" />
-                    <Bar dataKey="Orçamento" fill="hsl(var(--primary) / 0.5)" radius={[4, 4, 0, 0]} maxBarSize={32} />
-                    <Bar dataKey="Realizado" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} maxBarSize={32} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )
-            ) : distByCategory.length === 0 ? (
+            {branchFilter !== 'all' ? (
+              <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">Selecione todas as filiais para comparar unidades</div>
+            ) : branchDataFull.length === 0 ? (
               <div className="flex items-center justify-center h-[300px] text-sm text-muted-foreground">Sem lançamentos no mês</div>
             ) : (
               <ResponsiveContainer width="100%" height={300}>
-                <RPieChart>
-                  <Pie
-                    data={distByCategory}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={60}
-                    outerRadius={105}
-                    paddingAngle={2}
-                    stroke="hsl(var(--background))"
-                    strokeWidth={2}
-                  >
-                    {distByCategory.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                    <LabelList dataKey="value" position="outside" formatter={(v: number) => distTotal > 0 ? `${((v / distTotal) * 100).toFixed(0)}%` : ''} style={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                  </Pie>
-                  <Tooltip content={<CurrencyTooltip />} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" layout="vertical" align="right" verticalAlign="middle" />
-                </RPieChart>
+                <BarChart data={branchDataFull} margin={{ top: 8, right: 12, left: 0, bottom: 0 }} barCategoryGap="20%">
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="branch" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                  <YAxis tickFormatter={fmtBRLk} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={60} />
+                  <Tooltip content={<CurrencyTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
+                  <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" />
+                  <Bar dataKey="Orçamento" fill="hsl(var(--primary) / 0.35)" radius={[4, 4, 0, 0]} maxBarSize={26} />
+                  <Bar dataKey="Realizado" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} maxBarSize={26} />
+                  <Bar dataKey="Comprometido" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} maxBarSize={26} />
+                </BarChart>
               </ResponsiveContainer>
             )}
           </CardContent>
