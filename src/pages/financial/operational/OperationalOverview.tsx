@@ -9,7 +9,7 @@ import { usePaymentRequests } from '@/hooks/use-payment-requests';
 import { ALL_BRANCHES, BRANCH_LABELS, OPERATIONAL_MACROBLOCOS, MONTH_LABELS_PT } from '@/lib/types';
 import { buildConsumedList, fmtBRL, fmtBRLk, isKnownCategory, sumBudget, COMMITTED_MACROBLOCO } from '@/lib/operational-utils';
 import { AlertTriangle, TrendingUp, Wallet, CircleDollarSign, AlertCircle, Receipt, Lock } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, ComposedChart, Area, Line, PieChart as RPieChart, Pie, Cell, LabelList, ReferenceLine } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, LabelList, ReferenceLine } from 'recharts';
 
 // Shared tooltip with currency formatting
 type TooltipPayload = { name: string; value: number; color?: string; dataKey?: string };
@@ -107,16 +107,22 @@ export default function OperationalOverview() {
     const m = i + 1;
     const bud = sumBudget(budgetsBranch, { month: m });
     const real = consumedBranch.filter(c => c.status === 'realizado' && new Date(c.date).getMonth() + 1 === m).reduce((s, c) => s + c.amount, 0);
-    return { month: label, Orçamento: +bud.toFixed(2), Realizado: +real.toFixed(2) };
+    const comp = consumedBranch.filter(c => c.status === 'comprometido' && new Date(c.date).getMonth() + 1 === m).reduce((s, c) => s + c.amount, 0);
+    return { month: label, Orçamento: +bud.toFixed(2), Realizado: +real.toFixed(2), Comprometido: +comp.toFixed(2) };
   });
 
-  // Trend: cumulative realizado vs cumulative budget
-  const trend: { month: string; Orçado: number; Realizado: number }[] = [];
-  let cBud = 0, cReal = 0;
-  monthly.forEach(m => {
-    cBud += m.Orçamento; cReal += m.Realizado;
-    trend.push({ month: m.month, Orçado: +cBud.toFixed(2), Realizado: +cReal.toFixed(2) });
-  });
+  const categoryExecution = Array.from(new Set([
+    ...budgetsMonth.map(b => b.category),
+    ...consumedMonth.map(c => c.category),
+  ])).map(category => {
+    const budget = budgetByCategoryMonth.get(category) || 0;
+    const real = consumedMonth.filter(c => c.category === category && c.status === 'realizado').reduce((s, c) => s + c.amount, 0);
+    const committed = consumedMonth.filter(c => c.category === category && c.status === 'comprometido').reduce((s, c) => s + c.amount, 0);
+    const pct = budget > 0 ? (real / budget) * 100 : real > 0 ? 999 : 0;
+    return { category, Orçamento: +budget.toFixed(2), Realizado: +real.toFixed(2), Comprometido: +committed.toFixed(2), pct };
+  }).filter(c => c.Orçamento > 0 || c.Realizado > 0 || c.Comprometido > 0)
+    .sort((a, b) => (b.pct - a.pct) || (b.Realizado - a.Realizado))
+    .slice(0, 8);
 
   // By macrobloco (month)
   const macroData = OPERATIONAL_MACROBLOCOS.map(m => {
@@ -124,14 +130,6 @@ export default function OperationalOverview() {
     const sp = consumedMonth.filter(c => c.status === 'realizado' && c.macrobloco === m).reduce((s, c) => s + c.amount, 0);
     return { macro: m, Orçamento: +bud.toFixed(2), Realizado: +sp.toFixed(2) };
   });
-
-  // Distribution by category (month) — for pie when filial selected
-  const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--warning))', 'hsl(var(--destructive))', 'hsl(var(--muted-foreground))', '#8b5cf6', '#ec4899', '#10b981'];
-  const distByCategory = Array.from(byCategoryMonth.entries())
-    .map(([name, value]) => ({ name, value: +value.toFixed(2) }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 8);
-  const distTotal = distByCategory.reduce((s, d) => s + d.value, 0);
 
   // Macroblock data with % consumed for label
   const macroDataPct = macroData
@@ -141,9 +139,10 @@ export default function OperationalOverview() {
   // Branch data sorted by Realizado, with budget reference
   const branchDataFull = ALL_BRANCHES.map(br => {
     const sp = consumedYear.filter(c => c.branch === br && c.status === 'realizado' && new Date(c.date).getMonth() + 1 === monthFilter).reduce((s, c) => s + c.amount, 0);
+    const cp = consumedYear.filter(c => c.branch === br && c.status === 'comprometido' && new Date(c.date).getMonth() + 1 === monthFilter).reduce((s, c) => s + c.amount, 0);
     const bd = sumBudget(budgets, { branch: br, month: monthFilter });
-    return { branch: br, Realizado: +sp.toFixed(2), Orçamento: +bd.toFixed(2) };
-  }).filter(b => b.Realizado > 0 || b.Orçamento > 0).sort((a, b) => b.Realizado - a.Realizado);
+    return { branch: br, Realizado: +sp.toFixed(2), Comprometido: +cp.toFixed(2), Orçamento: +bd.toFixed(2) };
+  }).filter(b => b.Realizado > 0 || b.Comprometido > 0 || b.Orçamento > 0).sort((a, b) => b.Realizado - a.Realizado);
 
   return (
     <div className="space-y-6">
