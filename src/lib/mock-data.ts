@@ -64,6 +64,6 @@ export const PRODUCT_CATEGORIES = [
   'Reparo & Manutenção',
   'Bens de Pequeno Valor & Patrimônio Leve',
 ];
-export const ASSET_CATEGORIES = ['Climatização', 'Móveis', 'Eletrodomésticos', 'Utensílios', 'Infraestrutura', 'Informática'];
+export const ASSET_CATEGORIES = ['Climatização', 'Móveis', 'Eletrodomésticos', 'Utensílios', 'Utilitários', 'Decoração', 'Infraestrutura', 'Informática'];
 export const ASSET_CONDITIONS = ['Novo', 'Bom', 'Regular', 'Ruim', 'Inservível'] as const;
 export type AssetCondition = typeof ASSET_CONDITIONS[number];
