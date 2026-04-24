@@ -226,6 +226,7 @@ export default function PaymentRequestForm() {
         receipt_url,
         supplier_id: supplier_id || undefined,
         notes: data.notes,
+        allocations: splitEnabled && allocations.length > 0 ? allocations : null,
       };
 
       if (isEditing && editId) {
