@@ -118,6 +118,11 @@ export default function PaymentRequestForm() {
       if (editingRequest.supplier_id) setSelectedSupplierId(editingRequest.supplier_id);
       if (editingRequest.boleto_url) setExistingBoletoUrl(editingRequest.boleto_url);
       if (editingRequest.receipt_url) setExistingReceiptUrl(editingRequest.receipt_url);
+      const existingAlloc = (editingRequest as any).allocations;
+      if (Array.isArray(existingAlloc) && existingAlloc.length > 0) {
+        setAllocations(existingAlloc);
+        setSplitEnabled(true);
+      }
     }
   }, [editingRequest, form]);
 
