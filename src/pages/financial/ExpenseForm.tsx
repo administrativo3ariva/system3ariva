@@ -51,6 +51,8 @@ export default function ExpenseForm() {
 
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [allocations, setAllocations] = useState<Allocation[]>([]);
   const [existingReceiptUrl, setExistingReceiptUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
