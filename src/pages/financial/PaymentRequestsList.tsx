@@ -47,6 +47,7 @@ const STATUS_OPTIONS = ['Pago', 'Pendente Pagamento', 'Pendente NF'] as const;
 const FILTERS: FilterConfig[] = [
   { key: 'cost_center', label: 'Centro de Custo', allLabel: 'Todos Centros', options: FINANCIAL_COST_CENTERS },
   { key: 'company', label: 'Empresa', allLabel: 'Todas Empresas', options: FINANCIAL_COMPANIES },
+  { key: 'category', label: 'Categoria', allLabel: 'Todas Categorias', options: EXPENSE_CATEGORIES },
   { key: 'display_status', label: 'Status', allLabel: 'Todos Status', options: STATUS_OPTIONS as unknown as string[] },
 ];
 
