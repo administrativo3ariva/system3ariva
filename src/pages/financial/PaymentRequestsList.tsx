@@ -74,9 +74,7 @@ export default function PaymentRequestsList() {
     setFilterValues(prev => ({ ...prev, [key]: value }));
   };
 
-  // Enrich with display_status, then filter
-  const enriched = requests.map((r: any) => ({ ...r, display_status: getDisplayStatus(r) }));
-
+  
   const categoryFilter = filterValues.category;
 
   // Enrich with display_status, then filter
