@@ -105,14 +105,28 @@ export default function NfUploadPage() {
       return;
     }
 
+    // City consistency alert: warn if NF recipient city differs from branch's city
+    if (!isCityMatchingBranch(nf.recipient_city, nf.unit)) {
+      setPendingApproval(nf);
+      return;
+    }
+
+    executeApproval(nf);
+  };
+
+  const executeApproval = (nf: DbNfUpload) => {
+    const allocations = buildAllocationsFromItems(editedItems);
     approveNf.mutate(
       { ...nf, nf_items: editedItems },
       {
         onSuccess: () => {
           setPreviewNf(null);
+          setPendingApproval(null);
           // Total used at financial form = total NF (or sum of items as fallback)
           const itemsTotal = editedItems.reduce((s, i) => s + Number(i.total_price || 0), 0);
           const total = Number(nf.total_value) || itemsTotal;
+          const detectedCompany = detectCompanyFromText(nf.recipient_name, nf.recipient_doc);
+          const costCenter = branchToCostCenter(nf.unit);
           const params = new URLSearchParams({
             from_nf: 'true',
             nf_id: nf.id,
@@ -123,6 +137,8 @@ export default function NfUploadPage() {
           if (nf.supplier) params.set('supplier', nf.supplier);
           if (nf.file_url) params.set('receipt_url', nf.file_url);
           if (nf.issue_date) params.set('issue_date', nf.issue_date);
+          if (costCenter) params.set('cost_center', costCenter);
+          if (detectedCompany) params.set('company', detectedCompany);
 
           const target = financialLink === 'expense' ? '/financial/expenses/new' : '/financial/requests/new';
           toast.success('Estoque atualizado. Complete os dados do lançamento financeiro.');
