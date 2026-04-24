@@ -12,10 +12,24 @@ import { Plus, Trash2, Eye, Pencil, AlertTriangle, CreditCard, Split } from 'luc
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { isAllocated, readAllocations } from '@/lib/allocation-utils';
+import { isAllocated, readAllocations, expandAllocations } from '@/lib/allocation-utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+/** Returns the amount of the entry attributable to a given category (handles rateio). */
+function amountForCategory(entry: any, category: string): number {
+  if (!category || category === 'all') return Number(entry.amount) || 0;
+  const slices = expandAllocations({ amount: entry.amount, category: entry.category, allocations: entry.allocations });
+  return slices.filter(s => s.category === category).reduce((s, sl) => s + sl.amount, 0);
+}
+
+/** Match if primary category OR any allocation slice equals filter. */
+function matchesCategory(entry: any, category: string): boolean {
+  if (!category || category === 'all') return true;
+  if (entry.category === category) return true;
+  return readAllocations(entry.allocations).some(a => a.category === category);
+}
 
 const FILTERS: FilterConfig[] = [
   { key: 'cost_center', label: 'Centro de Custo', allLabel: 'Todos Centros', options: FINANCIAL_COST_CENTERS },
@@ -44,17 +58,27 @@ export default function ExpensesList() {
     setFilterValues(prev => ({ ...prev, [key]: value }));
   };
 
+  const categoryFilter = filterValues.category;
+
   const filtered = filterByDateRange(
-    expenses.filter((e: any) =>
-      Object.entries(filterValues).every(([k, v]) => !v || v === 'all' || (e as any)[k] === v)
-    ),
+    expenses.filter((e: any) => {
+      for (const [k, v] of Object.entries(filterValues)) {
+        if (!v || v === 'all') continue;
+        if (k === 'category') {
+          if (!matchesCategory(e, v)) return false;
+        } else if ((e as any)[k] !== v) {
+          return false;
+        }
+      }
+      return true;
+    }),
     'expense_date' as any,
     dateFrom,
     dateTo
   );
 
   const grouped = groupByDate(filtered);
-  const total = filtered.reduce((s: number, e: any) => s + Number(e.amount), 0);
+  const total = filtered.reduce((s: number, e: any) => s + amountForCategory(e, categoryFilter || 'all'), 0);
 
   return (
     <div className="space-y-6">
@@ -85,7 +109,7 @@ export default function ExpensesList() {
       ) : (
         <div className="space-y-4">
           {grouped.map(([date, items]) => {
-            const dayTotal = items.reduce((s: number, e: any) => s + Number(e.amount), 0);
+            const dayTotal = items.reduce((s: number, e: any) => s + amountForCategory(e, categoryFilter || 'all'), 0);
             return (
               <Card key={date}>
                 <div className="flex items-center justify-between px-5 py-3 bg-muted/40 border-b">
@@ -98,7 +122,11 @@ export default function ExpensesList() {
                   <span className="text-sm font-semibold tabular-nums text-foreground">{fmt(dayTotal)}</span>
                 </div>
                 <div className="divide-y">
-                  {items.map((e: any) => (
+                  {items.map((e: any) => {
+                    const allocated = isAllocated(e);
+                    const isFilteredCat = categoryFilter && categoryFilter !== 'all';
+                    const displayAmount = isFilteredCat ? amountForCategory(e, categoryFilter) : Number(e.amount);
+                    return (
                     <div key={e.id} className="flex items-center gap-4 px-5 py-3 hover:bg-muted/20 transition-colors group">
                       <div className={cn('w-2 h-2 rounded-full shrink-0', e.status === 'aprovado' ? 'bg-green-500' : e.status === 'rejeitado' ? 'bg-red-500' : 'bg-yellow-500')} />
                       <div className="flex-1 min-w-0">
@@ -113,15 +141,13 @@ export default function ExpensesList() {
                           <span className="text-[10px] text-primary mt-0.5 block">Parcela {e.installment_current || 1}/{e.installment_count}</span>
                         )}
                       </div>
-                      <span className="text-xs text-muted-foreground w-20 text-center hidden lg:block truncate">{e.company}</span>
-                      <span className="text-xs text-muted-foreground w-14 text-center hidden md:block">{e.cost_center}</span>
-                      <div className="w-[180px] text-center hidden xl:flex items-center justify-center gap-1.5">
-                        <span className="text-xs text-muted-foreground truncate">{e.category}</span>
-                        {isAllocated(e) && (
+                      {/* Reserved slot for Rateado badge — keeps columns aligned */}
+                      <div className="w-20 shrink-0 flex justify-center">
+                        {allocated && (
                           <TooltipProvider delayDuration={150}>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/10 gap-0.5 shrink-0">
+                                <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/10 gap-0.5 cursor-help">
                                   <Split className="h-2.5 w-2.5" />Rateado
                                 </Badge>
                               </TooltipTrigger>
@@ -138,6 +164,13 @@ export default function ExpensesList() {
                           </TooltipProvider>
                         )}
                       </div>
+                      <span className="text-xs text-muted-foreground w-20 text-center hidden lg:block truncate">{e.company}</span>
+                      <span className="text-xs text-muted-foreground w-14 text-center hidden md:block">{e.cost_center}</span>
+                      <div className="w-[160px] text-center hidden xl:flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground truncate">
+                          {isFilteredCat ? categoryFilter : e.category}
+                        </span>
+                      </div>
                       <div className="w-36 hidden lg:flex items-center justify-center">
                         {e.card_name ? (
                           <Badge variant="outline" className="text-[10px] gap-1 px-2 py-0.5">
@@ -146,7 +179,12 @@ export default function ExpensesList() {
                           </Badge>
                         ) : <span className="text-xs text-muted-foreground">—</span>}
                       </div>
-                      <span className="text-sm font-semibold tabular-nums text-foreground w-28 text-right">{fmt(Number(e.amount))}</span>
+                      <div className="w-28 text-right">
+                        <span className="text-sm font-semibold tabular-nums text-foreground block">{fmt(displayAmount)}</span>
+                        {isFilteredCat && allocated && Math.abs(displayAmount - Number(e.amount)) > 0.01 && (
+                          <span className="text-[10px] text-muted-foreground tabular-nums">de {fmt(Number(e.amount))}</span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewItem(e)}><Eye className="h-3.5 w-3.5" /></Button>
                         <Link to={`/financial/expenses/new?edit=${e.id}`}><Button variant="ghost" size="icon" className="h-7 w-7"><Pencil className="h-3.5 w-3.5" /></Button></Link>
@@ -165,7 +203,8 @@ export default function ExpensesList() {
                         </AlertDialog>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </Card>
             );

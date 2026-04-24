@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { usePaymentRequests, useDeletePaymentRequest, useUpdatePaymentRequest } from '@/hooks/use-payment-requests';
-import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES } from '@/lib/types';
+import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES, EXPENSE_CATEGORIES } from '@/lib/types';
 import { FinancialDetailDialog } from '@/components/FinancialDetailDialog';
 import { FinancialFilters, useDateRangeFilter, type FilterConfig } from '@/components/FinancialFilters';
 import { Link } from 'react-router-dom';
@@ -12,10 +12,22 @@ import { Plus, Trash2, Eye, Pencil, FileBarChart, QrCode, Landmark, AlertTriangl
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { isAllocated, readAllocations } from '@/lib/allocation-utils';
+import { isAllocated, readAllocations, expandAllocations } from '@/lib/allocation-utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+function amountForCategory(entry: any, category: string): number {
+  if (!category || category === 'all') return Number(entry.amount) || 0;
+  const slices = expandAllocations({ amount: entry.amount, category: entry.category, allocations: entry.allocations });
+  return slices.filter(s => s.category === category).reduce((s, sl) => s + sl.amount, 0);
+}
+
+function matchesCategory(entry: any, category: string): boolean {
+  if (!category || category === 'all') return true;
+  if (entry.category === category) return true;
+  return readAllocations(entry.allocations).some(a => a.category === category);
+}
 
 const paymentMethodLabels: Record<string, { label: string; icon: typeof FileBarChart }> = {
   boleto: { label: 'Boleto', icon: FileBarChart },
@@ -35,6 +47,7 @@ const STATUS_OPTIONS = ['Pago', 'Pendente Pagamento', 'Pendente NF'] as const;
 const FILTERS: FilterConfig[] = [
   { key: 'cost_center', label: 'Centro de Custo', allLabel: 'Todos Centros', options: FINANCIAL_COST_CENTERS },
   { key: 'company', label: 'Empresa', allLabel: 'Todas Empresas', options: FINANCIAL_COMPANIES },
+  { key: 'category', label: 'Categoria', allLabel: 'Todas Categorias', options: EXPENSE_CATEGORIES },
   { key: 'display_status', label: 'Status', allLabel: 'Todos Status', options: STATUS_OPTIONS as unknown as string[] },
 ];
 
@@ -61,12 +74,20 @@ export default function PaymentRequestsList() {
     setFilterValues(prev => ({ ...prev, [key]: value }));
   };
 
+  
+  const categoryFilter = filterValues.category;
+
   // Enrich with display_status, then filter
   const enriched = requests.map((r: any) => ({ ...r, display_status: getDisplayStatus(r) }));
 
   const filtered = enriched.filter((r: any) => {
     for (const [k, v] of Object.entries(filterValues)) {
-      if (v && v !== 'all' && r[k] !== v) return false;
+      if (!v || v === 'all') continue;
+      if (k === 'category') {
+        if (!matchesCategory(r, v)) return false;
+      } else if (r[k] !== v) {
+        return false;
+      }
     }
     // Use request_date for filtering, fallback to created_at
     const dateStr = r.request_date || r.created_at?.split('T')[0];
@@ -78,7 +99,7 @@ export default function PaymentRequestsList() {
   });
 
   const grouped = groupByDate(filtered, 'request_date');
-  const total = filtered.reduce((s: number, r: any) => s + Number(r.amount), 0);
+  const total = filtered.reduce((s: number, r: any) => s + amountForCategory(r, categoryFilter || 'all'), 0);
 
   return (
     <div className="space-y-6">
@@ -109,7 +130,7 @@ export default function PaymentRequestsList() {
       ) : (
         <div className="space-y-4">
           {grouped.map(([date, items]) => {
-            const dayTotal = items.reduce((s: number, r: any) => s + Number(r.amount), 0);
+            const dayTotal = items.reduce((s: number, r: any) => s + amountForCategory(r, categoryFilter || 'all'), 0);
             const dateLabel = date === 'sem-data'
               ? 'Sem data de vencimento'
               : format(parseISO(date), "dd 'de' MMMM, yyyy", { locale: ptBR });
@@ -125,6 +146,9 @@ export default function PaymentRequestsList() {
                 <div className="divide-y">
                   {items.map((r: any) => {
                     const pm = paymentMethodLabels[r.payment_method] || null;
+                    const allocated = isAllocated(r);
+                    const isFilteredCat = categoryFilter && categoryFilter !== 'all';
+                    const displayAmount = isFilteredCat ? amountForCategory(r, categoryFilter) : Number(r.amount);
                     return (
                       <div key={r.id} className="flex items-center gap-4 px-5 py-3 hover:bg-muted/20 transition-colors group">
                         <div className={cn('w-2 h-2 rounded-full shrink-0', r.display_status === 'Pago' ? 'bg-blue-500' : r.display_status === 'Pendente NF' ? 'bg-yellow-500' : 'bg-orange-500')} />
@@ -137,15 +161,13 @@ export default function PaymentRequestsList() {
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-muted-foreground w-20 text-center hidden lg:block truncate">{r.company}</span>
-                        <span className="text-xs text-muted-foreground w-14 text-center hidden md:block">{r.cost_center}</span>
-                        <div className="w-[180px] text-center hidden xl:flex items-center justify-center gap-1.5">
-                          <span className="text-xs text-muted-foreground truncate">{r.category}</span>
-                          {isAllocated(r) && (
+                        {/* Reserved slot for Rateado badge — keeps columns aligned */}
+                        <div className="w-20 shrink-0 flex justify-center">
+                          {allocated && (
                             <TooltipProvider delayDuration={150}>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/10 gap-0.5 shrink-0">
+                                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/10 gap-0.5 cursor-help">
                                     <Split className="h-2.5 w-2.5" />Rateado
                                   </Badge>
                                 </TooltipTrigger>
@@ -162,6 +184,13 @@ export default function PaymentRequestsList() {
                             </TooltipProvider>
                           )}
                         </div>
+                        <span className="text-xs text-muted-foreground w-20 text-center hidden lg:block truncate">{r.company}</span>
+                        <span className="text-xs text-muted-foreground w-14 text-center hidden md:block">{r.cost_center}</span>
+                        <div className="w-[160px] text-center hidden xl:flex items-center justify-center">
+                          <span className="text-xs text-muted-foreground truncate">
+                            {isFilteredCat ? categoryFilter : r.category}
+                          </span>
+                        </div>
                         <div className="w-32 hidden lg:flex items-center justify-center">
                           {pm ? (
                             <Badge variant="outline" className="text-[10px] gap-1 px-2 py-0.5">
@@ -170,7 +199,12 @@ export default function PaymentRequestsList() {
                             </Badge>
                           ) : <span className="text-xs text-muted-foreground">—</span>}
                         </div>
-                        <span className="text-sm font-semibold tabular-nums text-foreground w-28 text-right">{fmt(Number(r.amount))}</span>
+                        <div className="w-28 text-right">
+                          <span className="text-sm font-semibold tabular-nums text-foreground block">{fmt(displayAmount)}</span>
+                          {isFilteredCat && allocated && Math.abs(displayAmount - Number(r.amount)) > 0.01 && (
+                            <span className="text-[10px] text-muted-foreground tabular-nums">de {fmt(Number(r.amount))}</span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 w-20 justify-center">
                           <button
                             onClick={() => updateReq.mutate({ id: r.id, status: r.status === 'pago' ? 'pendente' : 'pago' })}
