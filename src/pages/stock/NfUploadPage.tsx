@@ -168,16 +168,14 @@ export default function NfUploadPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Arquivo</TableHead>
-              <TableHead>Fornecedor</TableHead>
-              <TableHead>Data Emissão</TableHead>
-              <TableHead className="text-right">Produtos</TableHead>
-              <TableHead className="text-right">Frete</TableHead>
-              <TableHead className="text-right">Outras Desp.</TableHead>
-              <TableHead className="text-right">Descontos</TableHead>
-              <TableHead className="text-right">Valor Total</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Ações</TableHead>
+              <TableHead className="whitespace-nowrap">Arquivo</TableHead>
+              <TableHead className="whitespace-nowrap">Fornecedor</TableHead>
+              <TableHead className="whitespace-nowrap">Data Emissão</TableHead>
+              <TableHead className="text-right whitespace-nowrap">Produtos</TableHead>
+              <TableHead className="text-right whitespace-nowrap">Frete</TableHead>
+              <TableHead className="text-right whitespace-nowrap">Valor Total</TableHead>
+              <TableHead className="whitespace-nowrap">Status</TableHead>
+              <TableHead className="whitespace-nowrap">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
