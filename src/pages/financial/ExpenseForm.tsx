@@ -150,6 +150,10 @@ export default function ExpenseForm() {
   };
 
   const onSubmit = async (data: FormData) => {
+    if (splitEnabled) {
+      const err = validateAllocations(allocations, data.amount);
+      if (err) { toast.error(err); return; }
+    }
     let receipt_url: string | undefined = existingReceiptUrl || undefined;
 
     if (receiptFile) {
