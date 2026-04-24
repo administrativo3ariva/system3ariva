@@ -387,6 +387,7 @@ serve(async (req) => {
           recipient_name: extracted.recipient_name,
           recipient_doc: extracted.recipient_doc,
           recipient_doc_type: extracted.recipient_doc_type,
+          recipient_city: extracted.recipient_city,
           issue_date: extracted.issue_date,
           total_value: extracted.total_value,
           freight_value: extracted.freight_value,
