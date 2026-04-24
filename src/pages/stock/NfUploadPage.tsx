@@ -19,7 +19,6 @@ import { formatCityName } from '@/lib/city-format';
 
 export default function NfUploadPage() {
   const { selectedBranch } = useApp();
-  const navigate = useNavigate();
   const { data: nfUploads = [], isLoading } = useNfUploads();
   const uploadNf = useUploadAndProcessNf();
   const updateNfUpload = useUpdateNfUpload();
@@ -32,33 +31,6 @@ export default function NfUploadPage() {
   const [addingCategoryForIndex, setAddingCategoryForIndex] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const branchToCostCenter = (unit: string): string => {
-    const map: Record<string, string> = {
-      'BH-Matriz': 'BH', 'Vêneto-BH': 'BH', 'Vêneto-SP': 'SP',
-      'SP': 'SP', 'RJ': 'RJ', 'PAG': 'PAG', 'VAG': 'VAG',
-      'FLO': 'FLO', 'ITA': 'ITA', 'CPN': 'CPN',
-      'LIM': 'LIM', 'JUN': 'JUN', 'SJC': 'SJC',
-    };
-    return map[unit] || 'BH';
-  };
-
-  const handleLinkToFinancial = (nf: DbNfUpload, type: 'expense' | 'payment') => {
-    const params = new URLSearchParams();
-    params.set('from_nf', 'true');
-    params.set('nf_id', nf.id);
-    if (nf.supplier) params.set('supplier', nf.supplier);
-    if (nf.total_value) params.set('amount', String(nf.total_value));
-    params.set('cost_center', branchToCostCenter(nf.unit));
-    if (nf.file_url) params.set('receipt_url', nf.file_url);
-    if (nf.file_name) params.set('nf_name', nf.file_name);
-    if (nf.issue_date) params.set('issue_date', nf.issue_date);
-    if ((nf as any).recipient_name) params.set('recipient_name', (nf as any).recipient_name);
-    if ((nf as any).recipient_doc) params.set('recipient_doc', (nf as any).recipient_doc);
-
-    const path = type === 'expense' ? '/financial/expenses/new' : '/financial/requests/new';
-    navigate(`${path}?${params.toString()}`);
-  };
 
   const allCategories = [...PRODUCT_CATEGORIES, ...customCategories.filter(c => !PRODUCT_CATEGORIES.includes(c))];
 
