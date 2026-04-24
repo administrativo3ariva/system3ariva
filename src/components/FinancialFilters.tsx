@@ -53,7 +53,10 @@ export function FinancialFilters({
         )}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div
+        className="grid gap-3"
+        style={{ gridTemplateColumns: `repeat(${2 + filters.length}, minmax(0, 1fr))` }}
+      >
         {/* Date range */}
         <div className="flex flex-col gap-1.5">
           <span className="text-xs text-muted-foreground font-medium">Data Inicial</span>
