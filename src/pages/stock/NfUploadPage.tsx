@@ -237,7 +237,7 @@ export default function NfUploadPage() {
       </div>
 
       <Dialog open={!!previewNf} onOpenChange={() => setPreviewNf(null)}>
-        <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-7xl w-[97vw] max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display">Conferência — {previewNf?.file_name}</DialogTitle>
           </DialogHeader>
