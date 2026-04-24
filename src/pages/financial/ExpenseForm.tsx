@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { CreditCard, Calendar, Building2, Tag, FileText, Upload, X, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { AllocationSplitter, Allocation, validateAllocations } from '@/components/AllocationSplitter';
 
 const schema = z.object({
   description: z.string().min(1, 'Obrigatório'),
