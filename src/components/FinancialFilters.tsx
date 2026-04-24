@@ -144,15 +144,36 @@ export function FinancialFilters({
   );
 }
 
-/** Hook to manage date range state defaulting to current month */
-export function useDateRangeFilter() {
+/** Hook to manage date range state defaulting to current month, with optional sessionStorage persistence */
+export function useDateRangeFilter(persistKey?: string) {
   const now = new Date();
   const defaultFrom = startOfMonth(now);
   const defaultTo = endOfMonth(now);
 
-  const [dateFrom, setDateFrom] = useState(defaultFrom);
-  const [dateTo, setDateTo] = useState(defaultTo);
-  const [isDefaultRange, setIsDefaultRange] = useState(true);
+  const storageKey = persistKey ? `financial-date-range:${persistKey}` : undefined;
+
+  const initial = (() => {
+    if (!storageKey || typeof window === 'undefined') return null;
+    try {
+      const raw = sessionStorage.getItem(storageKey);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as { from: string; to: string; isDefault: boolean };
+      return { from: parseISO(parsed.from), to: parseISO(parsed.to), isDefault: parsed.isDefault };
+    } catch { return null; }
+  })();
+
+  const [dateFrom, setDateFrom] = useState<Date>(initial?.from ?? defaultFrom);
+  const [dateTo, setDateTo] = useState<Date>(initial?.to ?? defaultTo);
+  const [isDefaultRange, setIsDefaultRange] = useState(initial?.isDefault ?? true);
+
+  useEffect(() => {
+    if (!storageKey || typeof window === 'undefined') return;
+    sessionStorage.setItem(storageKey, JSON.stringify({
+      from: format(dateFrom, 'yyyy-MM-dd'),
+      to: format(dateTo, 'yyyy-MM-dd'),
+      isDefault: isDefaultRange,
+    }));
+  }, [dateFrom, dateTo, isDefaultRange, storageKey]);
 
   const handleDateFromChange = (d: Date) => {
     setDateFrom(d);
@@ -171,6 +192,29 @@ export function useDateRangeFilter() {
   };
 
   return { dateFrom, dateTo, isDefaultRange, handleDateFromChange, handleDateToChange, clearDates };
+}
+
+/** Hook to manage filter values with optional sessionStorage persistence */
+export function usePersistedFilterValues(persistKey?: string) {
+  const storageKey = persistKey ? `financial-filter-values:${persistKey}` : undefined;
+  const [values, setValues] = useState<Record<string, string>>(() => {
+    if (!storageKey || typeof window === 'undefined') return {};
+    try {
+      const raw = sessionStorage.getItem(storageKey);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
+
+  useEffect(() => {
+    if (!storageKey || typeof window === 'undefined') return;
+    sessionStorage.setItem(storageKey, JSON.stringify(values));
+  }, [values, storageKey]);
+
+  const handleFilterChange = (key: string, value: string) => {
+    setValues(prev => ({ ...prev, [key]: value }));
+  };
+
+  return { values, setValues, handleFilterChange };
 }
 
 /** Filter items by date field within range */
