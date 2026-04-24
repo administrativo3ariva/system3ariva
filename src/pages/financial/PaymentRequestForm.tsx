@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { AllocationSplitter, Allocation, validateAllocations } from '@/components/AllocationSplitter';
 
 const PAYMENT_METHODS = [
   { value: 'boleto', label: 'Boleto', icon: FileBarChart },
