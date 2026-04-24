@@ -111,6 +111,7 @@ export default function ExpenseForm() {
       const supplier = searchParams.get('supplier');
       const amount = searchParams.get('amount');
       const costCenter = searchParams.get('cost_center');
+      const company = searchParams.get('company');
       const receiptUrl = searchParams.get('receipt_url');
       const nfName = searchParams.get('nf_name');
       const issueDate = searchParams.get('issue_date');
@@ -119,6 +120,12 @@ export default function ExpenseForm() {
       if (supplier) form.setValue('supplier', supplier);
       if (amount) form.setValue('amount', Number(amount));
       if (costCenter) form.setValue('cost_center', costCenter);
+      if (company) {
+        form.setValue('company', company);
+        // Auto-select corporate card if mapped
+        const mappedCard = COMPANY_CARD_MAP[company as FinancialCompany];
+        if (mappedCard) form.setValue('card_name', mappedCard);
+      }
       if (receiptUrl) setExistingReceiptUrl(receiptUrl);
       if (nfName) form.setValue('description', `NF: ${nfName}`);
       if (issueDate) form.setValue('expense_date', issueDate);
