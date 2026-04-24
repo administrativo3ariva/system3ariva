@@ -57,7 +57,7 @@ export const mockNfUploads: NfUpload[] = [
 
 // Aligned with Suprimentos + Patrimônio macroblocos (operational taxonomy)
 export const PRODUCT_CATEGORIES = [
-  'Material de Escritório & TI',
+  'Material de Escritório',
   'Material de Limpeza',
   'Material de Uso & Consumo',
   'Eletrodoméstico',
