@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useApp } from '@/contexts/AppContext';
 
+export type FinancialLinkType = 'expense' | 'payment' | null;
+
 export type DbNfItem = {
   id: string;
   nf_upload_id: string;
@@ -12,6 +14,7 @@ export type DbNfItem = {
   total_price: number;
   category?: string;
   unit_of_measure?: string;
+  financial_link_type?: FinancialLinkType;
 };
 
 export type DbNfUpload = {
