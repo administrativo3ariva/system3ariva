@@ -126,29 +126,19 @@ export function useUpdateNfUpload() {
   });
 }
 
-function branchToCostCenter(unit: string): string {
-  const map: Record<string, string> = {
-    'BH-Matriz': 'BH', 'Vêneto-BH': 'BH', 'Vêneto-SP': 'SP',
-    'SP': 'SP', 'RJ': 'RJ', 'PAG': 'PAG', 'VAG': 'VAG',
-    'FLO': 'FLO', 'ITA': 'ITA', 'CPN': 'CPN',
-    'LIM': 'LIM', 'JUN': 'JUN', 'SJC': 'SJC',
-  };
-  return map[unit] || 'BH';
-}
-
 export function useApproveNf() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (nf: DbNfUpload) => {
       const items = nf.nf_items || [];
 
-      // 1) Persist per-item category + financial_link_type so they survive
+      // 1) Persist per-item category so they survive (link type no longer used per-item)
       for (const item of items) {
         await supabase
           .from('nf_items')
           .update({
             category: item.category || null,
-            financial_link_type: item.financial_link_type || null,
+            financial_link_type: null,
             name: item.name,
             quantity: item.quantity,
             unit_price: item.unit_price,
@@ -207,74 +197,20 @@ export function useApproveNf() {
         if (moveError) throw moveError;
       }
 
-      // 3) Group items by financial link type and create financial entries
-      const expenseItems = items.filter(i => i.financial_link_type === 'expense');
-      const paymentItems = items.filter(i => i.financial_link_type === 'payment');
-
-      const expenseTotal = expenseItems.reduce((s, i) => s + Number(i.total_price || 0), 0);
-      const paymentTotal = paymentItems.reduce((s, i) => s + Number(i.total_price || 0), 0);
-
-      const cc = branchToCostCenter(targetUnit);
-      const baseDescription = `NF ${nf.file_name}${nf.supplier ? ` — ${nf.supplier}` : ''}`;
-      let createdExpense = false;
-      let createdPayment = false;
-
-      if (expenseItems.length > 0 && expenseTotal > 0) {
-        const { error } = await supabase.from('expenses').insert({
-          description: baseDescription,
-          amount: expenseTotal,
-          category: expenseItems[0].category || 'Outros',
-          company: targetUnit,
-          cost_center: cc,
-          expense_date: nf.issue_date || new Date().toISOString().slice(0, 10),
-          supplier: nf.supplier || null,
-          status: 'pendente',
-          receipt_url: nf.file_url || null,
-          notes: `Vinculado automaticamente da NF ${nf.id}`,
-        });
-        if (error) throw error;
-        createdExpense = true;
-      }
-
-      if (paymentItems.length > 0 && paymentTotal > 0) {
-        const { error } = await supabase.from('payment_requests').insert({
-          description: baseDescription,
-          amount: paymentTotal,
-          category: paymentItems[0].category || 'Outros',
-          company: targetUnit,
-          cost_center: cc,
-          request_date: new Date().toISOString().slice(0, 10),
-          due_date: nf.issue_date || null,
-          supplier: nf.supplier || null,
-          status: 'pendente',
-          receipt_url: nf.file_url || null,
-          notes: `Vinculado automaticamente da NF ${nf.id}`,
-        });
-        if (error) throw error;
-        createdPayment = true;
-      }
-
-      // 4) Mark NF as approved (or vinculado if any link was created)
-      const finalStatus = (createdExpense || createdPayment) ? 'vinculado' : 'aprovado';
+      // 3) Mark NF as approved (financial link is created via redirect to financial form)
       const { error: updateError } = await supabase
         .from('nf_uploads')
-        .update({ status: finalStatus })
+        .update({ status: 'aprovado' })
         .eq('id', nf.id);
       if (updateError) throw updateError;
 
-      return { createdExpense, createdPayment };
+      return { ok: true };
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['nf_uploads'] });
       qc.invalidateQueries({ queryKey: ['products'] });
       qc.invalidateQueries({ queryKey: ['movements'] });
-      qc.invalidateQueries({ queryKey: ['expenses'] });
-      qc.invalidateQueries({ queryKey: ['payment_requests'] });
-
-      const parts: string[] = ['Itens adicionados ao estoque'];
-      if (result?.createdExpense) parts.push('despesa lançada');
-      if (result?.createdPayment) parts.push('solicitação criada');
-      toast.success(`NF aprovada — ${parts.join(', ')}.`);
+      toast.success('NF aprovada — itens adicionados ao estoque.');
     },
     onError: (err: any) => {
       console.error('Approve NF error:', err);

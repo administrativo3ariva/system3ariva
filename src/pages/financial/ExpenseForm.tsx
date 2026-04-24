@@ -114,6 +114,7 @@ export default function ExpenseForm() {
       const receiptUrl = searchParams.get('receipt_url');
       const nfName = searchParams.get('nf_name');
       const issueDate = searchParams.get('issue_date');
+      const allocationsParam = searchParams.get('allocations');
 
       if (supplier) form.setValue('supplier', supplier);
       if (amount) form.setValue('amount', Number(amount));
@@ -121,6 +122,24 @@ export default function ExpenseForm() {
       if (receiptUrl) setExistingReceiptUrl(receiptUrl);
       if (nfName) form.setValue('description', `NF: ${nfName}`);
       if (issueDate) form.setValue('expense_date', issueDate);
+
+      if (allocationsParam) {
+        try {
+          const parsed: Array<{ category: string; amount: number }> = JSON.parse(allocationsParam);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // sort desc by amount and pick the largest as primary
+            const sorted = [...parsed].sort((a, b) => Number(b.amount) - Number(a.amount));
+            form.setValue('category', sorted[0].category);
+            const rest = sorted.slice(1);
+            if (rest.length > 0) {
+              setAllocations(rest.map(a => ({ category: a.category, amount: Number(a.amount) })));
+              setSplitEnabled(true);
+            }
+          }
+        } catch (e) {
+          console.warn('Invalid allocations param', e);
+        }
+      }
     }
   }, [isFromNf, isEditing, searchParams, form]);
 

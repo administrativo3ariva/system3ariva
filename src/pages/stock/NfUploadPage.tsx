@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { Pencil, Plus, CreditCard, Landmark, Ban } from 'lucide-react';
+import { Pencil, Plus, CreditCard, Landmark } from 'lucide-react';
 import { Upload, FileText, Check, X, Eye, Loader2, Trash2, ExternalLink } from 'lucide-react';
 import { useNfUploads, useUploadAndProcessNf, useUpdateNfUpload, useDeleteNfUpload, useApproveNf } from '@/hooks/use-nf-uploads';
-import type { DbNfUpload, DbNfItem, FinancialLinkType } from '@/hooks/use-nf-uploads';
+import type { DbNfUpload, DbNfItem } from '@/hooks/use-nf-uploads';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,8 +17,12 @@ import { useApp } from '@/contexts/AppContext';
 import { BranchBadge } from '@/components/BranchBadge';
 import { PRODUCT_CATEGORIES } from '@/lib/mock-data';
 import { formatCityName } from '@/lib/city-format';
+import { toast } from 'sonner';
+
+type FinancialLinkChoice = 'expense' | 'payment';
 
 export default function NfUploadPage() {
+  const navigate = useNavigate();
   const { selectedBranch } = useApp();
   const { data: nfUploads = [], isLoading } = useNfUploads();
   const uploadNf = useUploadAndProcessNf();
@@ -29,6 +34,7 @@ export default function NfUploadPage() {
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [newCategoryInput, setNewCategoryInput] = useState('');
   const [addingCategoryForIndex, setAddingCategoryForIndex] = useState<number | null>(null);
+  const [financialLink, setFinancialLink] = useState<FinancialLinkChoice | ''>('');
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -39,6 +45,7 @@ export default function NfUploadPage() {
       setEditedItems(
         (previewNf.nf_items || []).map(item => ({ ...item, category: item.category || '' }))
       );
+      setFinancialLink('');
     }
   }, [previewNf]);
 
@@ -57,9 +64,60 @@ export default function NfUploadPage() {
     });
   };
 
+  // Aggregate items by category (skips items without category)
+  const buildAllocationsFromItems = (items: DbNfItem[]) => {
+    const map = new Map<string, number>();
+    for (const it of items) {
+      const cat = (it.category || '').trim();
+      if (!cat) continue;
+      map.set(cat, (map.get(cat) || 0) + Number(it.total_price || 0));
+    }
+    return Array.from(map.entries())
+      .map(([category, amount]) => ({ category, amount: +amount.toFixed(2) }))
+      .sort((a, b) => b.amount - a.amount);
+  };
+
   const handleApprove = (nf: DbNfUpload) => {
-    approveNf.mutate({ ...nf, nf_items: editedItems });
-    setPreviewNf(null);
+    if (!financialLink) {
+      toast.error('Selecione o vínculo financeiro (Cartão Corporativo ou Solicitação de Pagamento).');
+      return;
+    }
+    const uncategorized = editedItems.filter(i => !i.category);
+    if (uncategorized.length > 0) {
+      toast.error(`Classifique a categoria de todos os ${editedItems.length} itens antes de aprovar.`);
+      return;
+    }
+    const allocations = buildAllocationsFromItems(editedItems);
+    if (allocations.length === 0) {
+      toast.error('Nenhuma categoria identificada para vincular ao financeiro.');
+      return;
+    }
+
+    approveNf.mutate(
+      { ...nf, nf_items: editedItems },
+      {
+        onSuccess: () => {
+          setPreviewNf(null);
+          // Total used at financial form = total NF (or sum of items as fallback)
+          const itemsTotal = editedItems.reduce((s, i) => s + Number(i.total_price || 0), 0);
+          const total = Number(nf.total_value) || itemsTotal;
+          const params = new URLSearchParams({
+            from_nf: 'true',
+            nf_id: nf.id,
+            nf_name: nf.file_name,
+            amount: String(total),
+            allocations: JSON.stringify(allocations),
+          });
+          if (nf.supplier) params.set('supplier', nf.supplier);
+          if (nf.file_url) params.set('receipt_url', nf.file_url);
+          if (nf.issue_date) params.set('issue_date', nf.issue_date);
+
+          const target = financialLink === 'expense' ? '/financial/expenses/new' : '/financial/requests/new';
+          toast.success('Estoque atualizado. Complete os dados do lançamento financeiro.');
+          navigate(`${target}?${params.toString()}`);
+        },
+      }
+    );
   };
 
   const handleReject = (id: string) => {
@@ -399,14 +457,13 @@ export default function NfUploadPage() {
                       <TableHead className="min-w-[80px] text-center">Qtd</TableHead>
                       <TableHead className="min-w-[100px] text-center">Valor Unit.</TableHead>
                       <TableHead className="min-w-[90px] text-center">Total</TableHead>
-                      <TableHead className="min-w-[180px] text-center">Vínculo Financeiro</TableHead>
                       <TableHead className="w-[40px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {editedItems.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center text-muted-foreground">
+                        <TableCell colSpan={7} className="text-center text-muted-foreground">
                           Nenhum item extraído
                         </TableCell>
                       </TableRow>
@@ -521,31 +578,7 @@ export default function NfUploadPage() {
                         <TableCell className="text-center font-medium text-sm tabular-nums whitespace-nowrap align-middle">
                           R$ {Number(item.total_price).toFixed(2)}
                         </TableCell>
-                        <TableCell className="align-middle">
-                          <Select
-                            value={item.financial_link_type || 'none'}
-                            onValueChange={(v) => {
-                              const updated = [...editedItems];
-                              updated[i] = { ...updated[i], financial_link_type: v === 'none' ? null : (v as FinancialLinkType) };
-                              setEditedItems(updated);
-                            }}
-                          >
-                            <SelectTrigger className="h-8 text-sm w-full min-w-[170px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">
-                                <span className="flex items-center gap-2"><Ban className="h-3.5 w-3.5 text-muted-foreground" /> Sem vínculo</span>
-                              </SelectItem>
-                              <SelectItem value="expense">
-                                <span className="flex items-center gap-2"><CreditCard className="h-3.5 w-3.5 text-primary" /> Despesa (Cartão)</span>
-                              </SelectItem>
-                              <SelectItem value="payment">
-                                <span className="flex items-center gap-2"><Landmark className="h-3.5 w-3.5 text-primary" /> Solicitação Pgto</span>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
+                        {/* per-item financial link removed — link is global at the bottom */}
                         <TableCell className="align-middle text-center">
                           <Button
                             variant="ghost"
@@ -561,8 +594,76 @@ export default function NfUploadPage() {
                   </TableBody>
                 </Table>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Classifique cada item e selecione o tipo de vínculo financeiro. Ao aprovar a entrada, o estoque será atualizado e os lançamentos financeiros serão criados automaticamente.
+                  Classifique a categoria de cada item. Ao aprovar, os itens entram no estoque e o sistema abre o lançamento financeiro com os valores rateados por categoria.
                 </p>
+              </div>
+
+              {/* Global financial link selector */}
+              <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Vínculo Financeiro</p>
+                  <p className="text-xs text-muted-foreground">
+                    Como esta NF deve ser registrada na Gestão Financeira? Após aprovar a entrada de estoque,
+                    o lançamento será aberto com o rateio por categoria já preenchido.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFinancialLink('expense')}
+                    className={`flex items-center gap-3 rounded-lg border-2 p-3 text-left transition-all ${
+                      financialLink === 'expense'
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-muted hover:border-muted-foreground/40'
+                    }`}
+                  >
+                    <CreditCard className={`h-5 w-5 shrink-0 ${financialLink === 'expense' ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <div className="min-w-0">
+                      <p className={`text-sm font-medium ${financialLink === 'expense' ? 'text-primary' : 'text-foreground'}`}>
+                        Despesa de Cartão Corporativo
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">Lançamento direto no cartão</p>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFinancialLink('payment')}
+                    className={`flex items-center gap-3 rounded-lg border-2 p-3 text-left transition-all ${
+                      financialLink === 'payment'
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-muted hover:border-muted-foreground/40'
+                    }`}
+                  >
+                    <Landmark className={`h-5 w-5 shrink-0 ${financialLink === 'payment' ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <div className="min-w-0">
+                      <p className={`text-sm font-medium ${financialLink === 'payment' ? 'text-primary' : 'text-foreground'}`}>
+                        Solicitação de Pagamento
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">Boleto, PIX ou transferência</p>
+                    </div>
+                  </button>
+                </div>
+                {(() => {
+                  const allocs = buildAllocationsFromItems(editedItems);
+                  if (allocs.length === 0) return null;
+                  return (
+                    <div className="rounded-md border bg-background p-3">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">
+                        Rateio que será enviado ao financeiro {allocs.length > 1 ? `(${allocs.length} categorias)` : '(1 categoria)'}:
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {allocs.map((a) => (
+                          <Badge key={a.category} variant="outline" className="gap-1.5">
+                            <span>{a.category}</span>
+                            <span className="tabular-nums text-muted-foreground">
+                              R$ {a.amount.toFixed(2)}
+                            </span>
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {previewNf.status === 'pendente' && (
@@ -570,8 +671,13 @@ export default function NfUploadPage() {
                   <Button variant="outline" onClick={() => handleReject(previewNf.id)} className="text-destructive">
                     <X className="h-4 w-4 mr-2" /> Rejeitar
                   </Button>
-                  <Button onClick={() => handleApprove(previewNf)} className="bg-success text-success-foreground hover:bg-success/90">
-                    <Check className="h-4 w-4 mr-2" /> Aprovar Entrada
+                  <Button
+                    onClick={() => handleApprove(previewNf)}
+                    disabled={!financialLink || approveNf.isPending}
+                    className="bg-success text-success-foreground hover:bg-success/90"
+                  >
+                    <Check className="h-4 w-4 mr-2" />
+                    {approveNf.isPending ? 'Processando...' : 'Aprovar Entrada'}
                   </Button>
                 </div>
               )}
