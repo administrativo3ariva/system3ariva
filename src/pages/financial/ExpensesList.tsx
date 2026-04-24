@@ -203,7 +203,8 @@ export default function ExpensesList() {
                         </AlertDialog>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </Card>
             );
