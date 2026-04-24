@@ -47,6 +47,7 @@ export default function NfUploadPage() {
   const [addingCategoryForIndex, setAddingCategoryForIndex] = useState<number | null>(null);
   const [financialLink, setFinancialLink] = useState<FinancialLinkChoice | ''>('');
   const [dragOver, setDragOver] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState<DbNfUpload | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const allCategories = [...PRODUCT_CATEGORIES, ...customCategories.filter(c => !PRODUCT_CATEGORIES.includes(c))];
