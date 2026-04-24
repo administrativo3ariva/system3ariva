@@ -146,6 +146,9 @@ export default function PaymentRequestsList() {
                 <div className="divide-y">
                   {items.map((r: any) => {
                     const pm = paymentMethodLabels[r.payment_method] || null;
+                    const allocated = isAllocated(r);
+                    const isFilteredCat = categoryFilter && categoryFilter !== 'all';
+                    const displayAmount = isFilteredCat ? amountForCategory(r, categoryFilter) : Number(r.amount);
                     return (
                       <div key={r.id} className="flex items-center gap-4 px-5 py-3 hover:bg-muted/20 transition-colors group">
                         <div className={cn('w-2 h-2 rounded-full shrink-0', r.display_status === 'Pago' ? 'bg-blue-500' : r.display_status === 'Pendente NF' ? 'bg-yellow-500' : 'bg-orange-500')} />
@@ -158,15 +161,13 @@ export default function PaymentRequestsList() {
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-muted-foreground w-20 text-center hidden lg:block truncate">{r.company}</span>
-                        <span className="text-xs text-muted-foreground w-14 text-center hidden md:block">{r.cost_center}</span>
-                        <div className="w-[180px] text-center hidden xl:flex items-center justify-center gap-1.5">
-                          <span className="text-xs text-muted-foreground truncate">{r.category}</span>
-                          {isAllocated(r) && (
+                        {/* Reserved slot for Rateado badge — keeps columns aligned */}
+                        <div className="w-20 shrink-0 flex justify-center">
+                          {allocated && (
                             <TooltipProvider delayDuration={150}>
                               <Tooltip>
                                 <TooltipTrigger asChild>
-                                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/10 gap-0.5 shrink-0">
+                                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/10 gap-0.5 cursor-help">
                                     <Split className="h-2.5 w-2.5" />Rateado
                                   </Badge>
                                 </TooltipTrigger>
@@ -183,6 +184,13 @@ export default function PaymentRequestsList() {
                             </TooltipProvider>
                           )}
                         </div>
+                        <span className="text-xs text-muted-foreground w-20 text-center hidden lg:block truncate">{r.company}</span>
+                        <span className="text-xs text-muted-foreground w-14 text-center hidden md:block">{r.cost_center}</span>
+                        <div className="w-[160px] text-center hidden xl:flex items-center justify-center">
+                          <span className="text-xs text-muted-foreground truncate">
+                            {isFilteredCat ? categoryFilter : r.category}
+                          </span>
+                        </div>
                         <div className="w-32 hidden lg:flex items-center justify-center">
                           {pm ? (
                             <Badge variant="outline" className="text-[10px] gap-1 px-2 py-0.5">
@@ -191,7 +199,12 @@ export default function PaymentRequestsList() {
                             </Badge>
                           ) : <span className="text-xs text-muted-foreground">—</span>}
                         </div>
-                        <span className="text-sm font-semibold tabular-nums text-foreground w-28 text-right">{fmt(Number(r.amount))}</span>
+                        <div className="w-28 text-right">
+                          <span className="text-sm font-semibold tabular-nums text-foreground block">{fmt(displayAmount)}</span>
+                          {isFilteredCat && allocated && Math.abs(displayAmount - Number(r.amount)) > 0.01 && (
+                            <span className="text-[10px] text-muted-foreground tabular-nums">de {fmt(Number(r.amount))}</span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-2 w-20 justify-center">
                           <button
                             onClick={() => updateReq.mutate({ id: r.id, status: r.status === 'pago' ? 'pendente' : 'pago' })}
