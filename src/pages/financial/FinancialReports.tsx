@@ -597,11 +597,32 @@ export default function FinancialReports() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredData.slice(0, 50).map(item => (
-                  <TableRow key={item.id}>
+                {filteredData.slice(0, 50).map((item, idx) => (
+                  <TableRow key={`${item.source}-${item.id}-${item.category}-${idx}`}>
                     <TableCell className="text-xs tabular-nums">{item.date}</TableCell>
-                    <TableCell className="text-xs max-w-[200px] truncate">{item.description}</TableCell>
-                    <TableCell className="text-right text-xs tabular-nums font-medium">{fmt(item.amount)}</TableCell>
+                    <TableCell className="text-xs max-w-[200px] truncate">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate">{item.description}</span>
+                        {item.isAllocated && (
+                          <Badge
+                            variant="outline"
+                            className="h-4 px-1 text-[9px] gap-0.5 border-amber-500/40 text-amber-700 dark:text-amber-400 shrink-0"
+                            title={item.allocationLabel}
+                          >
+                            <Split className="h-2.5 w-2.5" />
+                            {item.isPrimary ? 'Princ.' : 'Sec.'}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right text-xs tabular-nums font-medium">
+                      {fmt(item.amount)}
+                      {item.isAllocated && (
+                        <div className="text-[9px] text-muted-foreground font-normal">
+                          de {fmt(item.totalAmount)}
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell className="text-xs">{item.company}</TableCell>
                     <TableCell className="text-xs">{item.cost_center}</TableCell>
                     <TableCell className="text-xs w-[180px]">{item.category}</TableCell>
