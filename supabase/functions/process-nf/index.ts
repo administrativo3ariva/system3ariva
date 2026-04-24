@@ -157,7 +157,7 @@ async function callLovableAi(messages: any[]) {
                   },
                 },
               },
-              required: ["supplier", "supplier_cnpj", "recipient_name", "recipient_doc", "recipient_doc_type", "issue_date", "total_value", "freight_value", "other_expenses", "discount_value", "items"],
+              required: ["supplier", "supplier_cnpj", "recipient_name", "recipient_doc", "recipient_doc_type", "recipient_city", "issue_date", "total_value", "freight_value", "other_expenses", "discount_value", "items"],
               additionalProperties: false,
             },
           },
