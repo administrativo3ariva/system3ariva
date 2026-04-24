@@ -457,7 +457,6 @@ export default function NfUploadPage() {
                       <TableHead className="min-w-[80px] text-center">Qtd</TableHead>
                       <TableHead className="min-w-[100px] text-center">Valor Unit.</TableHead>
                       <TableHead className="min-w-[90px] text-center">Total</TableHead>
-                      <TableHead className="min-w-[180px] text-center">Vínculo Financeiro</TableHead>
                       <TableHead className="w-[40px]"></TableHead>
                     </TableRow>
                   </TableHeader>
