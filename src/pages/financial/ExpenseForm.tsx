@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { CreditCard, Calendar, Building2, Tag, FileText, Upload, X, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { AllocationSplitter, Allocation, validateAllocations } from '@/components/AllocationSplitter';
 
 const schema = z.object({
   description: z.string().min(1, 'Obrigatório'),
@@ -50,6 +51,8 @@ export default function ExpenseForm() {
 
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [allocations, setAllocations] = useState<Allocation[]>([]);
   const [existingReceiptUrl, setExistingReceiptUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -92,6 +95,11 @@ export default function ExpenseForm() {
       });
       if (editingExpense.receipt_url) {
         setExistingReceiptUrl(editingExpense.receipt_url);
+      }
+      const existingAlloc = (editingExpense as any).allocations;
+      if (Array.isArray(existingAlloc) && existingAlloc.length > 0) {
+        setAllocations(existingAlloc);
+        setSplitEnabled(true);
       }
     }
   }, [editingExpense, form]);
@@ -142,6 +150,10 @@ export default function ExpenseForm() {
   };
 
   const onSubmit = async (data: FormData) => {
+    if (splitEnabled) {
+      const err = validateAllocations(allocations, data.amount);
+      if (err) { toast.error(err); return; }
+    }
     let receipt_url: string | undefined = existingReceiptUrl || undefined;
 
     if (receiptFile) {
@@ -173,6 +185,7 @@ export default function ExpenseForm() {
       is_installment: data.is_installment || false,
       installment_count: data.is_installment ? data.installment_count : null,
       installment_current: data.is_installment ? 1 : null,
+      allocations: splitEnabled && allocations.length > 0 ? allocations : null,
       ...(receipt_url ? { receipt_url } : {}),
     } as any;
 
@@ -388,6 +401,20 @@ export default function ExpenseForm() {
               )}
             </CardContent>
           </Card>
+
+          {/* Section 2.5: Allocation / Rateio */}
+          <AllocationSplitter
+            enabled={splitEnabled}
+            onToggle={(v) => {
+              setSplitEnabled(v);
+              if (!v) setAllocations([]);
+            }}
+            totalAmount={form.watch('amount') || 0}
+            primaryCategory={form.watch('category') || ''}
+            allocations={allocations}
+            onChange={setAllocations}
+            categoryOptions={EXPENSE_CATEGORIES}
+          />
 
           {/* Section 3: Receipt / NF */}
           <Card>

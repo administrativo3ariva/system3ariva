@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { AllocationSplitter, Allocation, validateAllocations } from '@/components/AllocationSplitter';
 
 const PAYMENT_METHODS = [
   { value: 'boleto', label: 'Boleto', icon: FileBarChart },
@@ -68,6 +69,8 @@ export default function PaymentRequestForm() {
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
   const [existingBoletoUrl, setExistingBoletoUrl] = useState<string | null>(null);
   const [existingReceiptUrl, setExistingReceiptUrl] = useState<string | null>(null);
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [allocations, setAllocations] = useState<Allocation[]>([]);
   const boletoInputRef = useRef<HTMLInputElement>(null);
   const receiptInputRef = useRef<HTMLInputElement>(null);
 
@@ -115,6 +118,11 @@ export default function PaymentRequestForm() {
       if (editingRequest.supplier_id) setSelectedSupplierId(editingRequest.supplier_id);
       if (editingRequest.boleto_url) setExistingBoletoUrl(editingRequest.boleto_url);
       if (editingRequest.receipt_url) setExistingReceiptUrl(editingRequest.receipt_url);
+      const existingAlloc = (editingRequest as any).allocations;
+      if (Array.isArray(existingAlloc) && existingAlloc.length > 0) {
+        setAllocations(existingAlloc);
+        setSplitEnabled(true);
+      }
     }
   }, [editingRequest, form]);
 
@@ -172,6 +180,10 @@ export default function PaymentRequestForm() {
   };
 
   const onSubmit = async (data: FormData) => {
+    if (splitEnabled) {
+      const err = validateAllocations(allocations, data.amount);
+      if (err) { toast.error(err); return; }
+    }
     setUploading(true);
     try {
       let boleto_url: string | undefined = existingBoletoUrl || undefined;
@@ -214,6 +226,7 @@ export default function PaymentRequestForm() {
         receipt_url,
         supplier_id: supplier_id || undefined,
         notes: data.notes,
+        allocations: splitEnabled && allocations.length > 0 ? allocations : null,
       };
 
       if (isEditing && editId) {
@@ -388,6 +401,20 @@ export default function PaymentRequestForm() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Section 2.5: Allocation / Rateio */}
+          <AllocationSplitter
+            enabled={splitEnabled}
+            onToggle={(v) => {
+              setSplitEnabled(v);
+              if (!v) setAllocations([]);
+            }}
+            totalAmount={form.watch('amount') || 0}
+            primaryCategory={form.watch('category') || ''}
+            allocations={allocations}
+            onChange={setAllocations}
+            categoryOptions={EXPENSE_CATEGORIES}
+          />
 
           {/* Section 3: Payment Method */}
           <Card>

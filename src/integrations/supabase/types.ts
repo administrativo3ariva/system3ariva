@@ -106,6 +106,7 @@ export type Database = {
       }
       expenses: {
         Row: {
+          allocations: Json | null
           amount: number
           card_name: string | null
           category: string
@@ -126,6 +127,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allocations?: Json | null
           amount?: number
           card_name?: string | null
           category: string
@@ -146,6 +148,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allocations?: Json | null
           amount?: number
           card_name?: string | null
           category?: string
@@ -437,6 +440,7 @@ export type Database = {
       }
       payment_requests: {
         Row: {
+          allocations: Json | null
           amount: number
           bank_account: string | null
           bank_account_type: string | null
@@ -462,6 +466,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allocations?: Json | null
           amount?: number
           bank_account?: string | null
           bank_account_type?: string | null
@@ -487,6 +492,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allocations?: Json | null
           amount?: number
           bank_account?: string | null
           bank_account_type?: string | null
