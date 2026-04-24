@@ -422,7 +422,7 @@ export default function NfUploadPage() {
                   <TableHeader>
                      <TableRow>
                       <TableHead className="min-w-[250px]">Item</TableHead>
-                      <TableHead className="min-w-[130px]">Categoria</TableHead>
+                      <TableHead className="min-w-[170px]">Categoria</TableHead>
                       <TableHead className="min-w-[70px]">Und.</TableHead>
                       <TableHead className="text-right min-w-[80px]">Qtd</TableHead>
                       <TableHead className="text-right min-w-[100px]">Valor Unit.</TableHead>
