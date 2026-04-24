@@ -221,9 +221,13 @@ export default function FinancialReports() {
       'Data': item.date,
       'Descrição': item.description,
       'Valor (R$)': item.amount,
+      'Valor Total Lançamento (R$)': item.totalAmount,
+      'Rateado': item.isAllocated ? 'Sim' : 'Não',
+      'Categoria (fatia)': item.category,
+      'Tipo Fatia': item.isAllocated ? (item.isPrimary ? 'Principal' : 'Secundária') : 'Única',
+      'Detalhe Rateio': item.allocationLabel,
       'Empresa': item.company,
       'Centro de Custo': item.cost_center,
-      'Categoria': item.category,
       'Fornecedor': item.supplier,
       'Cartão': item.card_name,
       'Status': item.status,
@@ -232,16 +236,21 @@ export default function FinancialReports() {
     const cartaoRows = filteredData.filter(i => i.source === 'cartao').map(mapRow);
     const solicitacaoRows = filteredData.filter(i => i.source === 'solicitacao').map(mapRow);
 
+    const allocatedCount = new Set(
+      filteredData.filter(i => i.isAllocated).map(i => `${i.source}:${i.id}`)
+    ).size;
+
     // Summary sheet
     const summaryRows = [
-      { 'Métrica': 'Total Geral', 'Valor (R$)': totalAmount },
+      { 'Métrica': 'Total Geral (com rateio)', 'Valor (R$)': totalAmount },
       { 'Métrica': 'Total Cartão Corporativo', 'Valor (R$)': totalCartao },
       { 'Métrica': 'Total Solicitações', 'Valor (R$)': totalSolicitacao },
-      { 'Métrica': 'Qtd. Lançamentos', 'Valor (R$)': filteredData.length },
+      { 'Métrica': 'Qtd. Fatias (linhas)', 'Valor (R$)': filteredData.length },
+      { 'Métrica': 'Qtd. Lançamentos Rateados', 'Valor (R$)': allocatedCount },
       { 'Métrica': 'Período', 'Valor (R$)': `${dateStart} a ${dateEnd}` },
     ];
 
-    // Grouped sheet
+    // Grouped sheet (já usa amount = fatia, então rateio é refletido)
     const groupedRows = groupedData.map(g => ({
       [groupLabels[groupBy]]: g.name,
       'Cartão Corp. (R$)': g.cartao,
@@ -256,12 +265,13 @@ export default function FinancialReports() {
     const wsGrouped = XLSX.utils.json_to_sheet(groupedRows);
 
     const colWidths = [
-      { wch: 12 }, { wch: 40 }, { wch: 14 }, { wch: 15 },
-      { wch: 16 }, { wch: 28 }, { wch: 25 }, { wch: 22 }, { wch: 12 },
+      { wch: 12 }, { wch: 36 }, { wch: 14 }, { wch: 18 }, { wch: 10 },
+      { wch: 22 }, { wch: 12 }, { wch: 40 },
+      { wch: 15 }, { wch: 16 }, { wch: 25 }, { wch: 22 }, { wch: 12 },
     ];
     wsCartao['!cols'] = colWidths;
     wsSolicitacao['!cols'] = colWidths;
-    wsSummary['!cols'] = [{ wch: 30 }, { wch: 20 }];
+    wsSummary['!cols'] = [{ wch: 32 }, { wch: 22 }];
     wsGrouped['!cols'] = [{ wch: 30 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
 
     // Apply formatting to all sheets
