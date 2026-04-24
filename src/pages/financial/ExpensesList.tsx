@@ -50,13 +50,9 @@ function groupByDate(items: any[]) {
 export default function ExpensesList() {
   const { data: expenses = [], isLoading } = useExpenses();
   const deleteExpense = useDeleteExpense();
-  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
-  const { dateFrom, dateTo, isDefaultRange, handleDateFromChange, handleDateToChange, clearDates } = useDateRangeFilter();
+  const { values: filterValues, handleFilterChange } = usePersistedFilterValues('expenses-list');
+  const { dateFrom, dateTo, isDefaultRange, handleDateFromChange, handleDateToChange, clearDates } = useDateRangeFilter('expenses-list');
   const [viewItem, setViewItem] = useState<any | null>(null);
-
-  const handleFilterChange = (key: string, value: string) => {
-    setFilterValues(prev => ({ ...prev, [key]: value }));
-  };
 
   const categoryFilter = filterValues.category;
 
