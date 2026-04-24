@@ -17,6 +17,17 @@ import { useApp } from '@/contexts/AppContext';
 import { BranchBadge } from '@/components/BranchBadge';
 import { PRODUCT_CATEGORIES } from '@/lib/mock-data';
 import { formatCityName } from '@/lib/city-format';
+import { branchToCostCenter, branchToCity, isCityMatchingBranch, detectCompanyFromText } from '@/lib/nf-mapping';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
 type FinancialLinkChoice = 'expense' | 'payment';
