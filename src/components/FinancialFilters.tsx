@@ -79,6 +79,7 @@ export function FinancialFilters({
                 selected={dateFrom}
                 onSelect={(d) => d && onDateFromChange(d)}
                 initialFocus
+                locale={ptBR}
                 className={cn("p-3 pointer-events-auto")}
               />
             </PopoverContent>
