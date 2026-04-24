@@ -1,4 +1,5 @@
 import { OperationalBudgetMonthly, CATEGORY_TO_MACROBLOCO, ALL_OPERATIONAL_CATEGORIES, OperationalMacrobloco } from '@/lib/types';
+import { expandAllocations, type Allocation } from '@/lib/allocation-utils';
 
 /** Maps a financial cost_center string to the operational branch label.
  *  Note: FLO (cost_center) maps to FLN (branch label per spec). */
@@ -33,6 +34,10 @@ export type ConsumedItem = {
   company?: string | null;
   cost_center?: string | null;
   payment_method?: string | null;
+  /** True when this item is a slice of an allocated (rateado) entry. */
+  isAllocationSlice?: boolean;
+  /** Total amount of the parent entry (only set for allocation slices). */
+  parentAmount?: number;
 };
 
 /** Map a card expense status to a launch bucket.
