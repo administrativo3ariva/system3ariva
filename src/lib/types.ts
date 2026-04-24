@@ -180,7 +180,7 @@ export type OperationalMacrobloco = typeof OPERATIONAL_MACROBLOCOS[number];
 
 export const OPERATIONAL_CATEGORIES_BY_MACROBLOCO: Record<OperationalMacrobloco, string[]> = {
   'Suprimentos': [
-    'Material de Escritório & TI',
+    'Material de Escritório',
     'Material de Limpeza',
     'Material de Uso & Consumo',
   ],
