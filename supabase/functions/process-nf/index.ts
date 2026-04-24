@@ -21,6 +21,7 @@ type ExtractedNF = {
   recipient_name: string | null;
   recipient_doc: string | null;
   recipient_doc_type: string | null;
+  recipient_city: string | null;
   issue_date: string | null;
   total_value: number;
   freight_value: number;
@@ -97,6 +98,7 @@ function normalizeExtractedResult(input: any): ExtractedNF {
     recipient_name: input?.recipient_name ? String(input.recipient_name).trim() : null,
     recipient_doc: input?.recipient_doc ? String(input.recipient_doc).trim() : null,
     recipient_doc_type: input?.recipient_doc_type ? String(input.recipient_doc_type).trim().toUpperCase() : null,
+    recipient_city: input?.recipient_city ? String(input.recipient_city).trim() : null,
     issue_date: input?.issue_date ? String(input.issue_date).trim() : null,
     total_value: Number.isFinite(Number(input?.total_value)) ? Number(input.total_value) : 0,
     freight_value: Number.isFinite(Number(input?.freight_value)) ? Number(input.freight_value) : 0,
@@ -133,6 +135,7 @@ async function callLovableAi(messages: any[]) {
                 recipient_name: { type: "string", description: "Nome ou Razão Social do tomador/destinatário da nota fiscal." },
                 recipient_doc: { type: "string", description: "CPF ou CNPJ do tomador/destinatário da nota fiscal, conforme aparece na NF." },
                 recipient_doc_type: { type: "string", enum: ["CPF", "CNPJ"], description: "Tipo do documento do tomador: CPF (pessoa física, 11 dígitos) ou CNPJ (pessoa jurídica, 14 dígitos)." },
+                recipient_city: { type: "string", description: "Cidade do destinatário/tomador (cidade de entrega) conforme aparece nos dados do destinatário da NF. Apenas o nome da cidade, sem UF." },
                 issue_date: { type: "string", description: "Data de emissão da nota fiscal no formato YYYY-MM-DD. Extraia do campo 'Data de Emissão', 'Data da Emissão' ou similar." },
                 total_value: { type: "number", description: "Valor total da nota fiscal (incluindo frete e outras despesas)" },
                 freight_value: { type: "number", description: "Valor do frete da nota fiscal. 0 se não houver." },
@@ -154,7 +157,7 @@ async function callLovableAi(messages: any[]) {
                   },
                 },
               },
-              required: ["supplier", "supplier_cnpj", "recipient_name", "recipient_doc", "recipient_doc_type", "issue_date", "total_value", "freight_value", "other_expenses", "discount_value", "items"],
+              required: ["supplier", "supplier_cnpj", "recipient_name", "recipient_doc", "recipient_doc_type", "recipient_city", "issue_date", "total_value", "freight_value", "other_expenses", "discount_value", "items"],
               additionalProperties: false,
             },
           },
@@ -221,7 +224,7 @@ async function extractFromPdf(pdfBytes: Uint8Array, fileName: string) {
     {
       role: "system",
       content:
-        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor (nome/razão social e CNPJ), tomador/destinatário (nome/razão social e CNPJ), data de emissão, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
+        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor (nome/razão social e CNPJ), tomador/destinatário (nome/razão social, CNPJ e cidade de entrega), data de emissão, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
     },
     {
       role: "user",
@@ -235,7 +238,7 @@ async function extractFromImage(fileUrl: string) {
     {
       role: "system",
       content:
-        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor (nome/razão social e CNPJ), tomador/destinatário (nome/razão social e CNPJ), data de emissão, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
+        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor (nome/razão social e CNPJ), tomador/destinatário (nome/razão social, CNPJ e cidade de entrega), data de emissão, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
     },
     {
       role: "user",
@@ -246,7 +249,7 @@ async function extractFromImage(fileUrl: string) {
         },
         {
           type: "text",
-          text: "Extraia o fornecedor (nome e CNPJ), tomador/destinatário (nome e CNPJ), data de emissão, valor total, frete, descontos, outras despesas e itens (com unidade de medida) desta nota fiscal brasileira.",
+          text: "Extraia o fornecedor (nome e CNPJ), tomador/destinatário (nome, CNPJ e cidade), data de emissão, valor total, frete, descontos, outras despesas e itens (com unidade de medida) desta nota fiscal brasileira.",
         },
       ],
     },
@@ -343,6 +346,7 @@ serve(async (req) => {
           recipient_name: extracted.recipient_name || null,
           recipient_doc: extracted.recipient_doc || null,
           recipient_doc_type: extracted.recipient_doc_type || null,
+          recipient_city: extracted.recipient_city || null,
           issue_date: extracted.issue_date || null,
           total_value: extracted.total_value || null,
           freight_value: extracted.freight_value || 0,
@@ -383,6 +387,7 @@ serve(async (req) => {
           recipient_name: extracted.recipient_name,
           recipient_doc: extracted.recipient_doc,
           recipient_doc_type: extracted.recipient_doc_type,
+          recipient_city: extracted.recipient_city,
           issue_date: extracted.issue_date,
           total_value: extracted.total_value,
           freight_value: extracted.freight_value,

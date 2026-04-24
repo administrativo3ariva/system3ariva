@@ -237,7 +237,7 @@ export default function NfUploadPage() {
       </div>
 
       <Dialog open={!!previewNf} onOpenChange={() => setPreviewNf(null)}>
-        <DialogContent className="max-w-5xl w-[95vw] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-7xl w-[97vw] max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display">Conferência — {previewNf?.file_name}</DialogTitle>
           </DialogHeader>
@@ -275,7 +275,7 @@ export default function NfUploadPage() {
                 </div>
                 <div className="space-y-2 p-3 rounded-lg border bg-muted/30">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Tomador / Destinatário</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
                     <div>
                       <Label className="text-muted-foreground text-xs">Nome / Razão Social</Label>
                       <Input
@@ -303,6 +303,15 @@ export default function NfUploadPage() {
                         defaultValue={(previewNf as any).recipient_doc || ''}
                         placeholder={(previewNf as any).recipient_doc_type === 'CPF' ? 'XXX.XXX.XXX-XX' : 'XX.XXX.XXX/XXXX-XX'}
                         onBlur={e => updateNfUpload.mutate({ id: previewNf.id, recipient_doc: e.target.value })}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground text-xs">Cidade de Entrega</Label>
+                      <Input
+                        defaultValue={(previewNf as any).recipient_city || ''}
+                        placeholder="Ex.: Belo Horizonte"
+                        onBlur={e => updateNfUpload.mutate({ id: previewNf.id, recipient_city: e.target.value })}
                         className="mt-1"
                       />
                     </div>
@@ -413,7 +422,7 @@ export default function NfUploadPage() {
                   <TableHeader>
                      <TableRow>
                       <TableHead className="min-w-[250px]">Item</TableHead>
-                      <TableHead className="min-w-[130px]">Categoria</TableHead>
+                      <TableHead className="min-w-[170px]">Categoria</TableHead>
                       <TableHead className="min-w-[70px]">Und.</TableHead>
                       <TableHead className="text-right min-w-[80px]">Qtd</TableHead>
                       <TableHead className="text-right min-w-[100px]">Valor Unit.</TableHead>
@@ -473,7 +482,7 @@ export default function NfUploadPage() {
                                 setEditedItems(updated);
                               }}
                             >
-                              <SelectTrigger className="h-8 text-sm w-32">
+                              <SelectTrigger className="h-8 text-sm w-full min-w-[140px]">
                                 <SelectValue placeholder="Selecione" />
                               </SelectTrigger>
                               <SelectContent>
