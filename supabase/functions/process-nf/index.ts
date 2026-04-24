@@ -346,6 +346,7 @@ serve(async (req) => {
           recipient_name: extracted.recipient_name || null,
           recipient_doc: extracted.recipient_doc || null,
           recipient_doc_type: extracted.recipient_doc_type || null,
+          recipient_city: extracted.recipient_city || null,
           issue_date: extracted.issue_date || null,
           total_value: extracted.total_value || null,
           freight_value: extracted.freight_value || 0,
