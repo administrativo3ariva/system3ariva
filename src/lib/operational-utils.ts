@@ -110,6 +110,7 @@ export function buildConsumedList(args: {
     const slices = expandAllocations({ amount: Number(p.amount) || 0, category: p.category, allocations: p.allocations });
     const isSplit = slices.length > 1;
     slices.forEach((sl, idx) => {
+      if (isNonBudgetCategory(sl.category)) return;
       list.push({
         id: isSplit ? `${p.id}::${idx}` : p.id,
         branch: COST_CENTER_TO_BRANCH[p.cost_center] ?? p.cost_center,
