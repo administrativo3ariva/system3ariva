@@ -130,7 +130,7 @@ export default function PaymentRequestsList() {
       ) : (
         <div className="space-y-4">
           {grouped.map(([date, items]) => {
-            const dayTotal = items.reduce((s: number, r: any) => s + Number(r.amount), 0);
+            const dayTotal = items.reduce((s: number, r: any) => s + amountForCategory(r, categoryFilter || 'all'), 0);
             const dateLabel = date === 'sem-data'
               ? 'Sem data de vencimento'
               : format(parseISO(date), "dd 'de' MMMM, yyyy", { locale: ptBR });
