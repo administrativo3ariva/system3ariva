@@ -69,6 +69,8 @@ export default function PaymentRequestForm() {
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
   const [existingBoletoUrl, setExistingBoletoUrl] = useState<string | null>(null);
   const [existingReceiptUrl, setExistingReceiptUrl] = useState<string | null>(null);
+  const [splitEnabled, setSplitEnabled] = useState(false);
+  const [allocations, setAllocations] = useState<Allocation[]>([]);
   const boletoInputRef = useRef<HTMLInputElement>(null);
   const receiptInputRef = useRef<HTMLInputElement>(null);
 
