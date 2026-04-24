@@ -96,6 +96,11 @@ export default function ExpenseForm() {
       if (editingExpense.receipt_url) {
         setExistingReceiptUrl(editingExpense.receipt_url);
       }
+      const existingAlloc = (editingExpense as any).allocations;
+      if (Array.isArray(existingAlloc) && existingAlloc.length > 0) {
+        setAllocations(existingAlloc);
+        setSplitEnabled(true);
+      }
     }
   }, [editingExpense, form]);
 
