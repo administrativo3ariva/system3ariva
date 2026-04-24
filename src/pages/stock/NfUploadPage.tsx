@@ -594,8 +594,76 @@ export default function NfUploadPage() {
                   </TableBody>
                 </Table>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Classifique cada item e selecione o tipo de vínculo financeiro. Ao aprovar a entrada, o estoque será atualizado e os lançamentos financeiros serão criados automaticamente.
+                  Classifique a categoria de cada item. Ao aprovar, os itens entram no estoque e o sistema abre o lançamento financeiro com os valores rateados por categoria.
                 </p>
+              </div>
+
+              {/* Global financial link selector */}
+              <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Vínculo Financeiro</p>
+                  <p className="text-xs text-muted-foreground">
+                    Como esta NF deve ser registrada na Gestão Financeira? Após aprovar a entrada de estoque,
+                    o lançamento será aberto com o rateio por categoria já preenchido.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFinancialLink('expense')}
+                    className={`flex items-center gap-3 rounded-lg border-2 p-3 text-left transition-all ${
+                      financialLink === 'expense'
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-muted hover:border-muted-foreground/40'
+                    }`}
+                  >
+                    <CreditCard className={`h-5 w-5 shrink-0 ${financialLink === 'expense' ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <div className="min-w-0">
+                      <p className={`text-sm font-medium ${financialLink === 'expense' ? 'text-primary' : 'text-foreground'}`}>
+                        Despesa de Cartão Corporativo
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">Lançamento direto no cartão</p>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFinancialLink('payment')}
+                    className={`flex items-center gap-3 rounded-lg border-2 p-3 text-left transition-all ${
+                      financialLink === 'payment'
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-muted hover:border-muted-foreground/40'
+                    }`}
+                  >
+                    <Landmark className={`h-5 w-5 shrink-0 ${financialLink === 'payment' ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <div className="min-w-0">
+                      <p className={`text-sm font-medium ${financialLink === 'payment' ? 'text-primary' : 'text-foreground'}`}>
+                        Solicitação de Pagamento
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">Boleto, PIX ou transferência</p>
+                    </div>
+                  </button>
+                </div>
+                {(() => {
+                  const allocs = buildAllocationsFromItems(editedItems);
+                  if (allocs.length === 0) return null;
+                  return (
+                    <div className="rounded-md border bg-background p-3">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">
+                        Rateio que será enviado ao financeiro {allocs.length > 1 ? `(${allocs.length} categorias)` : '(1 categoria)'}:
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {allocs.map((a) => (
+                          <Badge key={a.category} variant="outline" className="gap-1.5">
+                            <span>{a.category}</span>
+                            <span className="tabular-nums text-muted-foreground">
+                              R$ {a.amount.toFixed(2)}
+                            </span>
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {previewNf.status === 'pendente' && (
@@ -603,8 +671,13 @@ export default function NfUploadPage() {
                   <Button variant="outline" onClick={() => handleReject(previewNf.id)} className="text-destructive">
                     <X className="h-4 w-4 mr-2" /> Rejeitar
                   </Button>
-                  <Button onClick={() => handleApprove(previewNf)} className="bg-success text-success-foreground hover:bg-success/90">
-                    <Check className="h-4 w-4 mr-2" /> Aprovar Entrada
+                  <Button
+                    onClick={() => handleApprove(previewNf)}
+                    disabled={!financialLink || approveNf.isPending}
+                    className="bg-success text-success-foreground hover:bg-success/90"
+                  >
+                    <Check className="h-4 w-4 mr-2" />
+                    {approveNf.isPending ? 'Processando...' : 'Aprovar Entrada'}
                   </Button>
                 </div>
               )}
