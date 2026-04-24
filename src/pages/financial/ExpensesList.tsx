@@ -12,10 +12,24 @@ import { Plus, Trash2, Eye, Pencil, AlertTriangle, CreditCard, Split } from 'luc
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { isAllocated, readAllocations } from '@/lib/allocation-utils';
+import { isAllocated, readAllocations, expandAllocations } from '@/lib/allocation-utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+/** Returns the amount of the entry attributable to a given category (handles rateio). */
+function amountForCategory(entry: any, category: string): number {
+  if (!category || category === 'all') return Number(entry.amount) || 0;
+  const slices = expandAllocations({ amount: entry.amount, category: entry.category, allocations: entry.allocations });
+  return slices.filter(s => s.category === category).reduce((s, sl) => s + sl.amount, 0);
+}
+
+/** Match if primary category OR any allocation slice equals filter. */
+function matchesCategory(entry: any, category: string): boolean {
+  if (!category || category === 'all') return true;
+  if (entry.category === category) return true;
+  return readAllocations(entry.allocations).some(a => a.category === category);
+}
 
 const FILTERS: FilterConfig[] = [
   { key: 'cost_center', label: 'Centro de Custo', allLabel: 'Todos Centros', options: FINANCIAL_COST_CENTERS },
