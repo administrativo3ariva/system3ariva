@@ -17,6 +17,17 @@ import { useApp } from '@/contexts/AppContext';
 import { BranchBadge } from '@/components/BranchBadge';
 import { PRODUCT_CATEGORIES } from '@/lib/mock-data';
 import { formatCityName } from '@/lib/city-format';
+import { branchToCostCenter, branchToCity, isCityMatchingBranch, detectCompanyFromText } from '@/lib/nf-mapping';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
 type FinancialLinkChoice = 'expense' | 'payment';
@@ -36,6 +47,7 @@ export default function NfUploadPage() {
   const [addingCategoryForIndex, setAddingCategoryForIndex] = useState<number | null>(null);
   const [financialLink, setFinancialLink] = useState<FinancialLinkChoice | ''>('');
   const [dragOver, setDragOver] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState<DbNfUpload | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const allCategories = [...PRODUCT_CATEGORIES, ...customCategories.filter(c => !PRODUCT_CATEGORIES.includes(c))];
@@ -93,14 +105,28 @@ export default function NfUploadPage() {
       return;
     }
 
+    // City consistency alert: warn if NF recipient city differs from branch's city
+    if (!isCityMatchingBranch(nf.recipient_city, nf.unit)) {
+      setPendingApproval(nf);
+      return;
+    }
+
+    executeApproval(nf);
+  };
+
+  const executeApproval = (nf: DbNfUpload) => {
+    const allocations = buildAllocationsFromItems(editedItems);
     approveNf.mutate(
       { ...nf, nf_items: editedItems },
       {
         onSuccess: () => {
           setPreviewNf(null);
+          setPendingApproval(null);
           // Total used at financial form = total NF (or sum of items as fallback)
           const itemsTotal = editedItems.reduce((s, i) => s + Number(i.total_price || 0), 0);
           const total = Number(nf.total_value) || itemsTotal;
+          const detectedCompany = detectCompanyFromText(nf.recipient_name, nf.recipient_doc);
+          const costCenter = branchToCostCenter(nf.unit);
           const params = new URLSearchParams({
             from_nf: 'true',
             nf_id: nf.id,
@@ -111,6 +137,8 @@ export default function NfUploadPage() {
           if (nf.supplier) params.set('supplier', nf.supplier);
           if (nf.file_url) params.set('receipt_url', nf.file_url);
           if (nf.issue_date) params.set('issue_date', nf.issue_date);
+          if (costCenter) params.set('cost_center', costCenter);
+          if (detectedCompany) params.set('company', detectedCompany);
 
           const target = financialLink === 'expense' ? '/financial/expenses/new' : '/financial/requests/new';
           toast.success('Estoque atualizado. Complete os dados do lançamento financeiro.');
@@ -685,6 +713,40 @@ export default function NfUploadPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!pendingApproval} onOpenChange={(open) => { if (!open) setPendingApproval(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-warning/15 text-warning">!</span>
+              Cidade de entrega divergente
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  A NF tem como cidade de entrega
+                  {' '}<strong>{formatCityName(pendingApproval?.recipient_city || '') || '—'}</strong>,
+                  mas a filial selecionada é
+                  {' '}<strong>{pendingApproval?.unit}</strong>
+                  {' '}({branchToCity(pendingApproval?.unit) || 'cidade não mapeada'}).
+                </p>
+                <p>
+                  Confirme que esta NF deve mesmo dar entrada no estoque de <strong>{pendingApproval?.unit}</strong>.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { if (pendingApproval) executeApproval(pendingApproval); }}
+              className="bg-warning text-warning-foreground hover:bg-warning/90"
+            >
+              Confirmar mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
