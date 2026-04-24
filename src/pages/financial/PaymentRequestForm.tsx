@@ -180,6 +180,10 @@ export default function PaymentRequestForm() {
   };
 
   const onSubmit = async (data: FormData) => {
+    if (splitEnabled) {
+      const err = validateAllocations(allocations, data.amount);
+      if (err) { toast.error(err); return; }
+    }
     setUploading(true);
     try {
       let boleto_url: string | undefined = existingBoletoUrl || undefined;
