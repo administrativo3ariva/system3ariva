@@ -58,17 +58,27 @@ export default function ExpensesList() {
     setFilterValues(prev => ({ ...prev, [key]: value }));
   };
 
+  const categoryFilter = filterValues.category;
+
   const filtered = filterByDateRange(
-    expenses.filter((e: any) =>
-      Object.entries(filterValues).every(([k, v]) => !v || v === 'all' || (e as any)[k] === v)
-    ),
+    expenses.filter((e: any) => {
+      for (const [k, v] of Object.entries(filterValues)) {
+        if (!v || v === 'all') continue;
+        if (k === 'category') {
+          if (!matchesCategory(e, v)) return false;
+        } else if ((e as any)[k] !== v) {
+          return false;
+        }
+      }
+      return true;
+    }),
     'expense_date' as any,
     dateFrom,
     dateTo
   );
 
   const grouped = groupByDate(filtered);
-  const total = filtered.reduce((s: number, e: any) => s + Number(e.amount), 0);
+  const total = filtered.reduce((s: number, e: any) => s + amountForCategory(e, categoryFilter || 'all'), 0);
 
   return (
     <div className="space-y-6">
