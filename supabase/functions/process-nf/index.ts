@@ -65,6 +65,55 @@ function decodeBase64(base64: string) {
   return bytes;
 }
 
+const CITY_OVERRIDES: Record<string, string> = {
+  "sao paulo": "São Paulo",
+  "rio de janeiro": "Rio de Janeiro",
+  "belo horizonte": "Belo Horizonte",
+  "brasilia": "Brasília",
+  "salvador": "Salvador",
+  "fortaleza": "Fortaleza",
+  "curitiba": "Curitiba",
+  "manaus": "Manaus",
+  "recife": "Recife",
+  "porto alegre": "Porto Alegre",
+  "goiania": "Goiânia",
+  "belem": "Belém",
+  "vitoria": "Vitória",
+  "florianopolis": "Florianópolis",
+  "guarulhos": "Guarulhos",
+  "campinas": "Campinas",
+  "uberlandia": "Uberlândia",
+  "contagem": "Contagem",
+  "betim": "Betim",
+  "niteroi": "Niterói",
+  "sao goncalo": "São Gonçalo",
+  "duque de caxias": "Duque de Caxias",
+  "sao bernardo do campo": "São Bernardo do Campo",
+  "santo andre": "Santo André",
+  "ribeirao preto": "Ribeirão Preto",
+  "sao jose dos campos": "São José dos Campos",
+};
+
+const LOWER_WORDS = new Set(["de", "da", "do", "das", "dos", "e", "a", "o"]);
+
+function formatCityName(input: string | null | undefined): string | null {
+  if (!input) return null;
+  const trimmed = String(input).trim();
+  if (!trimmed) return null;
+  const key = trimmed.toLocaleLowerCase("pt-BR");
+  if (CITY_OVERRIDES[key]) return CITY_OVERRIDES[key];
+  const stripped = key.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (CITY_OVERRIDES[stripped]) return CITY_OVERRIDES[stripped];
+  return trimmed
+    .split(/\s+/)
+    .map((w, idx) => {
+      const lw = w.toLocaleLowerCase("pt-BR");
+      if (idx > 0 && LOWER_WORDS.has(lw)) return lw;
+      return lw.charAt(0).toLocaleUpperCase("pt-BR") + lw.slice(1);
+    })
+    .join(" ");
+}
+
 function normalizeExtractedResult(input: any): ExtractedNF {
   const items = Array.isArray(input?.items)
     ? input.items
@@ -98,7 +147,7 @@ function normalizeExtractedResult(input: any): ExtractedNF {
     recipient_name: input?.recipient_name ? String(input.recipient_name).trim() : null,
     recipient_doc: input?.recipient_doc ? String(input.recipient_doc).trim() : null,
     recipient_doc_type: input?.recipient_doc_type ? String(input.recipient_doc_type).trim().toUpperCase() : null,
-    recipient_city: input?.recipient_city ? String(input.recipient_city).trim() : null,
+    recipient_city: formatCityName(input?.recipient_city),
     issue_date: input?.issue_date ? String(input.issue_date).trim() : null,
     total_value: Number.isFinite(Number(input?.total_value)) ? Number(input.total_value) : 0,
     freight_value: Number.isFinite(Number(input?.freight_value)) ? Number(input.freight_value) : 0,
