@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { usePaymentRequests, useDeletePaymentRequest, useUpdatePaymentRequest } from '@/hooks/use-payment-requests';
 import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES, EXPENSE_CATEGORIES } from '@/lib/types';
 import { FinancialDetailDialog } from '@/components/FinancialDetailDialog';
-import { FinancialFilters, useDateRangeFilter, type FilterConfig } from '@/components/FinancialFilters';
+import { FinancialFilters, useDateRangeFilter, usePersistedFilterValues, type FilterConfig } from '@/components/FinancialFilters';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -66,13 +66,9 @@ export default function PaymentRequestsList() {
   const { data: requests = [], isLoading } = usePaymentRequests();
   const deleteReq = useDeletePaymentRequest();
   const updateReq = useUpdatePaymentRequest();
-  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
-  const { dateFrom, dateTo, isDefaultRange, handleDateFromChange, handleDateToChange, clearDates } = useDateRangeFilter();
+  const { values: filterValues, handleFilterChange } = usePersistedFilterValues('payment-requests-list');
+  const { dateFrom, dateTo, isDefaultRange, handleDateFromChange, handleDateToChange, clearDates } = useDateRangeFilter('payment-requests-list');
   const [viewItem, setViewItem] = useState<any | null>(null);
-
-  const handleFilterChange = (key: string, value: string) => {
-    setFilterValues(prev => ({ ...prev, [key]: value }));
-  };
 
   
   const categoryFilter = filterValues.category;

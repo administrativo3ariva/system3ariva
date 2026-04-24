@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useExpenses, useDeleteExpense, useUpdateExpense } from '@/hooks/use-expenses';
 import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES, EXPENSE_CATEGORIES } from '@/lib/types';
 import { FinancialDetailDialog } from '@/components/FinancialDetailDialog';
-import { FinancialFilters, useDateRangeFilter, filterByDateRange, type FilterConfig } from '@/components/FinancialFilters';
+import { FinancialFilters, useDateRangeFilter, usePersistedFilterValues, filterByDateRange, type FilterConfig } from '@/components/FinancialFilters';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -50,13 +50,9 @@ function groupByDate(items: any[]) {
 export default function ExpensesList() {
   const { data: expenses = [], isLoading } = useExpenses();
   const deleteExpense = useDeleteExpense();
-  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
-  const { dateFrom, dateTo, isDefaultRange, handleDateFromChange, handleDateToChange, clearDates } = useDateRangeFilter();
+  const { values: filterValues, handleFilterChange } = usePersistedFilterValues('expenses-list');
+  const { dateFrom, dateTo, isDefaultRange, handleDateFromChange, handleDateToChange, clearDates } = useDateRangeFilter('expenses-list');
   const [viewItem, setViewItem] = useState<any | null>(null);
-
-  const handleFilterChange = (key: string, value: string) => {
-    setFilterValues(prev => ({ ...prev, [key]: value }));
-  };
 
   const categoryFilter = filterValues.category;
 
