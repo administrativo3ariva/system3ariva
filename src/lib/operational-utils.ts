@@ -1,4 +1,4 @@
-import { OperationalBudgetMonthly, CATEGORY_TO_MACROBLOCO, ALL_OPERATIONAL_CATEGORIES, OperationalMacrobloco } from '@/lib/types';
+import { OperationalBudgetMonthly, CATEGORY_TO_MACROBLOCO, ALL_OPERATIONAL_CATEGORIES, OperationalMacrobloco, isNonBudgetCategory } from '@/lib/types';
 import { expandAllocations, type Allocation } from '@/lib/allocation-utils';
 
 /** Maps a financial cost_center string to the operational branch label.
