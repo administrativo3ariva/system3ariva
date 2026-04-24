@@ -168,16 +168,14 @@ export default function NfUploadPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Arquivo</TableHead>
-              <TableHead>Fornecedor</TableHead>
-              <TableHead>Data Emissão</TableHead>
-              <TableHead className="text-right">Produtos</TableHead>
-              <TableHead className="text-right">Frete</TableHead>
-              <TableHead className="text-right">Outras Desp.</TableHead>
-              <TableHead className="text-right">Descontos</TableHead>
-              <TableHead className="text-right">Valor Total</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Ações</TableHead>
+              <TableHead className="whitespace-nowrap">Arquivo</TableHead>
+              <TableHead className="whitespace-nowrap">Fornecedor</TableHead>
+              <TableHead className="whitespace-nowrap">Data Emissão</TableHead>
+              <TableHead className="text-right whitespace-nowrap">Produtos</TableHead>
+              <TableHead className="text-right whitespace-nowrap">Frete</TableHead>
+              <TableHead className="text-right whitespace-nowrap">Valor Total</TableHead>
+              <TableHead className="whitespace-nowrap">Status</TableHead>
+              <TableHead className="whitespace-nowrap">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -190,33 +188,29 @@ export default function NfUploadPage() {
             )}
             {nfUploads.map(nf => (
               <TableRow key={nf.id} className="table-row-hover">
-                <TableCell className="font-medium text-sm flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  {nf.file_name}
-                  {nf.file_url && (
-                    <a href={nf.file_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
-                      <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                    </a>
-                  )}
+                <TableCell className="font-medium text-sm">
+                  <div className="flex items-center gap-2 whitespace-nowrap">
+                    <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <span className="truncate max-w-[220px]">{nf.file_name}</span>
+                    {nf.file_url && (
+                      <a href={nf.file_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
+                        <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                      </a>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="text-sm">{nf.supplier || '—'}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">{nf.issue_date ? new Date(nf.issue_date + 'T00:00:00').toLocaleDateString('pt-BR') : new Date(nf.upload_date).toLocaleDateString('pt-BR')}</TableCell>
-                <TableCell className="text-right text-sm">
+                <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{nf.issue_date ? new Date(nf.issue_date + 'T00:00:00').toLocaleDateString('pt-BR') : new Date(nf.upload_date).toLocaleDateString('pt-BR')}</TableCell>
+                <TableCell className="text-right text-sm whitespace-nowrap tabular-nums">
                   {(() => {
                     const itemsTotal = (nf.nf_items || []).reduce((s, i) => s + Number(i.total_price), 0);
                     return itemsTotal ? `R$ ${itemsTotal.toFixed(2)}` : '—';
                   })()}
                 </TableCell>
-                <TableCell className="text-right text-sm">
+                <TableCell className="text-right text-sm whitespace-nowrap tabular-nums">
                   {nf.freight_value ? `R$ ${Number(nf.freight_value).toFixed(2)}` : '—'}
                 </TableCell>
-                <TableCell className="text-right text-sm">
-                  {nf.other_expenses ? `R$ ${Number(nf.other_expenses).toFixed(2)}` : '—'}
-                </TableCell>
-                <TableCell className="text-right text-sm">
-                  {nf.discount_value ? `R$ ${Number(nf.discount_value).toFixed(2)}` : '—'}
-                </TableCell>
-                <TableCell className="text-right font-medium">
+                <TableCell className="text-right font-medium whitespace-nowrap tabular-nums">
                   {nf.total_value ? `R$ ${Number(nf.total_value).toFixed(2)}` : '—'}
                 </TableCell>
                 <TableCell>{statusBadge(nf.status)}</TableCell>
