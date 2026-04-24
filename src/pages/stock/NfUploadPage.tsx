@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { Pencil, Plus, CreditCard, Landmark, Ban } from 'lucide-react';
+import { Pencil, Plus, CreditCard, Landmark } from 'lucide-react';
 import { Upload, FileText, Check, X, Eye, Loader2, Trash2, ExternalLink } from 'lucide-react';
 import { useNfUploads, useUploadAndProcessNf, useUpdateNfUpload, useDeleteNfUpload, useApproveNf } from '@/hooks/use-nf-uploads';
-import type { DbNfUpload, DbNfItem, FinancialLinkType } from '@/hooks/use-nf-uploads';
+import type { DbNfUpload, DbNfItem } from '@/hooks/use-nf-uploads';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,9 @@ import { useApp } from '@/contexts/AppContext';
 import { BranchBadge } from '@/components/BranchBadge';
 import { PRODUCT_CATEGORIES } from '@/lib/mock-data';
 import { formatCityName } from '@/lib/city-format';
+import { toast } from 'sonner';
+
+type FinancialLinkChoice = 'expense' | 'payment';
 
 export default function NfUploadPage() {
   const { selectedBranch } = useApp();
