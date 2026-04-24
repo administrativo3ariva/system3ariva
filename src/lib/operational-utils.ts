@@ -57,12 +57,14 @@ function mapRequestStatus(s: string): LaunchStatus {
 }
 
 /** Aggregates corporate-card expenses + payment_requests
- *  into a unified consumption list filtered by year + optional month. */
+ *  into a unified consumption list filtered by year + optional month.
+ *  Entries with `allocations` are exploded into one slice per category, so
+ *  rateios are reflected accurately in dashboards and budget consumption. */
 export function buildConsumedList(args: {
   year: number;
   month?: number; // 1-12 optional
-  expenses: Array<{ id: string; description: string; amount: number; cost_center: string; category: string; expense_date: string; status: string; supplier?: string | null; company?: string; card_name?: string | null }>;
-  payments: Array<{ id: string; description: string; amount: number; cost_center: string; category: string; status: string; payment_date?: string | null; request_date?: string | null; due_date?: string | null; supplier?: string | null; company?: string; payment_method?: string | null }>;
+  expenses: Array<{ id: string; description: string; amount: number; cost_center: string; category: string; expense_date: string; status: string; supplier?: string | null; company?: string; card_name?: string | null; allocations?: Allocation[] | null | unknown }>;
+  payments: Array<{ id: string; description: string; amount: number; cost_center: string; category: string; status: string; payment_date?: string | null; request_date?: string | null; due_date?: string | null; supplier?: string | null; company?: string; payment_method?: string | null; allocations?: Allocation[] | null | unknown }>;
 }): ConsumedItem[] {
   const { year, month, expenses, payments } = args;
   const list: ConsumedItem[] = [];
@@ -71,21 +73,28 @@ export function buildConsumedList(args: {
     const d = new Date(e.expense_date);
     if (d.getFullYear() !== year) return;
     if (month && d.getMonth() + 1 !== month) return;
-    list.push({
-      id: e.id,
-      branch: COST_CENTER_TO_BRANCH[e.cost_center] ?? e.cost_center,
-      macrobloco: CATEGORY_TO_MACROBLOCO[e.category] ?? '—',
-      category: e.category,
-      amount: Number(e.amount) || 0,
-      date: e.expense_date,
-      source: 'card',
-      status: mapExpenseStatus(e.status),
-      rawStatus: e.status,
-      description: e.description,
-      supplier: e.supplier ?? null,
-      company: e.company ?? null,
-      cost_center: e.cost_center,
-      payment_method: e.card_name ?? 'Cartão Corporativo',
+
+    const slices = expandAllocations({ amount: Number(e.amount) || 0, category: e.category, allocations: e.allocations });
+    const isSplit = slices.length > 1;
+    slices.forEach((sl, idx) => {
+      list.push({
+        id: isSplit ? `${e.id}::${idx}` : e.id,
+        branch: COST_CENTER_TO_BRANCH[e.cost_center] ?? e.cost_center,
+        macrobloco: CATEGORY_TO_MACROBLOCO[sl.category] ?? '—',
+        category: sl.category,
+        amount: sl.amount,
+        date: e.expense_date,
+        source: 'card',
+        status: mapExpenseStatus(e.status),
+        rawStatus: e.status,
+        description: e.description,
+        supplier: e.supplier ?? null,
+        company: e.company ?? null,
+        cost_center: e.cost_center,
+        payment_method: e.card_name ?? 'Cartão Corporativo',
+        isAllocationSlice: isSplit,
+        parentAmount: isSplit ? Number(e.amount) || 0 : undefined,
+      });
     });
   });
 
@@ -95,21 +104,28 @@ export function buildConsumedList(args: {
     const d = new Date(ref);
     if (d.getFullYear() !== year) return;
     if (month && d.getMonth() + 1 !== month) return;
-    list.push({
-      id: p.id,
-      branch: COST_CENTER_TO_BRANCH[p.cost_center] ?? p.cost_center,
-      macrobloco: CATEGORY_TO_MACROBLOCO[p.category] ?? '—',
-      category: p.category,
-      amount: Number(p.amount) || 0,
-      date: ref,
-      source: 'request',
-      status: mapRequestStatus(p.status),
-      rawStatus: p.status,
-      description: p.description,
-      supplier: p.supplier ?? null,
-      company: p.company ?? null,
-      cost_center: p.cost_center,
-      payment_method: p.payment_method ?? null,
+
+    const slices = expandAllocations({ amount: Number(p.amount) || 0, category: p.category, allocations: p.allocations });
+    const isSplit = slices.length > 1;
+    slices.forEach((sl, idx) => {
+      list.push({
+        id: isSplit ? `${p.id}::${idx}` : p.id,
+        branch: COST_CENTER_TO_BRANCH[p.cost_center] ?? p.cost_center,
+        macrobloco: CATEGORY_TO_MACROBLOCO[sl.category] ?? '—',
+        category: sl.category,
+        amount: sl.amount,
+        date: ref,
+        source: 'request',
+        status: mapRequestStatus(p.status),
+        rawStatus: p.status,
+        description: p.description,
+        supplier: p.supplier ?? null,
+        company: p.company ?? null,
+        cost_center: p.cost_center,
+        payment_method: p.payment_method ?? null,
+        isAllocationSlice: isSplit,
+        parentAmount: isSplit ? Number(p.amount) || 0 : undefined,
+      });
     });
   });
 
