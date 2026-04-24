@@ -38,6 +38,7 @@ export function useCreatePaymentRequest() {
       receipt_url?: string;
       supplier_id?: string;
       notes?: string;
+      allocations?: Array<{ category: string; amount: number }> | null;
     }) => {
       const { data, error } = await supabase.from('payment_requests').insert(req as any).select().single();
       if (error) throw error;
