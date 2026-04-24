@@ -31,8 +31,9 @@ export function useCreateExpense() {
       receipt_url?: string;
       supplier?: string | null;
       supplier_id?: string | null;
+      allocations?: Array<{ category: string; amount: number }> | null;
     }) => {
-      const { data, error } = await supabase.from('expenses').insert(expense).select().single();
+      const { data, error } = await supabase.from('expenses').insert(expense as any).select().single();
       if (error) throw error;
       return data;
     },
