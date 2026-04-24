@@ -402,6 +402,20 @@ export default function ExpenseForm() {
             </CardContent>
           </Card>
 
+          {/* Section 2.5: Allocation / Rateio */}
+          <AllocationSplitter
+            enabled={splitEnabled}
+            onToggle={(v) => {
+              setSplitEnabled(v);
+              if (!v) setAllocations([]);
+            }}
+            totalAmount={form.watch('amount') || 0}
+            primaryCategory={form.watch('category') || ''}
+            allocations={allocations}
+            onChange={setAllocations}
+            categoryOptions={EXPENSE_CATEGORIES}
+          />
+
           {/* Section 3: Receipt / NF */}
           <Card>
             <CardContent className="pt-6 space-y-4">
