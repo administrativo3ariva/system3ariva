@@ -574,7 +574,10 @@ export default function FinancialReports() {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm">
-              Prévia dos Dados ({filteredData.length} registros)
+              Prévia dos Dados ({filteredData.length} fatias)
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                — lançamentos rateados aparecem em uma linha por categoria
+              </span>
             </CardTitle>
             <Button variant="outline" size="sm" onClick={handleExport} disabled={filteredData.length === 0} className="gap-1.5">
               <Download className="h-3.5 w-3.5" /> Baixar
