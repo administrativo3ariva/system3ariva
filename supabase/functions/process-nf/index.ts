@@ -135,6 +135,7 @@ async function callLovableAi(messages: any[]) {
                 recipient_name: { type: "string", description: "Nome ou Razão Social do tomador/destinatário da nota fiscal." },
                 recipient_doc: { type: "string", description: "CPF ou CNPJ do tomador/destinatário da nota fiscal, conforme aparece na NF." },
                 recipient_doc_type: { type: "string", enum: ["CPF", "CNPJ"], description: "Tipo do documento do tomador: CPF (pessoa física, 11 dígitos) ou CNPJ (pessoa jurídica, 14 dígitos)." },
+                recipient_city: { type: "string", description: "Cidade do destinatário/tomador (cidade de entrega) conforme aparece nos dados do destinatário da NF. Apenas o nome da cidade, sem UF." },
                 issue_date: { type: "string", description: "Data de emissão da nota fiscal no formato YYYY-MM-DD. Extraia do campo 'Data de Emissão', 'Data da Emissão' ou similar." },
                 total_value: { type: "number", description: "Valor total da nota fiscal (incluindo frete e outras despesas)" },
                 freight_value: { type: "number", description: "Valor do frete da nota fiscal. 0 se não houver." },
