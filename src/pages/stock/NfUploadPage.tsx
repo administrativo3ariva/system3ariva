@@ -578,31 +578,7 @@ export default function NfUploadPage() {
                         <TableCell className="text-center font-medium text-sm tabular-nums whitespace-nowrap align-middle">
                           R$ {Number(item.total_price).toFixed(2)}
                         </TableCell>
-                        <TableCell className="align-middle">
-                          <Select
-                            value={item.financial_link_type || 'none'}
-                            onValueChange={(v) => {
-                              const updated = [...editedItems];
-                              updated[i] = { ...updated[i], financial_link_type: v === 'none' ? null : (v as FinancialLinkType) };
-                              setEditedItems(updated);
-                            }}
-                          >
-                            <SelectTrigger className="h-8 text-sm w-full min-w-[170px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">
-                                <span className="flex items-center gap-2"><Ban className="h-3.5 w-3.5 text-muted-foreground" /> Sem vínculo</span>
-                              </SelectItem>
-                              <SelectItem value="expense">
-                                <span className="flex items-center gap-2"><CreditCard className="h-3.5 w-3.5 text-primary" /> Despesa (Cartão)</span>
-                              </SelectItem>
-                              <SelectItem value="payment">
-                                <span className="flex items-center gap-2"><Landmark className="h-3.5 w-3.5 text-primary" /> Solicitação Pgto</span>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
+                        {/* per-item financial link removed — link is global at the bottom */}
                         <TableCell className="align-middle text-center">
                           <Button
                             variant="ghost"
