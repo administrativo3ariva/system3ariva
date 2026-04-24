@@ -713,6 +713,40 @@ export default function NfUploadPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!pendingApproval} onOpenChange={(open) => { if (!open) setPendingApproval(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-warning/15 text-warning">!</span>
+              Cidade de entrega divergente
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                <p>
+                  A NF tem como cidade de entrega
+                  {' '}<strong>{formatCityName(pendingApproval?.recipient_city || '') || '—'}</strong>,
+                  mas a filial selecionada é
+                  {' '}<strong>{pendingApproval?.unit}</strong>
+                  {' '}({branchToCity(pendingApproval?.unit) || 'cidade não mapeada'}).
+                </p>
+                <p>
+                  Confirme que esta NF deve mesmo dar entrada no estoque de <strong>{pendingApproval?.unit}</strong>.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { if (pendingApproval) executeApproval(pendingApproval); }}
+              className="bg-warning text-warning-foreground hover:bg-warning/90"
+            >
+              Confirmar mesmo assim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
