@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 type FinancialLinkChoice = 'expense' | 'payment';
 
 export default function NfUploadPage() {
+  const navigate = useNavigate();
   const { selectedBranch } = useApp();
   const { data: nfUploads = [], isLoading } = useNfUploads();
   const uploadNf = useUploadAndProcessNf();
@@ -33,6 +34,7 @@ export default function NfUploadPage() {
   const [customCategories, setCustomCategories] = useState<string[]>([]);
   const [newCategoryInput, setNewCategoryInput] = useState('');
   const [addingCategoryForIndex, setAddingCategoryForIndex] = useState<number | null>(null);
+  const [financialLink, setFinancialLink] = useState<FinancialLinkChoice | ''>('');
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,6 +45,7 @@ export default function NfUploadPage() {
       setEditedItems(
         (previewNf.nf_items || []).map(item => ({ ...item, category: item.category || '' }))
       );
+      setFinancialLink('');
     }
   }, [previewNf]);
 
@@ -61,9 +64,60 @@ export default function NfUploadPage() {
     });
   };
 
+  // Aggregate items by category (skips items without category)
+  const buildAllocationsFromItems = (items: DbNfItem[]) => {
+    const map = new Map<string, number>();
+    for (const it of items) {
+      const cat = (it.category || '').trim();
+      if (!cat) continue;
+      map.set(cat, (map.get(cat) || 0) + Number(it.total_price || 0));
+    }
+    return Array.from(map.entries())
+      .map(([category, amount]) => ({ category, amount: +amount.toFixed(2) }))
+      .sort((a, b) => b.amount - a.amount);
+  };
+
   const handleApprove = (nf: DbNfUpload) => {
-    approveNf.mutate({ ...nf, nf_items: editedItems });
-    setPreviewNf(null);
+    if (!financialLink) {
+      toast.error('Selecione o vínculo financeiro (Cartão Corporativo ou Solicitação de Pagamento).');
+      return;
+    }
+    const uncategorized = editedItems.filter(i => !i.category);
+    if (uncategorized.length > 0) {
+      toast.error(`Classifique a categoria de todos os ${editedItems.length} itens antes de aprovar.`);
+      return;
+    }
+    const allocations = buildAllocationsFromItems(editedItems);
+    if (allocations.length === 0) {
+      toast.error('Nenhuma categoria identificada para vincular ao financeiro.');
+      return;
+    }
+
+    approveNf.mutate(
+      { ...nf, nf_items: editedItems },
+      {
+        onSuccess: () => {
+          setPreviewNf(null);
+          // Total used at financial form = total NF (or sum of items as fallback)
+          const itemsTotal = editedItems.reduce((s, i) => s + Number(i.total_price || 0), 0);
+          const total = Number(nf.total_value) || itemsTotal;
+          const params = new URLSearchParams({
+            from_nf: 'true',
+            nf_id: nf.id,
+            nf_name: nf.file_name,
+            amount: String(total),
+            allocations: JSON.stringify(allocations),
+          });
+          if (nf.supplier) params.set('supplier', nf.supplier);
+          if (nf.file_url) params.set('receipt_url', nf.file_url);
+          if (nf.issue_date) params.set('issue_date', nf.issue_date);
+
+          const target = financialLink === 'expense' ? '/financial/expenses/new' : '/financial/requests/new';
+          toast.success('Estoque atualizado. Complete os dados do lançamento financeiro.');
+          navigate(`${target}?${params.toString()}`);
+        },
+      }
+    );
   };
 
   const handleReject = (id: string) => {
