@@ -116,6 +116,12 @@ export function FinancialDetailDialog({
                 {installmentInfo}
               </Badge>
             )}
+            {isRateado && (
+              <Badge variant="outline" className="gap-1 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/5">
+                <Split className="h-3 w-3" />
+                Rateado em {slices.length} categorias
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -128,7 +134,49 @@ export function FinancialDetailDialog({
             {/* Amount */}
             <div className="rounded-lg border bg-muted/30 px-5 py-4">
               <p className="text-2xl font-bold tabular-nums text-foreground">{fmt(amount)}</p>
+              {isRateado && (
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Valor distribuído entre {slices.length} categorias contábeis
+                </p>
+              )}
             </div>
+
+            {/* Allocation breakdown */}
+            {isRateado && (
+              <div className="rounded-lg border bg-background overflow-hidden">
+                <div className="flex items-center gap-2 px-4 py-2.5 border-b bg-muted/30">
+                  <Split className="h-3.5 w-3.5 text-amber-600" />
+                  <span className="text-xs font-semibold text-foreground uppercase tracking-wide">Detalhamento do rateio</span>
+                </div>
+                <div className="divide-y">
+                  {slices.map((s, i) => {
+                    const pct = amount > 0 ? (s.amount / amount) * 100 : 0;
+                    return (
+                      <div key={`${s.category}-${i}`} className="px-4 py-2.5">
+                        <div className="flex items-center justify-between gap-3 mb-1.5">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-sm font-medium text-foreground truncate">{s.category}</span>
+                            {s.isPrimary && (
+                              <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-primary/40 text-primary">PRINCIPAL</Badge>
+                            )}
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className="text-sm font-semibold tabular-nums text-foreground">{fmt(s.amount)}</span>
+                            <span className="text-[10px] text-muted-foreground ml-1.5 tabular-nums">({pct.toFixed(1)}%)</span>
+                          </div>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className={cn('h-full', s.isPrimary ? 'bg-primary' : 'bg-amber-500')}
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Fields grid */}
             <div className="grid grid-cols-2 gap-x-8 gap-y-4">
