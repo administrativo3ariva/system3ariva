@@ -77,9 +77,19 @@ export default function PaymentRequestsList() {
   // Enrich with display_status, then filter
   const enriched = requests.map((r: any) => ({ ...r, display_status: getDisplayStatus(r) }));
 
+  const categoryFilter = filterValues.category;
+
+  // Enrich with display_status, then filter
+  const enriched = requests.map((r: any) => ({ ...r, display_status: getDisplayStatus(r) }));
+
   const filtered = enriched.filter((r: any) => {
     for (const [k, v] of Object.entries(filterValues)) {
-      if (v && v !== 'all' && r[k] !== v) return false;
+      if (!v || v === 'all') continue;
+      if (k === 'category') {
+        if (!matchesCategory(r, v)) return false;
+      } else if (r[k] !== v) {
+        return false;
+      }
     }
     // Use request_date for filtering, fallback to created_at
     const dateStr = r.request_date || r.created_at?.split('T')[0];
@@ -91,7 +101,7 @@ export default function PaymentRequestsList() {
   });
 
   const grouped = groupByDate(filtered, 'request_date');
-  const total = filtered.reduce((s: number, r: any) => s + Number(r.amount), 0);
+  const total = filtered.reduce((s: number, r: any) => s + amountForCategory(r, categoryFilter || 'all'), 0);
 
   return (
     <div className="space-y-6">
