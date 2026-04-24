@@ -8,10 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Trash2, Eye, Pencil, AlertTriangle, CreditCard } from 'lucide-react';
+import { Plus, Trash2, Eye, Pencil, AlertTriangle, CreditCard, Split } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { isAllocated, readAllocations } from '@/lib/allocation-utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const fmt = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -113,7 +115,29 @@ export default function ExpensesList() {
                       </div>
                       <span className="text-xs text-muted-foreground w-20 text-center hidden lg:block truncate">{e.company}</span>
                       <span className="text-xs text-muted-foreground w-14 text-center hidden md:block">{e.cost_center}</span>
-                      <span className="text-xs text-muted-foreground w-[180px] text-center hidden xl:block truncate">{e.category}</span>
+                      <div className="w-[180px] text-center hidden xl:flex items-center justify-center gap-1.5">
+                        <span className="text-xs text-muted-foreground truncate">{e.category}</span>
+                        {isAllocated(e) && (
+                          <TooltipProvider delayDuration={150}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-amber-500/40 text-amber-700 dark:text-amber-400 bg-amber-500/10 gap-0.5 shrink-0">
+                                  <Split className="h-2.5 w-2.5" />Rateado
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent className="text-xs">
+                                <p className="font-semibold mb-1">Rateio entre categorias</p>
+                                <ul className="space-y-0.5">
+                                  <li>• {e.category} (principal): {fmt(Number(e.amount) - readAllocations(e.allocations).reduce((s, a) => s + a.amount, 0))}</li>
+                                  {readAllocations(e.allocations).map((a, i) => (
+                                    <li key={i}>• {a.category}: {fmt(a.amount)}</li>
+                                  ))}
+                                </ul>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
                       <div className="w-36 hidden lg:flex items-center justify-center">
                         {e.card_name ? (
                           <Badge variant="outline" className="text-[10px] gap-1 px-2 py-0.5">
@@ -169,6 +193,8 @@ export default function ExpensesList() {
           ]}
           receiptUrl={viewItem.receipt_url}
           notes={viewItem.notes}
+          primaryCategory={viewItem.category}
+          allocations={viewItem.allocations}
         />
       )}
     </div>
