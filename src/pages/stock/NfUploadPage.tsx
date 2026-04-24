@@ -420,27 +420,28 @@ export default function NfUploadPage() {
                 </Label>
                 <Table>
                   <TableHeader>
-                     <TableRow>
-                      <TableHead className="min-w-[250px]">Item</TableHead>
-                      <TableHead className="min-w-[170px]">Categoria</TableHead>
-                      <TableHead className="min-w-[70px]">Und.</TableHead>
-                      <TableHead className="text-right min-w-[80px]">Qtd</TableHead>
-                      <TableHead className="text-right min-w-[100px]">Valor Unit.</TableHead>
-                      <TableHead className="text-right min-w-[80px]">Total</TableHead>
+                    <TableRow>
+                      <TableHead className="min-w-[220px] text-center">Item</TableHead>
+                      <TableHead className="min-w-[150px] text-center">Categoria</TableHead>
+                      <TableHead className="min-w-[70px] text-center">Und.</TableHead>
+                      <TableHead className="min-w-[80px] text-center">Qtd</TableHead>
+                      <TableHead className="min-w-[100px] text-center">Valor Unit.</TableHead>
+                      <TableHead className="min-w-[90px] text-center">Total</TableHead>
+                      <TableHead className="min-w-[180px] text-center">Vínculo Financeiro</TableHead>
                       <TableHead className="w-[40px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {editedItems.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center text-muted-foreground">
                           Nenhum item extraído
                         </TableCell>
                       </TableRow>
                     )}
                     {editedItems.map((item, i) => (
                       <TableRow key={i}>
-                        <TableCell>
+                        <TableCell className="align-middle">
                           <Input
                             value={item.name}
                             onChange={e => {
@@ -451,9 +452,9 @@ export default function NfUploadPage() {
                             className="h-8 text-sm"
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="align-middle">
                           {addingCategoryForIndex === i ? (
-                            <div className="flex gap-1">
+                            <div className="flex gap-1 justify-center">
                               <Input
                                 value={newCategoryInput}
                                 onChange={e => setNewCategoryInput(e.target.value)}
@@ -496,26 +497,28 @@ export default function NfUploadPage() {
                             </Select>
                           )}
                         </TableCell>
-                        <TableCell>
-                          <Select
-                            value={item.unit_of_measure || 'UN'}
-                            onValueChange={v => {
-                              const updated = [...editedItems];
-                              updated[i] = { ...updated[i], unit_of_measure: v };
-                              setEditedItems(updated);
-                            }}
-                          >
-                            <SelectTrigger className="h-8 text-sm w-16">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {['UN', 'CX', 'KG', 'PCT', 'PC', 'FR', 'LT', 'ML', 'G'].map(u => (
-                                <SelectItem key={u} value={u}>{u}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                        <TableCell className="align-middle">
+                          <div className="flex justify-center">
+                            <Select
+                              value={item.unit_of_measure || 'UN'}
+                              onValueChange={v => {
+                                const updated = [...editedItems];
+                                updated[i] = { ...updated[i], unit_of_measure: v };
+                                setEditedItems(updated);
+                              }}
+                            >
+                              <SelectTrigger className="h-8 text-sm w-16">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {['UN', 'CX', 'KG', 'PCT', 'PC', 'FR', 'LT', 'ML', 'G'].map(u => (
+                                  <SelectItem key={u} value={u}>{u}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="align-middle">
                           <Input
                             type="number"
                             step={(item.unit_of_measure || 'UN') === 'KG' ? '0.001' : '1'}
@@ -526,10 +529,10 @@ export default function NfUploadPage() {
                               updated[i] = { ...updated[i], quantity: qty, total_price: qty * updated[i].unit_price };
                               setEditedItems(updated);
                             }}
-                            className="h-8 text-sm text-right w-20 ml-auto"
+                            className="h-8 text-sm text-center w-20 mx-auto"
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="align-middle">
                           <Input
                             type="number"
                             step="0.01"
@@ -540,13 +543,38 @@ export default function NfUploadPage() {
                               updated[i] = { ...updated[i], unit_price: price, total_price: updated[i].quantity * price };
                               setEditedItems(updated);
                             }}
-                            className="h-8 text-sm text-right w-24 ml-auto"
+                            className="h-8 text-sm text-center w-24 mx-auto"
                           />
                         </TableCell>
-                        <TableCell className="text-right font-medium text-sm">
+                        <TableCell className="text-center font-medium text-sm tabular-nums whitespace-nowrap align-middle">
                           R$ {Number(item.total_price).toFixed(2)}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="align-middle">
+                          <Select
+                            value={item.financial_link_type || 'none'}
+                            onValueChange={(v) => {
+                              const updated = [...editedItems];
+                              updated[i] = { ...updated[i], financial_link_type: v === 'none' ? null : (v as FinancialLinkType) };
+                              setEditedItems(updated);
+                            }}
+                          >
+                            <SelectTrigger className="h-8 text-sm w-full min-w-[170px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">
+                                <span className="flex items-center gap-2"><Ban className="h-3.5 w-3.5 text-muted-foreground" /> Sem vínculo</span>
+                              </SelectItem>
+                              <SelectItem value="expense">
+                                <span className="flex items-center gap-2"><CreditCard className="h-3.5 w-3.5 text-primary" /> Despesa (Cartão)</span>
+                              </SelectItem>
+                              <SelectItem value="payment">
+                                <span className="flex items-center gap-2"><Landmark className="h-3.5 w-3.5 text-primary" /> Solicitação Pgto</span>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="align-middle text-center">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -560,33 +588,9 @@ export default function NfUploadPage() {
                     ))}
                   </TableBody>
                 </Table>
-              </div>
-              {/* Vincular ao Financeiro */}
-              <div className="border-t pt-4 mt-2">
-                <div className="flex items-center gap-2 mb-3">
-                  <Link2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">Vincular ao Financeiro</span>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    variant="outline"
-                    className="h-auto py-3 flex flex-col items-center gap-1.5"
-                    onClick={() => handleLinkToFinancial(previewNf, 'expense')}
-                  >
-                    <CreditCard className="h-5 w-5 text-primary" />
-                    <span className="text-sm font-medium">Lançar Despesa</span>
-                    <span className="text-xs text-muted-foreground">Cartão Corporativo</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-auto py-3 flex flex-col items-center gap-1.5"
-                    onClick={() => handleLinkToFinancial(previewNf, 'payment')}
-                  >
-                    <Landmark className="h-5 w-5 text-primary" />
-                    <span className="text-sm font-medium">Solicitação de Pagamento</span>
-                    <span className="text-xs text-muted-foreground">Boleto / PIX / Transferência</span>
-                  </Button>
-                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Classifique cada item e selecione o tipo de vínculo financeiro. Ao aprovar a entrada, o estoque será atualizado e os lançamentos financeiros serão criados automaticamente.
+                </p>
               </div>
 
               {previewNf.status === 'pendente' && (
