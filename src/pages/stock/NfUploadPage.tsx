@@ -169,28 +169,28 @@ export default function NfUploadPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="whitespace-nowrap">Arquivo</TableHead>
-              <TableHead className="whitespace-nowrap">Fornecedor</TableHead>
-              <TableHead className="whitespace-nowrap">Data Emissão</TableHead>
-              <TableHead className="text-right whitespace-nowrap">Produtos</TableHead>
-              <TableHead className="text-right whitespace-nowrap">Frete</TableHead>
-              <TableHead className="text-right whitespace-nowrap">Valor Total</TableHead>
-              <TableHead className="whitespace-nowrap">Status</TableHead>
-              <TableHead className="whitespace-nowrap">Ações</TableHead>
+              <TableHead className="whitespace-nowrap text-center">Arquivo</TableHead>
+              <TableHead className="whitespace-nowrap text-center">Fornecedor</TableHead>
+              <TableHead className="whitespace-nowrap text-center">Data Emissão</TableHead>
+              <TableHead className="whitespace-nowrap text-center">Produtos</TableHead>
+              <TableHead className="whitespace-nowrap text-center">Frete</TableHead>
+              <TableHead className="whitespace-nowrap text-center">Valor Total</TableHead>
+              <TableHead className="whitespace-nowrap text-center">Status</TableHead>
+              <TableHead className="whitespace-nowrap text-center">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {nfUploads.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   Nenhuma NF enviada para {selectedBranch}
                 </TableCell>
               </TableRow>
             )}
             {nfUploads.map(nf => (
               <TableRow key={nf.id} className="table-row-hover">
-                <TableCell className="font-medium text-sm">
-                  <div className="flex items-center gap-2 whitespace-nowrap">
+                <TableCell className="font-medium text-sm text-center">
+                  <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                     <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="truncate max-w-[220px]">{nf.file_name}</span>
                     {nf.file_url && (
@@ -200,23 +200,23 @@ export default function NfUploadPage() {
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-sm">{nf.supplier || '—'}</TableCell>
-                <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{nf.issue_date ? new Date(nf.issue_date + 'T00:00:00').toLocaleDateString('pt-BR') : new Date(nf.upload_date).toLocaleDateString('pt-BR')}</TableCell>
-                <TableCell className="text-right text-sm whitespace-nowrap tabular-nums">
+                <TableCell className="text-sm text-center">{nf.supplier || '—'}</TableCell>
+                <TableCell className="text-sm text-muted-foreground whitespace-nowrap text-center">{nf.issue_date ? new Date(nf.issue_date + 'T00:00:00').toLocaleDateString('pt-BR') : new Date(nf.upload_date).toLocaleDateString('pt-BR')}</TableCell>
+                <TableCell className="text-sm whitespace-nowrap tabular-nums text-center">
                   {(() => {
                     const itemsTotal = (nf.nf_items || []).reduce((s, i) => s + Number(i.total_price), 0);
                     return itemsTotal ? `R$ ${itemsTotal.toFixed(2)}` : '—';
                   })()}
                 </TableCell>
-                <TableCell className="text-right text-sm whitespace-nowrap tabular-nums">
+                <TableCell className="text-sm whitespace-nowrap tabular-nums text-center">
                   {nf.freight_value ? `R$ ${Number(nf.freight_value).toFixed(2)}` : '—'}
                 </TableCell>
-                <TableCell className="text-right font-medium whitespace-nowrap tabular-nums">
+                <TableCell className="font-medium whitespace-nowrap tabular-nums text-center">
                   {nf.total_value ? `R$ ${Number(nf.total_value).toFixed(2)}` : '—'}
                 </TableCell>
-                <TableCell>{statusBadge(nf.status)}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
+                <TableCell className="text-center">{statusBadge(nf.status)}</TableCell>
+                <TableCell className="text-center">
+                  <div className="flex items-center justify-center gap-1">
                     <Button variant="ghost" size="sm" onClick={() => setPreviewNf(nf)}>
                       <Eye className="h-4 w-4" />
                     </Button>
