@@ -327,8 +327,9 @@ export default function FinancialReports() {
     };
 
     applyFormatting(wsSummary, 2, [1]);
-    applyFormatting(wsCartao, 9, [2]);
-    applyFormatting(wsSolicitacao, 9, [2]);
+    // Cols moeda nas abas detalhadas: 2=Valor (fatia), 3=Valor Total Lançamento
+    applyFormatting(wsCartao, 13, [2, 3]);
+    applyFormatting(wsSolicitacao, 13, [2, 3]);
     applyFormatting(wsGrouped, 4, [1, 2, 3]);
 
     XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumo');
