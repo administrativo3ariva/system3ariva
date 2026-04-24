@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Pencil, Plus, Link2, CreditCard, Landmark } from 'lucide-react';
+
+import { Pencil, Plus, CreditCard, Landmark, Ban } from 'lucide-react';
 import { Upload, FileText, Check, X, Eye, Loader2, Trash2, ExternalLink } from 'lucide-react';
 import { useNfUploads, useUploadAndProcessNf, useUpdateNfUpload, useDeleteNfUpload, useApproveNf } from '@/hooks/use-nf-uploads';
-import type { DbNfUpload, DbNfItem } from '@/hooks/use-nf-uploads';
+import type { DbNfUpload, DbNfItem, FinancialLinkType } from '@/hooks/use-nf-uploads';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,10 +15,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useApp } from '@/contexts/AppContext';
 import { BranchBadge } from '@/components/BranchBadge';
 import { PRODUCT_CATEGORIES } from '@/lib/mock-data';
+import { formatCityName } from '@/lib/city-format';
 
 export default function NfUploadPage() {
   const { selectedBranch } = useApp();
-  const navigate = useNavigate();
   const { data: nfUploads = [], isLoading } = useNfUploads();
   const uploadNf = useUploadAndProcessNf();
   const updateNfUpload = useUpdateNfUpload();
@@ -31,33 +31,6 @@ export default function NfUploadPage() {
   const [addingCategoryForIndex, setAddingCategoryForIndex] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const branchToCostCenter = (unit: string): string => {
-    const map: Record<string, string> = {
-      'BH-Matriz': 'BH', 'Vêneto-BH': 'BH', 'Vêneto-SP': 'SP',
-      'SP': 'SP', 'RJ': 'RJ', 'PAG': 'PAG', 'VAG': 'VAG',
-      'FLO': 'FLO', 'ITA': 'ITA', 'CPN': 'CPN',
-      'LIM': 'LIM', 'JUN': 'JUN', 'SJC': 'SJC',
-    };
-    return map[unit] || 'BH';
-  };
-
-  const handleLinkToFinancial = (nf: DbNfUpload, type: 'expense' | 'payment') => {
-    const params = new URLSearchParams();
-    params.set('from_nf', 'true');
-    params.set('nf_id', nf.id);
-    if (nf.supplier) params.set('supplier', nf.supplier);
-    if (nf.total_value) params.set('amount', String(nf.total_value));
-    params.set('cost_center', branchToCostCenter(nf.unit));
-    if (nf.file_url) params.set('receipt_url', nf.file_url);
-    if (nf.file_name) params.set('nf_name', nf.file_name);
-    if (nf.issue_date) params.set('issue_date', nf.issue_date);
-    if ((nf as any).recipient_name) params.set('recipient_name', (nf as any).recipient_name);
-    if ((nf as any).recipient_doc) params.set('recipient_doc', (nf as any).recipient_doc);
-
-    const path = type === 'expense' ? '/financial/expenses/new' : '/financial/requests/new';
-    navigate(`${path}?${params.toString()}`);
-  };
 
   const allCategories = [...PRODUCT_CATEGORIES, ...customCategories.filter(c => !PRODUCT_CATEGORIES.includes(c))];
 
@@ -168,28 +141,28 @@ export default function NfUploadPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="whitespace-nowrap">Arquivo</TableHead>
-              <TableHead className="whitespace-nowrap">Fornecedor</TableHead>
-              <TableHead className="whitespace-nowrap">Data Emissão</TableHead>
-              <TableHead className="text-right whitespace-nowrap">Produtos</TableHead>
-              <TableHead className="text-right whitespace-nowrap">Frete</TableHead>
-              <TableHead className="text-right whitespace-nowrap">Valor Total</TableHead>
-              <TableHead className="whitespace-nowrap">Status</TableHead>
-              <TableHead className="whitespace-nowrap">Ações</TableHead>
+              <TableHead className="whitespace-nowrap text-center">Arquivo</TableHead>
+              <TableHead className="whitespace-nowrap text-center">Fornecedor</TableHead>
+              <TableHead className="whitespace-nowrap text-center">Data Emissão</TableHead>
+              <TableHead className="whitespace-nowrap text-center">Produtos</TableHead>
+              <TableHead className="whitespace-nowrap text-center">Frete</TableHead>
+              <TableHead className="whitespace-nowrap text-center">Valor Total</TableHead>
+              <TableHead className="whitespace-nowrap text-center">Status</TableHead>
+              <TableHead className="whitespace-nowrap text-center">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {nfUploads.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   Nenhuma NF enviada para {selectedBranch}
                 </TableCell>
               </TableRow>
             )}
             {nfUploads.map(nf => (
               <TableRow key={nf.id} className="table-row-hover">
-                <TableCell className="font-medium text-sm">
-                  <div className="flex items-center gap-2 whitespace-nowrap">
+                <TableCell className="font-medium text-sm text-center">
+                  <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                     <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="truncate max-w-[220px]">{nf.file_name}</span>
                     {nf.file_url && (
@@ -199,23 +172,23 @@ export default function NfUploadPage() {
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-sm">{nf.supplier || '—'}</TableCell>
-                <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{nf.issue_date ? new Date(nf.issue_date + 'T00:00:00').toLocaleDateString('pt-BR') : new Date(nf.upload_date).toLocaleDateString('pt-BR')}</TableCell>
-                <TableCell className="text-right text-sm whitespace-nowrap tabular-nums">
+                <TableCell className="text-sm text-center">{nf.supplier || '—'}</TableCell>
+                <TableCell className="text-sm text-muted-foreground whitespace-nowrap text-center">{nf.issue_date ? new Date(nf.issue_date + 'T00:00:00').toLocaleDateString('pt-BR') : new Date(nf.upload_date).toLocaleDateString('pt-BR')}</TableCell>
+                <TableCell className="text-sm whitespace-nowrap tabular-nums text-center">
                   {(() => {
                     const itemsTotal = (nf.nf_items || []).reduce((s, i) => s + Number(i.total_price), 0);
                     return itemsTotal ? `R$ ${itemsTotal.toFixed(2)}` : '—';
                   })()}
                 </TableCell>
-                <TableCell className="text-right text-sm whitespace-nowrap tabular-nums">
+                <TableCell className="text-sm whitespace-nowrap tabular-nums text-center">
                   {nf.freight_value ? `R$ ${Number(nf.freight_value).toFixed(2)}` : '—'}
                 </TableCell>
-                <TableCell className="text-right font-medium whitespace-nowrap tabular-nums">
+                <TableCell className="font-medium whitespace-nowrap tabular-nums text-center">
                   {nf.total_value ? `R$ ${Number(nf.total_value).toFixed(2)}` : '—'}
                 </TableCell>
-                <TableCell>{statusBadge(nf.status)}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
+                <TableCell className="text-center">{statusBadge(nf.status)}</TableCell>
+                <TableCell className="text-center">
+                  <div className="flex items-center justify-center gap-1">
                     <Button variant="ghost" size="sm" onClick={() => setPreviewNf(nf)}>
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -303,9 +276,14 @@ export default function NfUploadPage() {
                     <div>
                       <Label className="text-muted-foreground text-xs">Cidade de Entrega</Label>
                       <Input
-                        defaultValue={(previewNf as any).recipient_city || ''}
+                        key={`city-${previewNf.id}-${(previewNf as any).recipient_city || ''}`}
+                        defaultValue={formatCityName((previewNf as any).recipient_city || '')}
                         placeholder="Ex.: Belo Horizonte"
-                        onBlur={e => updateNfUpload.mutate({ id: previewNf.id, recipient_city: e.target.value })}
+                        onBlur={e => {
+                          const formatted = formatCityName(e.target.value);
+                          if (e.target.value !== formatted) e.target.value = formatted;
+                          updateNfUpload.mutate({ id: previewNf.id, recipient_city: formatted });
+                        }}
                         className="mt-1"
                       />
                     </div>
@@ -414,27 +392,28 @@ export default function NfUploadPage() {
                 </Label>
                 <Table>
                   <TableHeader>
-                     <TableRow>
-                      <TableHead className="min-w-[250px]">Item</TableHead>
-                      <TableHead className="min-w-[170px]">Categoria</TableHead>
-                      <TableHead className="min-w-[70px]">Und.</TableHead>
-                      <TableHead className="text-right min-w-[80px]">Qtd</TableHead>
-                      <TableHead className="text-right min-w-[100px]">Valor Unit.</TableHead>
-                      <TableHead className="text-right min-w-[80px]">Total</TableHead>
+                    <TableRow>
+                      <TableHead className="min-w-[220px] text-center">Item</TableHead>
+                      <TableHead className="min-w-[150px] text-center">Categoria</TableHead>
+                      <TableHead className="min-w-[70px] text-center">Und.</TableHead>
+                      <TableHead className="min-w-[80px] text-center">Qtd</TableHead>
+                      <TableHead className="min-w-[100px] text-center">Valor Unit.</TableHead>
+                      <TableHead className="min-w-[90px] text-center">Total</TableHead>
+                      <TableHead className="min-w-[180px] text-center">Vínculo Financeiro</TableHead>
                       <TableHead className="w-[40px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {editedItems.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center text-muted-foreground">
                           Nenhum item extraído
                         </TableCell>
                       </TableRow>
                     )}
                     {editedItems.map((item, i) => (
                       <TableRow key={i}>
-                        <TableCell>
+                        <TableCell className="align-middle">
                           <Input
                             value={item.name}
                             onChange={e => {
@@ -445,9 +424,9 @@ export default function NfUploadPage() {
                             className="h-8 text-sm"
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="align-middle">
                           {addingCategoryForIndex === i ? (
-                            <div className="flex gap-1">
+                            <div className="flex gap-1 justify-center">
                               <Input
                                 value={newCategoryInput}
                                 onChange={e => setNewCategoryInput(e.target.value)}
@@ -490,26 +469,28 @@ export default function NfUploadPage() {
                             </Select>
                           )}
                         </TableCell>
-                        <TableCell>
-                          <Select
-                            value={item.unit_of_measure || 'UN'}
-                            onValueChange={v => {
-                              const updated = [...editedItems];
-                              updated[i] = { ...updated[i], unit_of_measure: v };
-                              setEditedItems(updated);
-                            }}
-                          >
-                            <SelectTrigger className="h-8 text-sm w-16">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {['UN', 'CX', 'KG', 'PCT', 'PC', 'FR', 'LT', 'ML', 'G'].map(u => (
-                                <SelectItem key={u} value={u}>{u}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                        <TableCell className="align-middle">
+                          <div className="flex justify-center">
+                            <Select
+                              value={item.unit_of_measure || 'UN'}
+                              onValueChange={v => {
+                                const updated = [...editedItems];
+                                updated[i] = { ...updated[i], unit_of_measure: v };
+                                setEditedItems(updated);
+                              }}
+                            >
+                              <SelectTrigger className="h-8 text-sm w-16">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {['UN', 'CX', 'KG', 'PCT', 'PC', 'FR', 'LT', 'ML', 'G'].map(u => (
+                                  <SelectItem key={u} value={u}>{u}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="align-middle">
                           <Input
                             type="number"
                             step={(item.unit_of_measure || 'UN') === 'KG' ? '0.001' : '1'}
@@ -520,10 +501,10 @@ export default function NfUploadPage() {
                               updated[i] = { ...updated[i], quantity: qty, total_price: qty * updated[i].unit_price };
                               setEditedItems(updated);
                             }}
-                            className="h-8 text-sm text-right w-20 ml-auto"
+                            className="h-8 text-sm text-center w-20 mx-auto"
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="align-middle">
                           <Input
                             type="number"
                             step="0.01"
@@ -534,13 +515,38 @@ export default function NfUploadPage() {
                               updated[i] = { ...updated[i], unit_price: price, total_price: updated[i].quantity * price };
                               setEditedItems(updated);
                             }}
-                            className="h-8 text-sm text-right w-24 ml-auto"
+                            className="h-8 text-sm text-center w-24 mx-auto"
                           />
                         </TableCell>
-                        <TableCell className="text-right font-medium text-sm">
+                        <TableCell className="text-center font-medium text-sm tabular-nums whitespace-nowrap align-middle">
                           R$ {Number(item.total_price).toFixed(2)}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="align-middle">
+                          <Select
+                            value={item.financial_link_type || 'none'}
+                            onValueChange={(v) => {
+                              const updated = [...editedItems];
+                              updated[i] = { ...updated[i], financial_link_type: v === 'none' ? null : (v as FinancialLinkType) };
+                              setEditedItems(updated);
+                            }}
+                          >
+                            <SelectTrigger className="h-8 text-sm w-full min-w-[170px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">
+                                <span className="flex items-center gap-2"><Ban className="h-3.5 w-3.5 text-muted-foreground" /> Sem vínculo</span>
+                              </SelectItem>
+                              <SelectItem value="expense">
+                                <span className="flex items-center gap-2"><CreditCard className="h-3.5 w-3.5 text-primary" /> Despesa (Cartão)</span>
+                              </SelectItem>
+                              <SelectItem value="payment">
+                                <span className="flex items-center gap-2"><Landmark className="h-3.5 w-3.5 text-primary" /> Solicitação Pgto</span>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="align-middle text-center">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -554,33 +560,9 @@ export default function NfUploadPage() {
                     ))}
                   </TableBody>
                 </Table>
-              </div>
-              {/* Vincular ao Financeiro */}
-              <div className="border-t pt-4 mt-2">
-                <div className="flex items-center gap-2 mb-3">
-                  <Link2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">Vincular ao Financeiro</span>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    variant="outline"
-                    className="h-auto py-3 flex flex-col items-center gap-1.5"
-                    onClick={() => handleLinkToFinancial(previewNf, 'expense')}
-                  >
-                    <CreditCard className="h-5 w-5 text-primary" />
-                    <span className="text-sm font-medium">Lançar Despesa</span>
-                    <span className="text-xs text-muted-foreground">Cartão Corporativo</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-auto py-3 flex flex-col items-center gap-1.5"
-                    onClick={() => handleLinkToFinancial(previewNf, 'payment')}
-                  >
-                    <Landmark className="h-5 w-5 text-primary" />
-                    <span className="text-sm font-medium">Solicitação de Pagamento</span>
-                    <span className="text-xs text-muted-foreground">Boleto / PIX / Transferência</span>
-                  </Button>
-                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Classifique cada item e selecione o tipo de vínculo financeiro. Ao aprovar a entrada, o estoque será atualizado e os lançamentos financeiros serão criados automaticamente.
+                </p>
               </div>
 
               {previewNf.status === 'pendente' && (

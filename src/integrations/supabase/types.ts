@@ -240,6 +240,8 @@ export type Database = {
       }
       nf_items: {
         Row: {
+          category: string | null
+          financial_link_type: string | null
           id: string
           name: string
           nf_upload_id: string
@@ -249,6 +251,8 @@ export type Database = {
           unit_price: number
         }
         Insert: {
+          category?: string | null
+          financial_link_type?: string | null
           id?: string
           name: string
           nf_upload_id: string
@@ -258,6 +262,8 @@ export type Database = {
           unit_price?: number
         }
         Update: {
+          category?: string | null
+          financial_link_type?: string | null
           id?: string
           name?: string
           nf_upload_id?: string
