@@ -11,8 +11,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Download, FileSpreadsheet, Filter, X, TrendingUp, TrendingDown, ArrowRightLeft } from 'lucide-react';
+import { Download, FileSpreadsheet, Filter, X, TrendingUp, TrendingDown, ArrowRightLeft, Split } from 'lucide-react';
 import * as XLSX from 'xlsx-js-style';
+import { expandAllocations, isAllocated } from '@/lib/allocation-utils';
 
 const GroupedTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -79,43 +80,90 @@ export default function FinancialReports() {
   const [selectedSources, setSelectedSources] = useState<SourceType[]>(['cartao', 'solicitacao']);
   const [groupBy, setGroupBy] = useState<'category' | 'company' | 'cost_center' | 'supplier'>('category');
 
-  // Merge and filter data
+  // Merge and filter data — expand each entry into per-category allocation slices
+  // so totals/groups reflect rateio precisely (a single NF can contribute to N categories).
   const filteredData = useMemo(() => {
-    const allItems = [
-      ...expenses.map(e => ({
-        id: e.id,
-        description: e.description,
-        amount: Number(e.amount),
-        cost_center: e.cost_center,
-        company: e.company,
-        category: e.category,
-        supplier: e.supplier || '—',
-        date: e.expense_date,
-        source: 'cartao' as SourceType,
-        sourceLabel: 'Cartão Corporativo',
-        card_name: e.card_name || '—',
-        status: e.receipt_url ? 'Comprovado' : 'Pendente',
-      })),
-      ...requests.map(r => ({
-        id: r.id,
-        description: r.description,
-        amount: Number(r.amount),
-        cost_center: r.cost_center,
-        company: r.company,
-        category: r.category,
-        supplier: r.supplier || '—',
-        date: r.request_date || r.created_at?.split('T')[0],
-        source: 'solicitacao' as SourceType,
-        sourceLabel: 'Solicitação de Pagamento',
-        card_name: '—',
-        status: r.status,
-      })),
+    type Row = {
+      id: string;
+      description: string;
+      amount: number;        // slice amount (after rateio)
+      totalAmount: number;   // original entry total
+      cost_center: string;
+      company: string;
+      category: string;      // category of THIS slice
+      primaryCategory: string;
+      isPrimary: boolean;
+      isAllocated: boolean;
+      allocationLabel: string; // e.g. "Rateado: Limpeza R$50 + Material R$30"
+      supplier: string;
+      date: string;
+      source: SourceType;
+      sourceLabel: string;
+      card_name: string;
+      status: string;
+    };
+
+    const buildRows = (
+      entry: any,
+      base: Omit<Row, 'amount' | 'category' | 'isPrimary' | 'isAllocated' | 'allocationLabel' | 'primaryCategory' | 'totalAmount'>
+    ): Row[] => {
+      const total = Number(entry.amount) || 0;
+      const allocated = isAllocated(entry);
+      const slices = expandAllocations(entry);
+      const breakdownLabel = allocated
+        ? 'Rateado: ' +
+          slices
+            .map(s => `${s.category} ${s.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`)
+            .join(' + ')
+        : '';
+      return slices.map(s => ({
+        ...base,
+        amount: s.amount,
+        totalAmount: total,
+        category: s.category,
+        primaryCategory: entry.category,
+        isPrimary: s.isPrimary,
+        isAllocated: allocated,
+        allocationLabel: breakdownLabel,
+      }));
+    };
+
+    const allItems: Row[] = [
+      ...expenses.flatMap(e =>
+        buildRows(e, {
+          id: e.id,
+          description: e.description,
+          cost_center: e.cost_center,
+          company: e.company,
+          supplier: e.supplier || '—',
+          date: e.expense_date,
+          source: 'cartao',
+          sourceLabel: 'Cartão Corporativo',
+          card_name: e.card_name || '—',
+          status: e.receipt_url ? 'Comprovado' : 'Pendente',
+        })
+      ),
+      ...requests.flatMap(r =>
+        buildRows(r, {
+          id: r.id,
+          description: r.description,
+          cost_center: r.cost_center,
+          company: r.company,
+          supplier: r.supplier || '—',
+          date: r.request_date || r.created_at?.split('T')[0],
+          source: 'solicitacao',
+          sourceLabel: 'Solicitação de Pagamento',
+          card_name: '—',
+          status: r.status,
+        })
+      ),
     ];
 
     return allItems.filter(item => {
       if (item.date < dateStart || item.date > dateEnd) return false;
       if (selectedCompanies.length && !selectedCompanies.includes(item.company)) return false;
       if (selectedCostCenters.length && !selectedCostCenters.includes(item.cost_center)) return false;
+      // Category filter matches the SLICE category, so rateio splits show up correctly
       if (selectedCategories.length && !selectedCategories.includes(item.category)) return false;
       if (!selectedSources.includes(item.source)) return false;
       return true;
@@ -173,9 +221,13 @@ export default function FinancialReports() {
       'Data': item.date,
       'Descrição': item.description,
       'Valor (R$)': item.amount,
+      'Valor Total Lançamento (R$)': item.totalAmount,
+      'Rateado': item.isAllocated ? 'Sim' : 'Não',
+      'Categoria (fatia)': item.category,
+      'Tipo Fatia': item.isAllocated ? (item.isPrimary ? 'Principal' : 'Secundária') : 'Única',
+      'Detalhe Rateio': item.allocationLabel,
       'Empresa': item.company,
       'Centro de Custo': item.cost_center,
-      'Categoria': item.category,
       'Fornecedor': item.supplier,
       'Cartão': item.card_name,
       'Status': item.status,
@@ -184,16 +236,21 @@ export default function FinancialReports() {
     const cartaoRows = filteredData.filter(i => i.source === 'cartao').map(mapRow);
     const solicitacaoRows = filteredData.filter(i => i.source === 'solicitacao').map(mapRow);
 
+    const allocatedCount = new Set(
+      filteredData.filter(i => i.isAllocated).map(i => `${i.source}:${i.id}`)
+    ).size;
+
     // Summary sheet
     const summaryRows = [
-      { 'Métrica': 'Total Geral', 'Valor (R$)': totalAmount },
+      { 'Métrica': 'Total Geral (com rateio)', 'Valor (R$)': totalAmount },
       { 'Métrica': 'Total Cartão Corporativo', 'Valor (R$)': totalCartao },
       { 'Métrica': 'Total Solicitações', 'Valor (R$)': totalSolicitacao },
-      { 'Métrica': 'Qtd. Lançamentos', 'Valor (R$)': filteredData.length },
+      { 'Métrica': 'Qtd. Fatias (linhas)', 'Valor (R$)': filteredData.length },
+      { 'Métrica': 'Qtd. Lançamentos Rateados', 'Valor (R$)': allocatedCount },
       { 'Métrica': 'Período', 'Valor (R$)': `${dateStart} a ${dateEnd}` },
     ];
 
-    // Grouped sheet
+    // Grouped sheet (já usa amount = fatia, então rateio é refletido)
     const groupedRows = groupedData.map(g => ({
       [groupLabels[groupBy]]: g.name,
       'Cartão Corp. (R$)': g.cartao,
@@ -208,12 +265,13 @@ export default function FinancialReports() {
     const wsGrouped = XLSX.utils.json_to_sheet(groupedRows);
 
     const colWidths = [
-      { wch: 12 }, { wch: 40 }, { wch: 14 }, { wch: 15 },
-      { wch: 16 }, { wch: 28 }, { wch: 25 }, { wch: 22 }, { wch: 12 },
+      { wch: 12 }, { wch: 36 }, { wch: 14 }, { wch: 18 }, { wch: 10 },
+      { wch: 22 }, { wch: 12 }, { wch: 40 },
+      { wch: 15 }, { wch: 16 }, { wch: 25 }, { wch: 22 }, { wch: 12 },
     ];
     wsCartao['!cols'] = colWidths;
     wsSolicitacao['!cols'] = colWidths;
-    wsSummary['!cols'] = [{ wch: 30 }, { wch: 20 }];
+    wsSummary['!cols'] = [{ wch: 32 }, { wch: 22 }];
     wsGrouped['!cols'] = [{ wch: 30 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
 
     // Apply formatting to all sheets
@@ -269,8 +327,9 @@ export default function FinancialReports() {
     };
 
     applyFormatting(wsSummary, 2, [1]);
-    applyFormatting(wsCartao, 9, [2]);
-    applyFormatting(wsSolicitacao, 9, [2]);
+    // Cols moeda nas abas detalhadas: 2=Valor (fatia), 3=Valor Total Lançamento
+    applyFormatting(wsCartao, 13, [2, 3]);
+    applyFormatting(wsSolicitacao, 13, [2, 3]);
     applyFormatting(wsGrouped, 4, [1, 2, 3]);
 
     XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumo');
@@ -515,7 +574,10 @@ export default function FinancialReports() {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm">
-              Prévia dos Dados ({filteredData.length} registros)
+              Prévia dos Dados ({filteredData.length} fatias)
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                — lançamentos rateados aparecem em uma linha por categoria
+              </span>
             </CardTitle>
             <Button variant="outline" size="sm" onClick={handleExport} disabled={filteredData.length === 0} className="gap-1.5">
               <Download className="h-3.5 w-3.5" /> Baixar
@@ -538,11 +600,32 @@ export default function FinancialReports() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredData.slice(0, 50).map(item => (
-                  <TableRow key={item.id}>
+                {filteredData.slice(0, 50).map((item, idx) => (
+                  <TableRow key={`${item.source}-${item.id}-${item.category}-${idx}`}>
                     <TableCell className="text-xs tabular-nums">{item.date}</TableCell>
-                    <TableCell className="text-xs max-w-[200px] truncate">{item.description}</TableCell>
-                    <TableCell className="text-right text-xs tabular-nums font-medium">{fmt(item.amount)}</TableCell>
+                    <TableCell className="text-xs max-w-[200px] truncate">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate">{item.description}</span>
+                        {item.isAllocated && (
+                          <Badge
+                            variant="outline"
+                            className="h-4 px-1 text-[9px] gap-0.5 border-amber-500/40 text-amber-700 dark:text-amber-400 shrink-0"
+                            title={item.allocationLabel}
+                          >
+                            <Split className="h-2.5 w-2.5" />
+                            {item.isPrimary ? 'Princ.' : 'Sec.'}
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right text-xs tabular-nums font-medium">
+                      {fmt(item.amount)}
+                      {item.isAllocated && (
+                        <div className="text-[9px] text-muted-foreground font-normal">
+                          de {fmt(item.totalAmount)}
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell className="text-xs">{item.company}</TableCell>
                     <TableCell className="text-xs">{item.cost_center}</TableCell>
                     <TableCell className="text-xs w-[180px]">{item.category}</TableCell>
