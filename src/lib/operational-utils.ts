@@ -1,4 +1,4 @@
-import { OperationalBudgetMonthly, CATEGORY_TO_MACROBLOCO, ALL_OPERATIONAL_CATEGORIES, OperationalMacrobloco } from '@/lib/types';
+import { OperationalBudgetMonthly, CATEGORY_TO_MACROBLOCO, ALL_OPERATIONAL_CATEGORIES, OperationalMacrobloco, isNonBudgetCategory } from '@/lib/types';
 import { expandAllocations, type Allocation } from '@/lib/allocation-utils';
 
 /** Maps a financial cost_center string to the operational branch label.
@@ -77,6 +77,8 @@ export function buildConsumedList(args: {
     const slices = expandAllocations({ amount: Number(e.amount) || 0, category: e.category, allocations: e.allocations });
     const isSplit = slices.length > 1;
     slices.forEach((sl, idx) => {
+      // Skip slices whose category is not budget-controlled (e.g. Compras TI)
+      if (isNonBudgetCategory(sl.category)) return;
       list.push({
         id: isSplit ? `${e.id}::${idx}` : e.id,
         branch: COST_CENTER_TO_BRANCH[e.cost_center] ?? e.cost_center,
@@ -108,6 +110,7 @@ export function buildConsumedList(args: {
     const slices = expandAllocations({ amount: Number(p.amount) || 0, category: p.category, allocations: p.allocations });
     const isSplit = slices.length > 1;
     slices.forEach((sl, idx) => {
+      if (isNonBudgetCategory(sl.category)) return;
       list.push({
         id: isSplit ? `${p.id}::${idx}` : p.id,
         branch: COST_CENTER_TO_BRANCH[p.cost_center] ?? p.cost_center,
