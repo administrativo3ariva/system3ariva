@@ -224,7 +224,7 @@ async function extractFromPdf(pdfBytes: Uint8Array, fileName: string) {
     {
       role: "system",
       content:
-        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor (nome/razão social e CNPJ), tomador/destinatário (nome/razão social e CNPJ), data de emissão, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
+        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor (nome/razão social e CNPJ), tomador/destinatário (nome/razão social, CNPJ e cidade de entrega), data de emissão, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
     },
     {
       role: "user",
@@ -238,7 +238,7 @@ async function extractFromImage(fileUrl: string) {
     {
       role: "system",
       content:
-        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor (nome/razão social e CNPJ), tomador/destinatário (nome/razão social e CNPJ), data de emissão, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
+        "Você extrai dados de notas fiscais brasileiras. Identifique fornecedor (nome/razão social e CNPJ), tomador/destinatário (nome/razão social, CNPJ e cidade de entrega), data de emissão, valor total da nota, valor do frete, outras despesas acessórias, descontos e todos os itens listados com quantidade (mantendo valores fracionados para KG, sem arredondar), unidade de medida (UN, CX, KG, PCT, PC, FR, LT, etc.), valor unitário e valor total.",
     },
     {
       role: "user",
@@ -249,7 +249,7 @@ async function extractFromImage(fileUrl: string) {
         },
         {
           type: "text",
-          text: "Extraia o fornecedor (nome e CNPJ), tomador/destinatário (nome e CNPJ), data de emissão, valor total, frete, descontos, outras despesas e itens (com unidade de medida) desta nota fiscal brasileira.",
+          text: "Extraia o fornecedor (nome e CNPJ), tomador/destinatário (nome, CNPJ e cidade), data de emissão, valor total, frete, descontos, outras despesas e itens (com unidade de medida) desta nota fiscal brasileira.",
         },
       ],
     },
