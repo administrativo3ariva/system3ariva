@@ -138,7 +138,7 @@ export const COMPANY_CARD_MAP: Partial<Record<FinancialCompany, string>> = {
 // Aligned with operational macroblocos taxonomy (see OPERATIONAL_CATEGORIES_BY_MACROBLOCO below)
 export const EXPENSE_CATEGORIES = [
   // Suprimentos
-  'Material de Escritório & TI',
+  'Material de Escritório',
   'Material de Limpeza',
   'Material de Uso & Consumo',
   // Patrimônio e Manutenção
@@ -155,8 +155,19 @@ export const EXPENSE_CATEGORIES = [
   'Infraestrutura Predial',
   'Tributos Imobiliários',
   'Seguros Patrimoniais',
+  // Não orçamentárias (controladas por outras áreas — não descontam do orçamento operacional)
+  'Compras TI',
 ] as const;
 export type ExpenseCategory = typeof EXPENSE_CATEGORIES[number];
+
+/** Categorias que NÃO são controladas pelo orçamento operacional (ex.: TI, Administrativo).
+ *  Lançamentos com essas categorias são exibidos normalmente em Despesas/Solicitações/Relatórios,
+ *  mas são excluídos do consumo orçamentário e dos dashboards operacionais. */
+export const NON_BUDGET_CATEGORIES: string[] = ['Compras TI'];
+
+export function isNonBudgetCategory(c?: string | null): boolean {
+  return !!c && NON_BUDGET_CATEGORIES.includes(c);
+}
 
 // ===== Operacional / Orçamento =====
 export const OPERATIONAL_MACROBLOCOS = [
