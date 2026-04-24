@@ -482,7 +482,7 @@ export default function NfUploadPage() {
                                 setEditedItems(updated);
                               }}
                             >
-                              <SelectTrigger className="h-8 text-sm w-32">
+                              <SelectTrigger className="h-8 text-sm w-full min-w-[140px]">
                                 <SelectValue placeholder="Selecione" />
                               </SelectTrigger>
                               <SelectContent>
