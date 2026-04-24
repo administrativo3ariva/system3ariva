@@ -98,6 +98,7 @@ function normalizeExtractedResult(input: any): ExtractedNF {
     recipient_name: input?.recipient_name ? String(input.recipient_name).trim() : null,
     recipient_doc: input?.recipient_doc ? String(input.recipient_doc).trim() : null,
     recipient_doc_type: input?.recipient_doc_type ? String(input.recipient_doc_type).trim().toUpperCase() : null,
+    recipient_city: input?.recipient_city ? String(input.recipient_city).trim() : null,
     issue_date: input?.issue_date ? String(input.issue_date).trim() : null,
     total_value: Number.isFinite(Number(input?.total_value)) ? Number(input.total_value) : 0,
     freight_value: Number.isFinite(Number(input?.freight_value)) ? Number(input.freight_value) : 0,
