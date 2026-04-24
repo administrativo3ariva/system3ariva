@@ -185,6 +185,7 @@ export default function ExpenseForm() {
       is_installment: data.is_installment || false,
       installment_count: data.is_installment ? data.installment_count : null,
       installment_current: data.is_installment ? 1 : null,
+      allocations: splitEnabled && allocations.length > 0 ? allocations : null,
       ...(receipt_url ? { receipt_url } : {}),
     } as any;
 
