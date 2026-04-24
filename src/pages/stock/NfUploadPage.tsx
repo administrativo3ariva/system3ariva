@@ -304,9 +304,14 @@ export default function NfUploadPage() {
                     <div>
                       <Label className="text-muted-foreground text-xs">Cidade de Entrega</Label>
                       <Input
-                        defaultValue={(previewNf as any).recipient_city || ''}
+                        key={`city-${previewNf.id}-${(previewNf as any).recipient_city || ''}`}
+                        defaultValue={formatCityName((previewNf as any).recipient_city || '')}
                         placeholder="Ex.: Belo Horizonte"
-                        onBlur={e => updateNfUpload.mutate({ id: previewNf.id, recipient_city: e.target.value })}
+                        onBlur={e => {
+                          const formatted = formatCityName(e.target.value);
+                          if (e.target.value !== formatted) e.target.value = formatted;
+                          updateNfUpload.mutate({ id: previewNf.id, recipient_city: formatted });
+                        }}
                         className="mt-1"
                       />
                     </div>
