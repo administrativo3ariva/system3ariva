@@ -80,43 +80,90 @@ export default function FinancialReports() {
   const [selectedSources, setSelectedSources] = useState<SourceType[]>(['cartao', 'solicitacao']);
   const [groupBy, setGroupBy] = useState<'category' | 'company' | 'cost_center' | 'supplier'>('category');
 
-  // Merge and filter data
+  // Merge and filter data — expand each entry into per-category allocation slices
+  // so totals/groups reflect rateio precisely (a single NF can contribute to N categories).
   const filteredData = useMemo(() => {
-    const allItems = [
-      ...expenses.map(e => ({
-        id: e.id,
-        description: e.description,
-        amount: Number(e.amount),
-        cost_center: e.cost_center,
-        company: e.company,
-        category: e.category,
-        supplier: e.supplier || '—',
-        date: e.expense_date,
-        source: 'cartao' as SourceType,
-        sourceLabel: 'Cartão Corporativo',
-        card_name: e.card_name || '—',
-        status: e.receipt_url ? 'Comprovado' : 'Pendente',
-      })),
-      ...requests.map(r => ({
-        id: r.id,
-        description: r.description,
-        amount: Number(r.amount),
-        cost_center: r.cost_center,
-        company: r.company,
-        category: r.category,
-        supplier: r.supplier || '—',
-        date: r.request_date || r.created_at?.split('T')[0],
-        source: 'solicitacao' as SourceType,
-        sourceLabel: 'Solicitação de Pagamento',
-        card_name: '—',
-        status: r.status,
-      })),
+    type Row = {
+      id: string;
+      description: string;
+      amount: number;        // slice amount (after rateio)
+      totalAmount: number;   // original entry total
+      cost_center: string;
+      company: string;
+      category: string;      // category of THIS slice
+      primaryCategory: string;
+      isPrimary: boolean;
+      isAllocated: boolean;
+      allocationLabel: string; // e.g. "Rateado: Limpeza R$50 + Material R$30"
+      supplier: string;
+      date: string;
+      source: SourceType;
+      sourceLabel: string;
+      card_name: string;
+      status: string;
+    };
+
+    const buildRows = (
+      entry: any,
+      base: Omit<Row, 'amount' | 'category' | 'isPrimary' | 'isAllocated' | 'allocationLabel' | 'primaryCategory' | 'totalAmount'>
+    ): Row[] => {
+      const total = Number(entry.amount) || 0;
+      const allocated = isAllocated(entry);
+      const slices = expandAllocations(entry);
+      const breakdownLabel = allocated
+        ? 'Rateado: ' +
+          slices
+            .map(s => `${s.category} ${s.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`)
+            .join(' + ')
+        : '';
+      return slices.map(s => ({
+        ...base,
+        amount: s.amount,
+        totalAmount: total,
+        category: s.category,
+        primaryCategory: entry.category,
+        isPrimary: s.isPrimary,
+        isAllocated: allocated,
+        allocationLabel: breakdownLabel,
+      }));
+    };
+
+    const allItems: Row[] = [
+      ...expenses.flatMap(e =>
+        buildRows(e, {
+          id: e.id,
+          description: e.description,
+          cost_center: e.cost_center,
+          company: e.company,
+          supplier: e.supplier || '—',
+          date: e.expense_date,
+          source: 'cartao',
+          sourceLabel: 'Cartão Corporativo',
+          card_name: e.card_name || '—',
+          status: e.receipt_url ? 'Comprovado' : 'Pendente',
+        })
+      ),
+      ...requests.flatMap(r =>
+        buildRows(r, {
+          id: r.id,
+          description: r.description,
+          cost_center: r.cost_center,
+          company: r.company,
+          supplier: r.supplier || '—',
+          date: r.request_date || r.created_at?.split('T')[0],
+          source: 'solicitacao',
+          sourceLabel: 'Solicitação de Pagamento',
+          card_name: '—',
+          status: r.status,
+        })
+      ),
     ];
 
     return allItems.filter(item => {
       if (item.date < dateStart || item.date > dateEnd) return false;
       if (selectedCompanies.length && !selectedCompanies.includes(item.company)) return false;
       if (selectedCostCenters.length && !selectedCostCenters.includes(item.cost_center)) return false;
+      // Category filter matches the SLICE category, so rateio splits show up correctly
       if (selectedCategories.length && !selectedCategories.includes(item.category)) return false;
       if (!selectedSources.includes(item.source)) return false;
       return true;
