@@ -21,6 +21,7 @@ type ExtractedNF = {
   recipient_name: string | null;
   recipient_doc: string | null;
   recipient_doc_type: string | null;
+  recipient_city: string | null;
   issue_date: string | null;
   total_value: number;
   freight_value: number;
