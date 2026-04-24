@@ -66,13 +66,9 @@ export default function PaymentRequestsList() {
   const { data: requests = [], isLoading } = usePaymentRequests();
   const deleteReq = useDeletePaymentRequest();
   const updateReq = useUpdatePaymentRequest();
-  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
-  const { dateFrom, dateTo, isDefaultRange, handleDateFromChange, handleDateToChange, clearDates } = useDateRangeFilter();
+  const { values: filterValues, handleFilterChange } = usePersistedFilterValues('payment-requests-list');
+  const { dateFrom, dateTo, isDefaultRange, handleDateFromChange, handleDateToChange, clearDates } = useDateRangeFilter('payment-requests-list');
   const [viewItem, setViewItem] = useState<any | null>(null);
-
-  const handleFilterChange = (key: string, value: string) => {
-    setFilterValues(prev => ({ ...prev, [key]: value }));
-  };
 
   
   const categoryFilter = filterValues.category;
