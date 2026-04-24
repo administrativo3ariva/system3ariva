@@ -2,7 +2,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { FileText, MessageSquare, CreditCard, QrCode, Landmark, FileBarChart, ExternalLink, Download } from 'lucide-react';
+import { FileText, MessageSquare, CreditCard, QrCode, Landmark, FileBarChart, ExternalLink, Download, Split } from 'lucide-react';
+import { expandAllocations, type Allocation } from '@/lib/allocation-utils';
+import { cn } from '@/lib/utils';
 
 interface DetailField {
   label: string;
@@ -21,6 +23,10 @@ interface FinancialDetailDialogProps {
   receiptUrl?: string | null;
   notes?: string | null;
   installmentInfo?: string | null;
+  /** Primary category — used to compute allocation breakdown when allocations exist. */
+  primaryCategory?: string;
+  /** Secondary allocations (rateio). When present, breakdown is shown. */
+  allocations?: Allocation[] | null | unknown;
 }
 
 const statusLabels: Record<string, string> = {
@@ -70,9 +76,16 @@ function openUrl(url: string) {
 export function FinancialDetailDialog({
   open, onOpenChange, title, status, amount, paymentLabel,
   fields, receiptUrl, notes, installmentInfo,
+  primaryCategory, allocations,
 }: FinancialDetailDialogProps) {
   const PaymentIcon = paymentLabel ? (paymentIcons[paymentLabel.toLowerCase()] || CreditCard) : CreditCard;
   const isCard = paymentLabel?.toLowerCase().startsWith('cartão');
+
+  // Compute rateio breakdown
+  const slices = primaryCategory
+    ? expandAllocations({ amount, category: primaryCategory, allocations })
+    : [];
+  const isRateado = slices.length > 1;
 
   const receiptIsPdf = receiptUrl ? isPdf(receiptUrl) : false;
   const receiptIsImage = receiptUrl ? isImage(receiptUrl) : false;
