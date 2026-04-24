@@ -19,6 +19,7 @@ import { CreditCard, Calendar, Building2, Tag, FileText, Upload, X, AlertTriangl
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { AllocationSplitter, Allocation, validateAllocations } from '@/components/AllocationSplitter';
+import { normalizePrimary } from '@/lib/allocation-utils';
 
 const schema = z.object({
   description: z.string().min(1, 'Obrigatório'),
@@ -171,12 +172,22 @@ export default function ExpenseForm() {
       setUploading(false);
     }
 
+    // When rateio is enabled, promote the category with the highest value
+    // to be the primary `category` and adjust the persisted allocations.
+    let finalCategory = data.category;
+    let finalAllocations: Allocation[] | null = null;
+    if (splitEnabled && allocations.length > 0) {
+      const norm = normalizePrimary(data.category, data.amount, allocations);
+      finalCategory = norm.primary;
+      finalAllocations = norm.secondaries.length > 0 ? norm.secondaries : null;
+    }
+
     const payload = {
       description: data.description,
       amount: data.amount,
       cost_center: data.cost_center,
       company: data.company,
-      category: data.category,
+      category: finalCategory,
       card_name: data.card_name,
       expense_date: data.expense_date,
       notes: data.notes,
@@ -185,7 +196,7 @@ export default function ExpenseForm() {
       is_installment: data.is_installment || false,
       installment_count: data.is_installment ? data.installment_count : null,
       installment_current: data.is_installment ? 1 : null,
-      allocations: splitEnabled && allocations.length > 0 ? allocations : null,
+      allocations: finalAllocations,
       ...(receipt_url ? { receipt_url } : {}),
     } as any;
 

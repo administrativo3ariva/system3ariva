@@ -23,6 +23,7 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { AllocationSplitter, Allocation, validateAllocations } from '@/components/AllocationSplitter';
+import { normalizePrimary } from '@/lib/allocation-utils';
 
 const PAYMENT_METHODS = [
   { value: 'boleto', label: 'Boleto', icon: FileBarChart },
@@ -207,12 +208,22 @@ export default function PaymentRequestForm() {
         supplier_id = newSupplier.id;
       }
 
+      // When rateio is enabled, promote the category with the highest value
+      // to be the primary `category` and adjust the persisted allocations.
+      let finalCategory = data.category;
+      let finalAllocations: Allocation[] | null = null;
+      if (splitEnabled && allocations.length > 0) {
+        const norm = normalizePrimary(data.category, data.amount, allocations);
+        finalCategory = norm.primary;
+        finalAllocations = norm.secondaries.length > 0 ? norm.secondaries : null;
+      }
+
       const payload = {
         description: data.description,
         amount: data.amount,
         cost_center: data.cost_center,
         company: data.company,
-        category: data.category,
+        category: finalCategory,
         supplier: data.supplier,
         request_date: data.request_date,
         due_date: data.due_date || undefined,
@@ -226,7 +237,7 @@ export default function PaymentRequestForm() {
         receipt_url,
         supplier_id: supplier_id || undefined,
         notes: data.notes,
-        allocations: splitEnabled && allocations.length > 0 ? allocations : null,
+        allocations: finalAllocations,
       };
 
       if (isEditing && editId) {
