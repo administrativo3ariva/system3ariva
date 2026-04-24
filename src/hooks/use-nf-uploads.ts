@@ -26,6 +26,7 @@ export type DbNfUpload = {
   recipient_name?: string | null;
   recipient_doc?: string | null;
   recipient_doc_type?: string | null;
+  recipient_city?: string | null;
   total_value: number | null;
   unit: string;
   freight_value?: number | null;
