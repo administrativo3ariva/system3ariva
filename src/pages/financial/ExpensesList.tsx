@@ -193,6 +193,8 @@ export default function ExpensesList() {
           ]}
           receiptUrl={viewItem.receipt_url}
           notes={viewItem.notes}
+          primaryCategory={viewItem.category}
+          allocations={viewItem.allocations}
         />
       )}
     </div>
