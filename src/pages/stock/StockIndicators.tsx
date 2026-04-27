@@ -437,9 +437,8 @@ export default function StockIndicators() {
 
       {/* ─── FILTERS ─── */}
       <Card className="border-border/60">
-        <CardContent className="p-0">
-          {/* Filter header */}
-          <div className="flex items-center justify-between px-5 py-3 border-b border-border/40">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="rounded-md p-1.5 bg-primary/10">
                 <Filter className="h-3.5 w-3.5 text-primary" />
@@ -458,11 +457,10 @@ export default function StockIndicators() {
             )}
           </div>
 
-          {/* Filter body */}
-          <div className="px-5 py-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 items-start">
             {/* Period */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Período</label>
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Período</label>
               <Select value={period} onValueChange={v => setPeriod(v as PeriodPreset)}>
                 <SelectTrigger className="h-9 text-xs">
                   <CalendarDays className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
@@ -477,87 +475,96 @@ export default function StockIndicators() {
                 </SelectContent>
               </Select>
               {period === 'custom' && (
-                <div className="flex gap-2 mt-1.5">
+                <div className="flex gap-1.5 mt-1.5">
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className="text-xs flex-1 h-8 font-normal">
-                        {customFrom ? format(customFrom, 'dd/MM/yy') : 'Data inicial'}
+                        {customFrom ? format(customFrom, 'dd/MM/yy') : 'Início'}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} className="p-3 pointer-events-auto" /></PopoverContent>
+                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} locale={ptBR} className="p-3 pointer-events-auto" /></PopoverContent>
                   </Popover>
-                  <span className="text-muted-foreground self-center text-xs">→</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className="text-xs flex-1 h-8 font-normal">
-                        {customTo ? format(customTo, 'dd/MM/yy') : 'Data final'}
+                        {customTo ? format(customTo, 'dd/MM/yy') : 'Fim'}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={customTo} onSelect={setCustomTo} className="p-3 pointer-events-auto" /></PopoverContent>
+                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={customTo} onSelect={setCustomTo} locale={ptBR} className="p-3 pointer-events-auto" /></PopoverContent>
                   </Popover>
                 </div>
               )}
             </div>
 
-            {/* Branches */}
+            {/* Branches multi-select */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Filiais</label>
-              <div className="flex flex-wrap gap-1.5 pt-0.5">
-                {STOCK_BRANCHES.map(b => {
-                  const active = selBranches.includes(b);
-                  return (
-                    <Badge
-                      key={b}
-                      variant={active ? 'default' : 'outline'}
-                      className={cn(
-                        "text-[11px] cursor-pointer transition-all h-7 px-2.5",
-                        active
-                          ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
-                          : "hover:bg-accent/50 hover:border-primary/30"
-                      )}
-                      onClick={() => toggleBranch(b)}
-                    >
-                      {BRANCH_LABELS[b] || b}
-                    </Badge>
-                  );
-                })}
-              </div>
-              {selBranches.length === 0 && (
-                <p className="text-[10px] text-muted-foreground/60 italic">Todas selecionadas</p>
-              )}
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Filiais</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="h-9 w-full justify-between text-xs font-normal">
+                    <span className="flex items-center gap-1.5 min-w-0">
+                      <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate">
+                        {selBranches.length === 0 ? 'Todas as filiais' : `${selBranches.length} selecionada${selBranches.length > 1 ? 's' : ''}`}
+                      </span>
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5 opacity-50 shrink-0" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-2" align="start">
+                  <div className="max-h-72 overflow-y-auto space-y-0.5">
+                    {STOCK_BRANCHES.map(b => (
+                      <label key={b} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent/50 cursor-pointer text-xs">
+                        <Checkbox checked={selBranches.includes(b)} onCheckedChange={() => toggleBranch(b)} />
+                        <span>{BRANCH_LABELS[b] || b}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {selBranches.length > 0 && (
+                    <Button variant="ghost" size="sm" className="w-full mt-2 h-7 text-xs" onClick={() => setSelBranches([])}>
+                      Limpar
+                    </Button>
+                  )}
+                </PopoverContent>
+              </Popover>
             </div>
 
-            {/* Categories */}
+            {/* Categories multi-select */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Categorias</label>
-              <div className="flex flex-wrap gap-1.5 pt-0.5">
-                {categories.map(c => {
-                  const active = selCategories.includes(c);
-                  return (
-                    <Badge
-                      key={c}
-                      variant={active ? 'default' : 'outline'}
-                      className={cn(
-                        "text-[11px] cursor-pointer transition-all h-7 px-2.5",
-                        active
-                          ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
-                          : "hover:bg-accent/50 hover:border-primary/30"
-                      )}
-                      onClick={() => toggleCat(c)}
-                    >
-                      {c}
-                    </Badge>
-                  );
-                })}
-              </div>
-              {selCategories.length === 0 && (
-                <p className="text-[10px] text-muted-foreground/60 italic">Todas selecionadas</p>
-              )}
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Categorias</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="h-9 w-full justify-between text-xs font-normal">
+                    <span className="flex items-center gap-1.5 min-w-0">
+                      <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate">
+                        {selCategories.length === 0 ? 'Todas as categorias' : `${selCategories.length} selecionada${selCategories.length > 1 ? 's' : ''}`}
+                      </span>
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5 opacity-50 shrink-0" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-2" align="start">
+                  <div className="max-h-72 overflow-y-auto space-y-0.5">
+                    {categories.map(c => (
+                      <label key={c} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent/50 cursor-pointer text-xs">
+                        <Checkbox checked={selCategories.includes(c)} onCheckedChange={() => toggleCat(c)} />
+                        <span>{c}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {selCategories.length > 0 && (
+                    <Button variant="ghost" size="sm" className="w-full mt-2 h-7 text-xs" onClick={() => setSelCategories([])}>
+                      Limpar
+                    </Button>
+                  )}
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Item select */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Item</label>
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Item</label>
               <Select value={selItem} onValueChange={setSelItem}>
                 <SelectTrigger className="h-9 text-xs">
                   <Package className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
@@ -574,6 +581,28 @@ export default function StockIndicators() {
               </Select>
             </div>
           </div>
+
+          {/* Active filter chips */}
+          {(selBranches.length > 0 || selCategories.length > 0) && (
+            <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-border/40">
+              {selBranches.map(b => (
+                <Badge key={`b-${b}`} variant="secondary" className="text-[10px] gap-1 pl-2 pr-1 py-0.5">
+                  {BRANCH_LABELS[b] || b}
+                  <button onClick={() => toggleBranch(b)} className="hover:bg-background/50 rounded-sm p-0.5">
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </Badge>
+              ))}
+              {selCategories.map(c => (
+                <Badge key={`c-${c}`} variant="secondary" className="text-[10px] gap-1 pl-2 pr-1 py-0.5">
+                  {c}
+                  <button onClick={() => toggleCat(c)} className="hover:bg-background/50 rounded-sm p-0.5">
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
