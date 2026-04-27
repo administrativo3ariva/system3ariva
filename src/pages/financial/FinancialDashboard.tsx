@@ -198,16 +198,21 @@ export default function FinancialDashboard() {
       .sort((a, b) => b.total - a.total);
   }, [expenses, requests]);
 
-  // Por categoria (cartão + solicitações)
+  // Por categoria (cartão + solicitações) — respeita rateio (allocations)
+  // Cada lançamento é expandido em fatias por categoria, igual ao Relatório.
   const byCategory = useMemo(() => {
     const map: Record<string, { cartao: number; solicitacoes: number }> = {};
     expenses.forEach(e => {
-      if (!map[e.category]) map[e.category] = { cartao: 0, solicitacoes: 0 };
-      map[e.category].cartao += Number(e.amount);
+      expandAllocations(e as any).forEach(slice => {
+        if (!map[slice.category]) map[slice.category] = { cartao: 0, solicitacoes: 0 };
+        map[slice.category].cartao += slice.amount;
+      });
     });
     requests.forEach(r => {
-      if (!map[r.category]) map[r.category] = { cartao: 0, solicitacoes: 0 };
-      map[r.category].solicitacoes += Number(r.amount);
+      expandAllocations(r as any).forEach(slice => {
+        if (!map[slice.category]) map[slice.category] = { cartao: 0, solicitacoes: 0 };
+        map[slice.category].solicitacoes += slice.amount;
+      });
     });
     return Object.entries(map)
       .map(([name, v]) => ({ name, ...v, total: v.cartao + v.solicitacoes }))
