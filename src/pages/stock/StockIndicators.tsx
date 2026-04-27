@@ -2,7 +2,10 @@ import React, { useState, useMemo } from 'react';
 import {
   DollarSign, TrendingUp, TrendingDown, Minus, BarChart3, PieChart, Package,
   ArrowUpDown, AlertTriangle, Lightbulb, Download, Filter, CalendarDays, X,
+  Building2, Users, ChevronDown,
 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { format, parseISO, subMonths, startOfMonth, endOfMonth, startOfYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -424,6 +427,106 @@ export default function StockIndicators() {
 
   const topCostNames = topGasto.slice(0, 5).map(t => t.name);
 
+  /* ─── BH Per-floor data ─────
+   * Floors with collaborators: 3º, 5º (Algar), 8º, 9º. 10º is meeting room only.
+   * Strategy: for movements at unit BH-Matriz with `floor` set → attributed directly.
+   * For movements at BH-Matriz without `floor` → split proportionally by collaborator count.
+   */
+  const FLOOR_KEYS = ['3º andar', 'Algar', '8º andar', '9º andar'] as const;
+  const FLOOR_DISPLAY: Record<string, string> = {
+    '3º andar': '3º andar',
+    'Algar': '5º andar (Algar)',
+    '8º andar': '8º andar',
+    '9º andar': '9º andar',
+  };
+
+  const bhFloorData = useMemo(() => {
+    // collaborator counts per floor (only BH-Matriz)
+    const collabCounts: Record<string, number> = {};
+    FLOOR_KEYS.forEach(f => { collabCounts[f] = 0; });
+    allCollabs.filter(c => c.unit === 'BH-Matriz').forEach(c => {
+      const f = c.floor;
+      if (f && FLOOR_KEYS.includes(f as any)) collabCounts[f]++;
+    });
+    const totalCollabs = Object.values(collabCounts).reduce((a, b) => a + b, 0);
+
+    // BH movements within current filter range/categories/item
+    const bhMoves = filtered.filter(m => m.unit === 'BH-Matriz');
+
+    type FloorAgg = { gastoDirect: number; gastoShared: number; consumoDirect: number; consumoShared: number; itens: Map<string, { name: string; qty: number; val: number }> };
+    const agg: Record<string, FloorAgg> = {};
+    FLOOR_KEYS.forEach(f => {
+      agg[f] = { gastoDirect: 0, gastoShared: 0, consumoDirect: 0, consumoShared: 0, itens: new Map() };
+    });
+
+    let unallocGasto = 0;
+    let unallocConsumo = 0;
+    const unallocItems = new Map<string, { name: string; qty: number; val: number }>();
+
+    bhMoves.forEach(m => {
+      const p = productMap.get(m.product_id);
+      const val = m.quantity * (p?.unit_price ?? 0);
+      const f = m.floor;
+      if (f && FLOOR_KEYS.includes(f as any)) {
+        const a = agg[f];
+        if (m.type === 'entrada') a.gastoDirect += val;
+        if (m.type === 'saida') a.consumoDirect += m.quantity;
+        const e = a.itens.get(m.product_id) || { name: m.product_name, qty: 0, val: 0 };
+        if (m.type === 'saida') e.qty += m.quantity;
+        if (m.type === 'entrada') e.val += val;
+        a.itens.set(m.product_id, e);
+      } else {
+        if (m.type === 'entrada') unallocGasto += val;
+        if (m.type === 'saida') unallocConsumo += m.quantity;
+        const e = unallocItems.get(m.product_id) || { name: m.product_name, qty: 0, val: 0 };
+        if (m.type === 'saida') e.qty += m.quantity;
+        if (m.type === 'entrada') e.val += val;
+        unallocItems.set(m.product_id, e);
+      }
+    });
+
+    // Proportional split by collaborator share
+    FLOOR_KEYS.forEach(f => {
+      const share = totalCollabs > 0 ? collabCounts[f] / totalCollabs : 0;
+      agg[f].gastoShared = unallocGasto * share;
+      agg[f].consumoShared = unallocConsumo * share;
+      // also distribute item amounts proportionally
+      unallocItems.forEach((v, k) => {
+        const e = agg[f].itens.get(k) || { name: v.name, qty: 0, val: 0 };
+        e.qty += v.qty * share;
+        e.val += v.val * share;
+        agg[f].itens.set(k, e);
+      });
+    });
+
+    return {
+      collabCounts,
+      totalCollabs,
+      unalloc: { gasto: unallocGasto, consumo: unallocConsumo },
+      rows: FLOOR_KEYS.map(f => {
+        const a = agg[f];
+        const collabs = collabCounts[f];
+        const gasto = a.gastoDirect + a.gastoShared;
+        const consumo = a.consumoDirect + a.consumoShared;
+        const topItens = Array.from(a.itens.values()).sort((x, y) => y.val - x.val).slice(0, 5);
+        return {
+          floor: f,
+          label: FLOOR_DISPLAY[f],
+          collabs,
+          gastoDirect: a.gastoDirect,
+          gastoShared: a.gastoShared,
+          gasto,
+          consumoDirect: a.consumoDirect,
+          consumoShared: a.consumoShared,
+          consumo,
+          gastoPerCollab: collabs > 0 ? gasto / collabs : 0,
+          topItens,
+        };
+      }),
+    };
+  }, [allCollabs, filtered, productMap]);
+
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -434,9 +537,8 @@ export default function StockIndicators() {
 
       {/* ─── FILTERS ─── */}
       <Card className="border-border/60">
-        <CardContent className="p-0">
-          {/* Filter header */}
-          <div className="flex items-center justify-between px-5 py-3 border-b border-border/40">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="rounded-md p-1.5 bg-primary/10">
                 <Filter className="h-3.5 w-3.5 text-primary" />
@@ -455,11 +557,10 @@ export default function StockIndicators() {
             )}
           </div>
 
-          {/* Filter body */}
-          <div className="px-5 py-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 items-start">
             {/* Period */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Período</label>
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Período</label>
               <Select value={period} onValueChange={v => setPeriod(v as PeriodPreset)}>
                 <SelectTrigger className="h-9 text-xs">
                   <CalendarDays className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
@@ -474,87 +575,96 @@ export default function StockIndicators() {
                 </SelectContent>
               </Select>
               {period === 'custom' && (
-                <div className="flex gap-2 mt-1.5">
+                <div className="flex gap-1.5 mt-1.5">
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className="text-xs flex-1 h-8 font-normal">
-                        {customFrom ? format(customFrom, 'dd/MM/yy') : 'Data inicial'}
+                        {customFrom ? format(customFrom, 'dd/MM/yy') : 'Início'}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} className="p-3 pointer-events-auto" /></PopoverContent>
+                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} locale={ptBR} className="p-3 pointer-events-auto" /></PopoverContent>
                   </Popover>
-                  <span className="text-muted-foreground self-center text-xs">→</span>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className="text-xs flex-1 h-8 font-normal">
-                        {customTo ? format(customTo, 'dd/MM/yy') : 'Data final'}
+                        {customTo ? format(customTo, 'dd/MM/yy') : 'Fim'}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={customTo} onSelect={setCustomTo} className="p-3 pointer-events-auto" /></PopoverContent>
+                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={customTo} onSelect={setCustomTo} locale={ptBR} className="p-3 pointer-events-auto" /></PopoverContent>
                   </Popover>
                 </div>
               )}
             </div>
 
-            {/* Branches */}
+            {/* Branches multi-select */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Filiais</label>
-              <div className="flex flex-wrap gap-1.5 pt-0.5">
-                {STOCK_BRANCHES.map(b => {
-                  const active = selBranches.includes(b);
-                  return (
-                    <Badge
-                      key={b}
-                      variant={active ? 'default' : 'outline'}
-                      className={cn(
-                        "text-[11px] cursor-pointer transition-all h-7 px-2.5",
-                        active
-                          ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
-                          : "hover:bg-accent/50 hover:border-primary/30"
-                      )}
-                      onClick={() => toggleBranch(b)}
-                    >
-                      {BRANCH_LABELS[b] || b}
-                    </Badge>
-                  );
-                })}
-              </div>
-              {selBranches.length === 0 && (
-                <p className="text-[10px] text-muted-foreground/60 italic">Todas selecionadas</p>
-              )}
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Filiais</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="h-9 w-full justify-between text-xs font-normal">
+                    <span className="flex items-center gap-1.5 min-w-0">
+                      <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate">
+                        {selBranches.length === 0 ? 'Todas as filiais' : `${selBranches.length} selecionada${selBranches.length > 1 ? 's' : ''}`}
+                      </span>
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5 opacity-50 shrink-0" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-2" align="start">
+                  <div className="max-h-72 overflow-y-auto space-y-0.5">
+                    {STOCK_BRANCHES.map(b => (
+                      <label key={b} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent/50 cursor-pointer text-xs">
+                        <Checkbox checked={selBranches.includes(b)} onCheckedChange={() => toggleBranch(b)} />
+                        <span>{BRANCH_LABELS[b] || b}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {selBranches.length > 0 && (
+                    <Button variant="ghost" size="sm" className="w-full mt-2 h-7 text-xs" onClick={() => setSelBranches([])}>
+                      Limpar
+                    </Button>
+                  )}
+                </PopoverContent>
+              </Popover>
             </div>
 
-            {/* Categories */}
+            {/* Categories multi-select */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Categorias</label>
-              <div className="flex flex-wrap gap-1.5 pt-0.5">
-                {categories.map(c => {
-                  const active = selCategories.includes(c);
-                  return (
-                    <Badge
-                      key={c}
-                      variant={active ? 'default' : 'outline'}
-                      className={cn(
-                        "text-[11px] cursor-pointer transition-all h-7 px-2.5",
-                        active
-                          ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
-                          : "hover:bg-accent/50 hover:border-primary/30"
-                      )}
-                      onClick={() => toggleCat(c)}
-                    >
-                      {c}
-                    </Badge>
-                  );
-                })}
-              </div>
-              {selCategories.length === 0 && (
-                <p className="text-[10px] text-muted-foreground/60 italic">Todas selecionadas</p>
-              )}
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Categorias</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="h-9 w-full justify-between text-xs font-normal">
+                    <span className="flex items-center gap-1.5 min-w-0">
+                      <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate">
+                        {selCategories.length === 0 ? 'Todas as categorias' : `${selCategories.length} selecionada${selCategories.length > 1 ? 's' : ''}`}
+                      </span>
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5 opacity-50 shrink-0" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-2" align="start">
+                  <div className="max-h-72 overflow-y-auto space-y-0.5">
+                    {categories.map(c => (
+                      <label key={c} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent/50 cursor-pointer text-xs">
+                        <Checkbox checked={selCategories.includes(c)} onCheckedChange={() => toggleCat(c)} />
+                        <span>{c}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {selCategories.length > 0 && (
+                    <Button variant="ghost" size="sm" className="w-full mt-2 h-7 text-xs" onClick={() => setSelCategories([])}>
+                      Limpar
+                    </Button>
+                  )}
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Item select */}
             <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Item</label>
+              <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Item</label>
               <Select value={selItem} onValueChange={setSelItem}>
                 <SelectTrigger className="h-9 text-xs">
                   <Package className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
@@ -571,10 +681,42 @@ export default function StockIndicators() {
               </Select>
             </div>
           </div>
+
+          {/* Active filter chips */}
+          {(selBranches.length > 0 || selCategories.length > 0) && (
+            <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-border/40">
+              {selBranches.map(b => (
+                <Badge key={`b-${b}`} variant="secondary" className="text-[10px] gap-1 pl-2 pr-1 py-0.5">
+                  {BRANCH_LABELS[b] || b}
+                  <button onClick={() => toggleBranch(b)} className="hover:bg-background/50 rounded-sm p-0.5">
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </Badge>
+              ))}
+              {selCategories.map(c => (
+                <Badge key={`c-${c}`} variant="secondary" className="text-[10px] gap-1 pl-2 pr-1 py-0.5">
+                  {c}
+                  <button onClick={() => toggleCat(c)} className="hover:bg-background/50 rounded-sm p-0.5">
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* ─── KPIs ─── */}
+      <Tabs defaultValue="geral" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="geral" className="text-xs gap-1.5">
+            <BarChart3 className="h-3.5 w-3.5" /> Visão Geral
+          </TabsTrigger>
+          <TabsTrigger value="bh-andar" className="text-xs gap-1.5">
+            <Building2 className="h-3.5 w-3.5" /> Por Andar (BH)
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="geral" className="space-y-6 mt-0">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCardInline title="Gasto Total no Período" value={formatBRL(gastoAtual)} sub={`Anterior: ${formatBRL(gastoAnterior)}`} variation={varMensal} icon={DollarSign} />
         <KpiCardInline title="Variação Mensal" value={formatPct(varMensal)} sub={varMensal !== null ? (varMensal > 0 ? 'Custos subiram' : 'Custos caíram') : undefined} variation={varMensal} icon={ArrowUpDown} />
@@ -909,6 +1051,190 @@ export default function StockIndicators() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="bh-andar" className="space-y-6 mt-0">
+          <BHFloorView data={bhFloorData} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+/* ═══════════════ BH Floor View ═══════════════ */
+function BHFloorView({ data }: { data: any }) {
+  const { rows, totalCollabs, unalloc } = data;
+  const totalGastoBH = rows.reduce((s: number, r: any) => s + r.gasto, 0);
+  const totalConsumoBH = rows.reduce((s: number, r: any) => s + r.consumo, 0);
+
+  if (totalCollabs === 0) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center text-sm text-muted-foreground">
+          Nenhum colaborador cadastrado em BH-Matriz com andar definido. Cadastre colaboradores em <strong>Estoque → Colaboradores</strong> e atribua o andar para visualizar este painel.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="p-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-primary" />
+            <span className="font-semibold text-sm">BH (Matriz) — Visão por Andar</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Users className="h-3.5 w-3.5" /> {totalCollabs} colaboradores
+          </div>
+          <div className="text-muted-foreground">
+            Movimentações sem andar específico são <strong className="text-foreground">rateadas proporcionalmente</strong> ao número de colaboradores por andar.
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* KPIs per floor */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {rows.map((r: any) => (
+          <Card key={r.floor} className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4 space-y-2">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">{r.label}</p>
+                  <p className="text-lg font-bold">{formatBRL(r.gasto)}</p>
+                </div>
+                <div className="rounded-lg p-2 bg-primary/10 text-primary">
+                  <Building2 className="h-4 w-4" />
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground border-t border-border/40 pt-2">
+                <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {r.collabs} colab.</span>
+                <span>{r.collabs > 0 ? `${formatBRL(r.gastoPerCollab)}/colab.` : '—'}</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Gasto por Andar</CardTitle></CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={rows} layout="vertical" margin={{ left: 10, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={v => `R$${(v / 1000).toFixed(1)}k`} />
+                  <YAxis dataKey="label" type="category" tick={{ fontSize: 10 }} width={110} />
+                  <Tooltip formatter={(v: number) => formatBRL(v)} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="gastoDirect" stackId="g" name="Direto (lançado no andar)" fill="hsl(var(--primary))" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="gastoShared" stackId="g" name="Rateio (proporcional)" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Consumo por Andar (unidades)</CardTitle></CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={rows} layout="vertical" margin={{ left: 10, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                  <XAxis type="number" tick={{ fontSize: 11 }} />
+                  <YAxis dataKey="label" type="category" tick={{ fontSize: 10 }} width={110} />
+                  <Tooltip formatter={(v: number) => `${Number(v).toFixed(1)} un.`} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="consumoDirect" stackId="c" name="Direto" fill="hsl(150 60% 45%)" />
+                  <Bar dataKey="consumoShared" stackId="c" name="Rateio" fill="hsl(35 90% 55%)" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Detail table */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Detalhamento por Andar</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xs">Andar</TableHead>
+                <TableHead className="text-xs text-right">Colaboradores</TableHead>
+                <TableHead className="text-xs text-right">Gasto Direto</TableHead>
+                <TableHead className="text-xs text-right">Rateio</TableHead>
+                <TableHead className="text-xs text-right">Gasto Total</TableHead>
+                <TableHead className="text-xs text-right">% do Gasto BH</TableHead>
+                <TableHead className="text-xs text-right">Por Colab.</TableHead>
+                <TableHead className="text-xs text-right">Consumo (un.)</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((r: any) => (
+                <TableRow key={r.floor}>
+                  <TableCell className="text-xs font-medium">{r.label}</TableCell>
+                  <TableCell className="text-xs text-right">{r.collabs}</TableCell>
+                  <TableCell className="text-xs text-right">{formatBRL(r.gastoDirect)}</TableCell>
+                  <TableCell className="text-xs text-right text-muted-foreground">{formatBRL(r.gastoShared)}</TableCell>
+                  <TableCell className="text-xs text-right font-semibold">{formatBRL(r.gasto)}</TableCell>
+                  <TableCell className="text-xs text-right">{totalGastoBH > 0 ? ((r.gasto / totalGastoBH) * 100).toFixed(1) : '0.0'}%</TableCell>
+                  <TableCell className="text-xs text-right">{r.collabs > 0 ? formatBRL(r.gastoPerCollab) : '—'}</TableCell>
+                  <TableCell className="text-xs text-right">{r.consumo.toFixed(1)}</TableCell>
+                </TableRow>
+              ))}
+              <TableRow className="bg-muted/30 font-semibold">
+                <TableCell className="text-xs">Total BH</TableCell>
+                <TableCell className="text-xs text-right">{totalCollabs}</TableCell>
+                <TableCell className="text-xs text-right">{formatBRL(rows.reduce((s: number, r: any) => s + r.gastoDirect, 0))}</TableCell>
+                <TableCell className="text-xs text-right">{formatBRL(unalloc.gasto)}</TableCell>
+                <TableCell className="text-xs text-right">{formatBRL(totalGastoBH)}</TableCell>
+                <TableCell className="text-xs text-right">100%</TableCell>
+                <TableCell className="text-xs text-right">{totalCollabs > 0 ? formatBRL(totalGastoBH / totalCollabs) : '—'}</TableCell>
+                <TableCell className="text-xs text-right">{totalConsumoBH.toFixed(1)}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Top items per floor */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {rows.map((r: any) => (
+          <Card key={r.floor}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center justify-between">
+                <span>{r.label}</span>
+                <Badge variant="secondary" className="text-[10px]">{r.collabs} colab.</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {r.topItens.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">Sem movimentações no período.</p>
+              ) : (
+                <div className="space-y-2">
+                  {r.topItens.map((it: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between text-xs">
+                      <span className="truncate flex-1">{it.name}</span>
+                      <div className="flex gap-3 ml-2 shrink-0">
+                        <span className="text-muted-foreground">{it.qty.toFixed(1)} un.</span>
+                        <span className="font-medium w-24 text-right">{formatBRL(it.val)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
