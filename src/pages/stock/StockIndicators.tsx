@@ -427,6 +427,106 @@ export default function StockIndicators() {
 
   const topCostNames = topGasto.slice(0, 5).map(t => t.name);
 
+  /* ─── BH Per-floor data ─────
+   * Floors with collaborators: 3º, 5º (Algar), 8º, 9º. 10º is meeting room only.
+   * Strategy: for movements at unit BH-Matriz with `floor` set → attributed directly.
+   * For movements at BH-Matriz without `floor` → split proportionally by collaborator count.
+   */
+  const FLOOR_KEYS = ['3º andar', 'Algar', '8º andar', '9º andar'] as const;
+  const FLOOR_DISPLAY: Record<string, string> = {
+    '3º andar': '3º andar',
+    'Algar': '5º andar (Algar)',
+    '8º andar': '8º andar',
+    '9º andar': '9º andar',
+  };
+
+  const bhFloorData = useMemo(() => {
+    // collaborator counts per floor (only BH-Matriz)
+    const collabCounts: Record<string, number> = {};
+    FLOOR_KEYS.forEach(f => { collabCounts[f] = 0; });
+    allCollabs.filter(c => c.unit === 'BH-Matriz').forEach(c => {
+      const f = c.floor;
+      if (f && FLOOR_KEYS.includes(f as any)) collabCounts[f]++;
+    });
+    const totalCollabs = Object.values(collabCounts).reduce((a, b) => a + b, 0);
+
+    // BH movements within current filter range/categories/item
+    const bhMoves = filtered.filter(m => m.unit === 'BH-Matriz');
+
+    type FloorAgg = { gastoDirect: number; gastoShared: number; consumoDirect: number; consumoShared: number; itens: Map<string, { name: string; qty: number; val: number }> };
+    const agg: Record<string, FloorAgg> = {};
+    FLOOR_KEYS.forEach(f => {
+      agg[f] = { gastoDirect: 0, gastoShared: 0, consumoDirect: 0, consumoShared: 0, itens: new Map() };
+    });
+
+    let unallocGasto = 0;
+    let unallocConsumo = 0;
+    const unallocItems = new Map<string, { name: string; qty: number; val: number }>();
+
+    bhMoves.forEach(m => {
+      const p = productMap.get(m.product_id);
+      const val = m.quantity * (p?.unit_price ?? 0);
+      const f = m.floor;
+      if (f && FLOOR_KEYS.includes(f as any)) {
+        const a = agg[f];
+        if (m.type === 'entrada') a.gastoDirect += val;
+        if (m.type === 'saida') a.consumoDirect += m.quantity;
+        const e = a.itens.get(m.product_id) || { name: m.product_name, qty: 0, val: 0 };
+        if (m.type === 'saida') e.qty += m.quantity;
+        if (m.type === 'entrada') e.val += val;
+        a.itens.set(m.product_id, e);
+      } else {
+        if (m.type === 'entrada') unallocGasto += val;
+        if (m.type === 'saida') unallocConsumo += m.quantity;
+        const e = unallocItems.get(m.product_id) || { name: m.product_name, qty: 0, val: 0 };
+        if (m.type === 'saida') e.qty += m.quantity;
+        if (m.type === 'entrada') e.val += val;
+        unallocItems.set(m.product_id, e);
+      }
+    });
+
+    // Proportional split by collaborator share
+    FLOOR_KEYS.forEach(f => {
+      const share = totalCollabs > 0 ? collabCounts[f] / totalCollabs : 0;
+      agg[f].gastoShared = unallocGasto * share;
+      agg[f].consumoShared = unallocConsumo * share;
+      // also distribute item amounts proportionally
+      unallocItems.forEach((v, k) => {
+        const e = agg[f].itens.get(k) || { name: v.name, qty: 0, val: 0 };
+        e.qty += v.qty * share;
+        e.val += v.val * share;
+        agg[f].itens.set(k, e);
+      });
+    });
+
+    return {
+      collabCounts,
+      totalCollabs,
+      unalloc: { gasto: unallocGasto, consumo: unallocConsumo },
+      rows: FLOOR_KEYS.map(f => {
+        const a = agg[f];
+        const collabs = collabCounts[f];
+        const gasto = a.gastoDirect + a.gastoShared;
+        const consumo = a.consumoDirect + a.consumoShared;
+        const topItens = Array.from(a.itens.values()).sort((x, y) => y.val - x.val).slice(0, 5);
+        return {
+          floor: f,
+          label: FLOOR_DISPLAY[f],
+          collabs,
+          gastoDirect: a.gastoDirect,
+          gastoShared: a.gastoShared,
+          gasto,
+          consumoDirect: a.consumoDirect,
+          consumoShared: a.consumoShared,
+          consumo,
+          gastoPerCollab: collabs > 0 ? gasto / collabs : 0,
+          topItens,
+        };
+      }),
+    };
+  }, [allCollabs, filtered, productMap]);
+
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
