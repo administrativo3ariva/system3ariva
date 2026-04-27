@@ -12,6 +12,7 @@ import {
 import { format, parseISO, isSameMonth, differenceInDays, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { normalizeSupplierName, supplierKey } from '@/lib/utils';
+import { expandAllocations } from '@/lib/allocation-utils';
 
 const COLORS = [
   'hsl(221, 83%, 53%)', 'hsl(142, 71%, 45%)', 'hsl(38, 92%, 50%)',
