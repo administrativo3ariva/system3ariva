@@ -49,6 +49,8 @@ export default function ExpenseForm() {
   const create = useCreateExpense();
   const update = useUpdateExpense();
   const { data: expenses = [] } = useExpenses();
+  const { data: suppliersList = [] } = useSuppliers();
+  const createSupplier = useCreateSupplier();
   const editingExpense = isEditing ? expenses.find((e: any) => e.id === editId) : null;
 
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -209,6 +211,28 @@ export default function ExpenseForm() {
       finalAllocations = norm.secondaries.length > 0 ? norm.secondaries : null;
     }
 
+    // Normalize supplier name and resolve/create supplier record
+    const normalizedSupplier = normalizeSupplierName(data.supplier);
+    let supplier_id: string | null = data.supplier_id || null;
+    let supplierName: string | null = normalizedSupplier || null;
+    if (normalizedSupplier) {
+      const match = suppliersList.find(
+        (s) => s.name.toLowerCase() === normalizedSupplier.toLowerCase()
+      );
+      if (match) {
+        supplier_id = match.id;
+        supplierName = match.name; // canonical capitalization
+      } else if (!supplier_id) {
+        try {
+          const created = await createSupplier.mutateAsync({ name: normalizedSupplier });
+          supplier_id = created.id;
+          supplierName = created.name;
+        } catch (e) {
+          // ignore — keep textual supplier
+        }
+      }
+    }
+
     const payload = {
       description: data.description,
       amount: data.amount,
@@ -218,8 +242,8 @@ export default function ExpenseForm() {
       card_name: data.card_name,
       expense_date: data.expense_date,
       notes: data.notes,
-      supplier: data.supplier || null,
-      supplier_id: data.supplier_id || null,
+      supplier: supplierName,
+      supplier_id: supplier_id,
       is_installment: data.is_installment || false,
       installment_count: data.is_installment ? data.installment_count : null,
       installment_current: data.is_installment ? 1 : null,
