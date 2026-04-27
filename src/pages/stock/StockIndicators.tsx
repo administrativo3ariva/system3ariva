@@ -706,7 +706,17 @@ export default function StockIndicators() {
         </CardContent>
       </Card>
 
-      {/* ─── KPIs ─── */}
+      <Tabs defaultValue="geral" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="geral" className="text-xs gap-1.5">
+            <BarChart3 className="h-3.5 w-3.5" /> Visão Geral
+          </TabsTrigger>
+          <TabsTrigger value="bh-andar" className="text-xs gap-1.5">
+            <Building2 className="h-3.5 w-3.5" /> Por Andar (BH)
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="geral" className="space-y-6 mt-0">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCardInline title="Gasto Total no Período" value={formatBRL(gastoAtual)} sub={`Anterior: ${formatBRL(gastoAnterior)}`} variation={varMensal} icon={DollarSign} />
         <KpiCardInline title="Variação Mensal" value={formatPct(varMensal)} sub={varMensal !== null ? (varMensal > 0 ? 'Custos subiram' : 'Custos caíram') : undefined} variation={varMensal} icon={ArrowUpDown} />
@@ -1041,6 +1051,190 @@ export default function StockIndicators() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="bh-andar" className="space-y-6 mt-0">
+          <BHFloorView data={bhFloorData} />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+/* ═══════════════ BH Floor View ═══════════════ */
+function BHFloorView({ data }: { data: any }) {
+  const { rows, totalCollabs, unalloc } = data;
+  const totalGastoBH = rows.reduce((s: number, r: any) => s + r.gasto, 0);
+  const totalConsumoBH = rows.reduce((s: number, r: any) => s + r.consumo, 0);
+
+  if (totalCollabs === 0) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center text-sm text-muted-foreground">
+          Nenhum colaborador cadastrado em BH-Matriz com andar definido. Cadastre colaboradores em <strong>Estoque → Colaboradores</strong> e atribua o andar para visualizar este painel.
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="p-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-primary" />
+            <span className="font-semibold text-sm">BH (Matriz) — Visão por Andar</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Users className="h-3.5 w-3.5" /> {totalCollabs} colaboradores
+          </div>
+          <div className="text-muted-foreground">
+            Movimentações sem andar específico são <strong className="text-foreground">rateadas proporcionalmente</strong> ao número de colaboradores por andar.
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* KPIs per floor */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {rows.map((r: any) => (
+          <Card key={r.floor} className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4 space-y-2">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground">{r.label}</p>
+                  <p className="text-lg font-bold">{formatBRL(r.gasto)}</p>
+                </div>
+                <div className="rounded-lg p-2 bg-primary/10 text-primary">
+                  <Building2 className="h-4 w-4" />
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground border-t border-border/40 pt-2">
+                <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {r.collabs} colab.</span>
+                <span>{r.collabs > 0 ? `${formatBRL(r.gastoPerCollab)}/colab.` : '—'}</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Gasto por Andar</CardTitle></CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={rows} layout="vertical" margin={{ left: 10, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={v => `R$${(v / 1000).toFixed(1)}k`} />
+                  <YAxis dataKey="label" type="category" tick={{ fontSize: 10 }} width={110} />
+                  <Tooltip formatter={(v: number) => formatBRL(v)} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="gastoDirect" stackId="g" name="Direto (lançado no andar)" fill="hsl(var(--primary))" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="gastoShared" stackId="g" name="Rateio (proporcional)" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Consumo por Andar (unidades)</CardTitle></CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={rows} layout="vertical" margin={{ left: 10, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                  <XAxis type="number" tick={{ fontSize: 11 }} />
+                  <YAxis dataKey="label" type="category" tick={{ fontSize: 10 }} width={110} />
+                  <Tooltip formatter={(v: number) => `${Number(v).toFixed(1)} un.`} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="consumoDirect" stackId="c" name="Direto" fill="hsl(150 60% 45%)" />
+                  <Bar dataKey="consumoShared" stackId="c" name="Rateio" fill="hsl(35 90% 55%)" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Detail table */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Detalhamento por Andar</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xs">Andar</TableHead>
+                <TableHead className="text-xs text-right">Colaboradores</TableHead>
+                <TableHead className="text-xs text-right">Gasto Direto</TableHead>
+                <TableHead className="text-xs text-right">Rateio</TableHead>
+                <TableHead className="text-xs text-right">Gasto Total</TableHead>
+                <TableHead className="text-xs text-right">% do Gasto BH</TableHead>
+                <TableHead className="text-xs text-right">Por Colab.</TableHead>
+                <TableHead className="text-xs text-right">Consumo (un.)</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((r: any) => (
+                <TableRow key={r.floor}>
+                  <TableCell className="text-xs font-medium">{r.label}</TableCell>
+                  <TableCell className="text-xs text-right">{r.collabs}</TableCell>
+                  <TableCell className="text-xs text-right">{formatBRL(r.gastoDirect)}</TableCell>
+                  <TableCell className="text-xs text-right text-muted-foreground">{formatBRL(r.gastoShared)}</TableCell>
+                  <TableCell className="text-xs text-right font-semibold">{formatBRL(r.gasto)}</TableCell>
+                  <TableCell className="text-xs text-right">{totalGastoBH > 0 ? ((r.gasto / totalGastoBH) * 100).toFixed(1) : '0.0'}%</TableCell>
+                  <TableCell className="text-xs text-right">{r.collabs > 0 ? formatBRL(r.gastoPerCollab) : '—'}</TableCell>
+                  <TableCell className="text-xs text-right">{r.consumo.toFixed(1)}</TableCell>
+                </TableRow>
+              ))}
+              <TableRow className="bg-muted/30 font-semibold">
+                <TableCell className="text-xs">Total BH</TableCell>
+                <TableCell className="text-xs text-right">{totalCollabs}</TableCell>
+                <TableCell className="text-xs text-right">{formatBRL(rows.reduce((s: number, r: any) => s + r.gastoDirect, 0))}</TableCell>
+                <TableCell className="text-xs text-right">{formatBRL(unalloc.gasto)}</TableCell>
+                <TableCell className="text-xs text-right">{formatBRL(totalGastoBH)}</TableCell>
+                <TableCell className="text-xs text-right">100%</TableCell>
+                <TableCell className="text-xs text-right">{totalCollabs > 0 ? formatBRL(totalGastoBH / totalCollabs) : '—'}</TableCell>
+                <TableCell className="text-xs text-right">{totalConsumoBH.toFixed(1)}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Top items per floor */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {rows.map((r: any) => (
+          <Card key={r.floor}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center justify-between">
+                <span>{r.label}</span>
+                <Badge variant="secondary" className="text-[10px]">{r.collabs} colab.</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {r.topItens.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">Sem movimentações no período.</p>
+              ) : (
+                <div className="space-y-2">
+                  {r.topItens.map((it: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between text-xs">
+                      <span className="truncate flex-1">{it.name}</span>
+                      <div className="flex gap-3 ml-2 shrink-0">
+                        <span className="text-muted-foreground">{it.qty.toFixed(1)} un.</span>
+                        <span className="font-medium w-24 text-right">{formatBRL(it.val)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
