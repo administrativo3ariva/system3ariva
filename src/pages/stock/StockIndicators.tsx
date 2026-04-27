@@ -417,16 +417,6 @@ export default function StockIndicators() {
     URL.revokeObjectURL(url);
   }
 
-  if (loading) {
-    return (
-      <div className="space-y-4 p-6">
-        {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
-      </div>
-    );
-  }
-
-  const topCostNames = topGasto.slice(0, 5).map(t => t.name);
-
   /* ─── BH Per-floor data ─────
    * Floors with collaborators: 3º, 5º (Algar), 8º, 9º. 10º is meeting room only.
    * Strategy: for movements at unit BH-Matriz with `floor` set → attributed directly.
@@ -525,6 +515,17 @@ export default function StockIndicators() {
       }),
     };
   }, [allCollabs, filtered, productMap]);
+
+  if (loading) {
+    return (
+      <div className="space-y-4 p-6">
+        {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
+      </div>
+    );
+  }
+
+  const topCostNames = topGasto.slice(0, 5).map(t => t.name);
+
 
 
   return (
