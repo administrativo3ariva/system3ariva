@@ -8,7 +8,6 @@ import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES, EXPENSE_CATEGORIES, COMPAN
 import { supabase } from '@/integrations/supabase/client';
 import { SupplierAutocomplete } from '@/components/SupplierAutocomplete';
 import { useSuppliers, useCreateSupplier } from '@/hooks/use-suppliers';
-import { normalizeSupplierName } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +18,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Badge } from '@/components/ui/badge';
 import { CreditCard, Calendar, Building2, Tag, FileText, Upload, X, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { cn, normalizeSupplierName } from '@/lib/utils';
 import { AllocationSplitter, Allocation, validateAllocations } from '@/components/AllocationSplitter';
 import { normalizePrimary } from '@/lib/allocation-utils';
 
