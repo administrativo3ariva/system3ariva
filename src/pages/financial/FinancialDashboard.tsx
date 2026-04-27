@@ -87,6 +87,19 @@ const PieTooltip = ({ active, payload }: any) => {
   );
 };
 
+const SupplierTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  const d = payload[0];
+  return (
+    <div className="rounded-lg border bg-background p-3 shadow-lg min-w-[180px]">
+      <p className="mb-1 text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="text-sm font-bold" style={{ color: d.payload?.fill || 'hsl(221, 83%, 53%)' }}>
+        Total: {fmt(Number(d.value))}
+      </p>
+    </div>
+  );
+};
+
 export default function FinancialDashboard() {
   const { data: allExpenses = [] } = useExpenses();
   const { data: allRequests = [] } = usePaymentRequests();
