@@ -14,6 +14,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Download, FileSpreadsheet, Filter, X, TrendingUp, TrendingDown, ArrowRightLeft, Split } from 'lucide-react';
 import * as XLSX from 'xlsx-js-style';
 import { expandAllocations, isAllocated } from '@/lib/allocation-utils';
+import { normalizeSupplierName } from '@/lib/utils';
 
 const GroupedTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
@@ -135,7 +136,7 @@ export default function FinancialReports() {
           description: e.description,
           cost_center: e.cost_center,
           company: e.company,
-          supplier: e.supplier || '—',
+          supplier: normalizeSupplierName(e.supplier) || '—',
           date: e.expense_date,
           source: 'cartao',
           sourceLabel: 'Cartão Corporativo',
@@ -149,7 +150,7 @@ export default function FinancialReports() {
           description: r.description,
           cost_center: r.cost_center,
           company: r.company,
-          supplier: r.supplier || '—',
+          supplier: normalizeSupplierName(r.supplier) || '—',
           date: r.request_date || r.created_at?.split('T')[0],
           source: 'solicitacao',
           sourceLabel: 'Solicitação de Pagamento',
