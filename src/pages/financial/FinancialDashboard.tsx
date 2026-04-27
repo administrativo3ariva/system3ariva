@@ -12,6 +12,7 @@ import {
 import { format, parseISO, isSameMonth, differenceInDays, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { normalizeSupplierName, supplierKey } from '@/lib/utils';
+import { expandAllocations } from '@/lib/allocation-utils';
 
 const COLORS = [
   'hsl(221, 83%, 53%)', 'hsl(142, 71%, 45%)', 'hsl(38, 92%, 50%)',
@@ -82,6 +83,19 @@ const PieTooltip = ({ active, payload }: any) => {
     <div className="rounded-lg border bg-background p-3 shadow-lg">
       <p className="text-xs font-medium text-muted-foreground">{d.name}</p>
       <p className="text-sm font-semibold" style={{ color: d.payload.fill }}>{fmt(Number(d.value))}</p>
+    </div>
+  );
+};
+
+const SupplierTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  const d = payload[0];
+  return (
+    <div className="rounded-lg border bg-background p-3 shadow-lg min-w-[180px]">
+      <p className="mb-1 text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="text-sm font-bold" style={{ color: d.payload?.fill || 'hsl(221, 83%, 53%)' }}>
+        Total: {fmt(Number(d.value))}
+      </p>
     </div>
   );
 };
@@ -184,16 +198,21 @@ export default function FinancialDashboard() {
       .sort((a, b) => b.total - a.total);
   }, [expenses, requests]);
 
-  // Por categoria (cartão + solicitações)
+  // Por categoria (cartão + solicitações) — respeita rateio (allocations)
+  // Cada lançamento é expandido em fatias por categoria, igual ao Relatório.
   const byCategory = useMemo(() => {
     const map: Record<string, { cartao: number; solicitacoes: number }> = {};
     expenses.forEach(e => {
-      if (!map[e.category]) map[e.category] = { cartao: 0, solicitacoes: 0 };
-      map[e.category].cartao += Number(e.amount);
+      expandAllocations(e as any).forEach(slice => {
+        if (!map[slice.category]) map[slice.category] = { cartao: 0, solicitacoes: 0 };
+        map[slice.category].cartao += slice.amount;
+      });
     });
     requests.forEach(r => {
-      if (!map[r.category]) map[r.category] = { cartao: 0, solicitacoes: 0 };
-      map[r.category].solicitacoes += Number(r.amount);
+      expandAllocations(r as any).forEach(slice => {
+        if (!map[slice.category]) map[slice.category] = { cartao: 0, solicitacoes: 0 };
+        map[slice.category].solicitacoes += slice.amount;
+      });
     });
     return Object.entries(map)
       .map(([name, v]) => ({ name, ...v, total: v.cartao + v.solicitacoes }))
@@ -386,7 +405,7 @@ export default function FinancialDashboard() {
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
               <XAxis type="number" tickFormatter={(v) => v >= 1000 ? `R$${(v / 1000).toFixed(1).replace('.0', '')}k` : `R$${v}`} tick={{ fontSize: 11 }} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
-              <Tooltip formatter={(v: number) => fmt(v)} />
+              <Tooltip content={<SupplierTooltip />} cursor={{ fill: 'hsl(var(--muted)/0.3)' }} />
               <Bar dataKey="value" name="Total" radius={[0, 4, 4, 0]}>
                 {topSuppliers.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
               </Bar>
