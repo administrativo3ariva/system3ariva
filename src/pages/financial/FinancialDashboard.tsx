@@ -405,7 +405,7 @@ export default function FinancialDashboard() {
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
               <XAxis type="number" tickFormatter={(v) => v >= 1000 ? `R$${(v / 1000).toFixed(1).replace('.0', '')}k` : `R$${v}`} tick={{ fontSize: 11 }} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={120} />
-              <Tooltip formatter={(v: number) => fmt(v)} />
+              <Tooltip content={<SupplierTooltip />} cursor={{ fill: 'hsl(var(--muted)/0.3)' }} />
               <Bar dataKey="value" name="Total" radius={[0, 4, 4, 0]}>
                 {topSuppliers.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
               </Bar>
