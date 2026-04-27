@@ -7,6 +7,8 @@ import { useCreateExpense, useUpdateExpense, useExpenses } from '@/hooks/use-exp
 import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES, EXPENSE_CATEGORIES, COMPANY_CARD_MAP, CORPORATE_CARDS, FinancialCompany } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
 import { SupplierAutocomplete } from '@/components/SupplierAutocomplete';
+import { useSuppliers, useCreateSupplier } from '@/hooks/use-suppliers';
+import { normalizeSupplierName } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
