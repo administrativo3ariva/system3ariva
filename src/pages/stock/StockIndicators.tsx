@@ -2,7 +2,10 @@ import React, { useState, useMemo } from 'react';
 import {
   DollarSign, TrendingUp, TrendingDown, Minus, BarChart3, PieChart, Package,
   ArrowUpDown, AlertTriangle, Lightbulb, Download, Filter, CalendarDays, X,
+  Building2, Users, ChevronDown,
 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 import { format, parseISO, subMonths, startOfMonth, endOfMonth, startOfYear } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
