@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCreatePaymentRequest, useUpdatePaymentRequest, usePaymentRequests } from '@/hooks/use-payment-requests';
-import { useCreateSupplier, Supplier } from '@/hooks/use-suppliers';
+import { useCreateSupplier, useSuppliers, Supplier } from '@/hooks/use-suppliers';
 import { FINANCIAL_COST_CENTERS, FINANCIAL_COMPANIES, EXPENSE_CATEGORIES } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,7 +21,7 @@ import {
   Calendar, Landmark, QrCode, FileBarChart, CreditCard,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { cn, normalizeSupplierName } from '@/lib/utils';
 import { AllocationSplitter, Allocation, validateAllocations } from '@/components/AllocationSplitter';
 import { normalizePrimary } from '@/lib/allocation-utils';
 
@@ -64,6 +64,7 @@ export default function PaymentRequestForm() {
   const editingRequest = isEditing ? requests.find((r: any) => r.id === editId) : null;
 
   const createSupplier = useCreateSupplier();
+  const { data: suppliersList = [] } = useSuppliers();
   const [boletoFile, setBoletoFile] = useState<File | null>(null);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -213,19 +214,30 @@ export default function PaymentRequestForm() {
       if (boletoFile) boleto_url = await uploadFile(boletoFile, 'boletos');
       if (receiptFile) receipt_url = await uploadFile(receiptFile, 'receipts');
 
-      // Save supplier if new
+      // Normalize supplier name and resolve/create supplier (case-insensitive match)
+      const normalizedSupplier = normalizeSupplierName(data.supplier);
       let supplier_id = selectedSupplierId;
-      if (data.supplier && !supplier_id) {
-        const newSupplier = await createSupplier.mutateAsync({
-          name: data.supplier,
-          payment_method: data.payment_method || null,
-          pix_key: data.pix_key || null,
-          bank_name: data.bank_name || null,
-          bank_agency: data.bank_agency || null,
-          bank_account: data.bank_account || null,
-          bank_account_type: data.bank_account_type || null,
-        });
-        supplier_id = newSupplier.id;
+      let supplierName: string | null = normalizedSupplier || null;
+      if (normalizedSupplier) {
+        const match = suppliersList.find(
+          (s) => s.name.toLowerCase() === normalizedSupplier.toLowerCase()
+        );
+        if (match) {
+          supplier_id = match.id;
+          supplierName = match.name;
+        } else if (!supplier_id) {
+          const newSupplier = await createSupplier.mutateAsync({
+            name: normalizedSupplier,
+            payment_method: data.payment_method || null,
+            pix_key: data.pix_key || null,
+            bank_name: data.bank_name || null,
+            bank_agency: data.bank_agency || null,
+            bank_account: data.bank_account || null,
+            bank_account_type: data.bank_account_type || null,
+          });
+          supplier_id = newSupplier.id;
+          supplierName = newSupplier.name;
+        }
       }
 
       // When rateio is enabled, promote the category with the highest value
@@ -244,7 +256,7 @@ export default function PaymentRequestForm() {
         cost_center: data.cost_center,
         company: data.company,
         category: finalCategory,
-        supplier: data.supplier,
+        supplier: supplierName,
         request_date: data.request_date,
         due_date: data.due_date || undefined,
         payment_method: data.payment_method,

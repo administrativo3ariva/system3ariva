@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { format, parseISO, isSameMonth, differenceInDays, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { normalizeSupplierName, supplierKey } from '@/lib/utils';
 
 const COLORS = [
   'hsl(221, 83%, 53%)', 'hsl(142, 71%, 45%)', 'hsl(38, 92%, 50%)',
@@ -199,20 +200,20 @@ export default function FinancialDashboard() {
       .sort((a, b) => b.total - a.total);
   }, [expenses, requests]);
 
-  // Top 10 fornecedores (despesas + solicitações)
+  // Top 10 fornecedores (despesas + solicitações) — agrupado case-insensitive
   const topSuppliers = useMemo(() => {
-    const map: Record<string, number> = {};
-    requests.forEach(r => {
-      const name = r.supplier || 'Sem fornecedor';
-      map[name] = (map[name] || 0) + Number(r.amount);
-    });
-    expenses.forEach(e => {
-      const name = (e as any).supplier;
-      if (name) map[name] = (map[name] || 0) + Number(e.amount);
-    });
-    return Object.entries(map)
-      .filter(([name]) => name !== 'Sem fornecedor')
-      .map(([name, value]) => ({ name, value }))
+    const map: Record<string, { name: string; value: number }> = {};
+    const add = (rawName: string | undefined | null, amount: number) => {
+      const display = normalizeSupplierName(rawName);
+      if (!display) return;
+      const key = supplierKey(display);
+      if (!map[key]) map[key] = { name: display, value: 0 };
+      map[key].value += amount;
+    };
+    requests.forEach(r => add(r.supplier, Number(r.amount)));
+    expenses.forEach(e => add((e as any).supplier, Number(e.amount)));
+    return Object.values(map)
+      .map(({ name, value }) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 10);
   }, [requests, expenses]);
