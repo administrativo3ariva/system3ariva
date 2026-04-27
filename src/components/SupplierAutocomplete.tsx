@@ -17,8 +17,11 @@ export function SupplierAutocomplete({ value, onChange, onSelectSupplier, placeh
   const [focused, setFocused] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const filtered = value.length >= 2
-    ? suppliers.filter(s => s.name.toLowerCase().includes(value.toLowerCase())).slice(0, 8)
+  const normalizedValue = value.trim().replace(/\s+/g, ' ').toLowerCase();
+  const filtered = normalizedValue.length >= 2
+    ? suppliers
+        .filter(s => s.name.toLowerCase().includes(normalizedValue))
+        .slice(0, 8)
     : [];
 
   useEffect(() => {
