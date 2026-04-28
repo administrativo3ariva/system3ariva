@@ -96,7 +96,14 @@ export default function OperationalBudget() {
               </div>
             </CardHeader>
             <CardContent>
-              <Table>
+              <Table className="table-fixed w-full">
+                <colgroup>
+                  <col style={{ width: '40%' }} />
+                  <col style={{ width: '15%' }} />
+                  <col style={{ width: '15%' }} />
+                  <col style={{ width: '15%' }} />
+                  <col style={{ width: '15%' }} />
+                </colgroup>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Categoria</TableHead>
@@ -113,10 +120,10 @@ export default function OperationalBudget() {
                     const balance = v.budget - v.spent;
                     return (
                       <TableRow key={cat}>
-                        <TableCell>{cat}</TableCell>
-                        <TableCell className="text-right">{fmtBRL(v.budget)}</TableCell>
-                        <TableCell className="text-right">{fmtBRL(v.spent)}</TableCell>
-                        <TableCell className={`text-right ${balance < 0 ? 'text-destructive' : ''}`}>{fmtBRL(balance)}</TableCell>
+                        <TableCell className="truncate">{cat}</TableCell>
+                        <TableCell className="text-right tabular-nums">{fmtBRL(v.budget)}</TableCell>
+                        <TableCell className="text-right tabular-nums">{fmtBRL(v.spent)}</TableCell>
+                        <TableCell className={`text-right tabular-nums ${balance < 0 ? 'text-destructive' : ''}`}>{fmtBRL(balance)}</TableCell>
                         <TableCell className="text-right">
                           {v.budget === 0 ? (
                             v.spent > 0 ? <Badge variant="outline" className="border-warning text-warning">Sem orçamento</Badge> : <Badge variant="outline">—</Badge>
