@@ -138,10 +138,38 @@ export function buildConsumedList(args: {
     });
   });
 
+  if (recurringRuns && recurringTemplates) {
+    const tplMap = new Map(recurringTemplates.map(t => [t.id, t]));
+    recurringRuns.forEach(r => {
+      const tpl = tplMap.get(r.recurring_expense_id);
+      if (!tpl) return;
+      // date reference: paid_date when paid, else due_date, else year-month-01
+      const ref = r.paid && r.paid_date ? r.paid_date : (r.due_date || `${r.year}-${String(r.month).padStart(2, '0')}-01`);
+      const d = new Date(ref);
+      if (d.getFullYear() !== year) return;
+      if (month && d.getMonth() + 1 !== month) return;
+      if (isNonBudgetCategory(tpl.category)) return;
+      list.push({
+        id: `rec::${r.id}`,
+        branch: tpl.branch,
+        macrobloco: tpl.macrobloco || CATEGORY_TO_MACROBLOCO[tpl.category] || '—',
+        category: tpl.category,
+        amount: Number(r.amount) || 0,
+        date: ref,
+        source: 'request',
+        status: r.paid ? 'realizado' : 'comprometido',
+        rawStatus: r.paid ? 'pago' : 'pendente',
+        description: tpl.description,
+        supplier: tpl.supplier ?? null,
+        company: tpl.company ?? null,
+        cost_center: tpl.cost_center ?? null,
+        payment_method: tpl.payment_method ?? 'Recorrência',
+      });
+    });
+  }
+
   return list;
 }
-
-export function getMonthIndex(dateStr: string): number {
   return new Date(dateStr).getMonth();
 }
 
