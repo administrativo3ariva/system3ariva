@@ -13,6 +13,11 @@ import { format, parseISO, isSameMonth, differenceInDays, endOfMonth } from 'dat
 import { ptBR } from 'date-fns/locale';
 import { normalizeSupplierName, supplierKey } from '@/lib/utils';
 import { expandAllocations } from '@/lib/allocation-utils';
+import { CATEGORY_TO_MACROBLOCO } from '@/lib/types';
+
+const EXCLUDED_MACROBLOCO = 'Ocupação e Infraestrutura';
+const isExcludedCategory = (cat?: string | null) =>
+  !!cat && CATEGORY_TO_MACROBLOCO[cat] === EXCLUDED_MACROBLOCO;
 
 const COLORS = [
   'hsl(221, 83%, 53%)', 'hsl(142, 71%, 45%)', 'hsl(38, 92%, 50%)',
