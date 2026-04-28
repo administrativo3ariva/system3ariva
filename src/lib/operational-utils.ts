@@ -56,17 +56,23 @@ function mapRequestStatus(s: string): LaunchStatus {
   return 'comprometido'; // pendente, aprovado, etc.
 }
 
-/** Aggregates corporate-card expenses + payment_requests
+/** Aggregates corporate-card expenses + payment_requests (+ optional recurring runs)
  *  into a unified consumption list filtered by year + optional month.
  *  Entries with `allocations` are exploded into one slice per category, so
- *  rateios are reflected accurately in dashboards and budget consumption. */
+ *  rateios are reflected accurately in dashboards and budget consumption.
+ *  NOTE: `recurringRuns` should ONLY be passed for Operational module screens
+ *  (OperationalBudget / OperationalOverview). Other surfaces (FinancialDashboard,
+ *  Reports, PaymentRequestsList) MUST NOT include them — recurring lives only in
+ *  the Recurring tab and bleeds into Operational budget tracking exclusively. */
 export function buildConsumedList(args: {
   year: number;
   month?: number; // 1-12 optional
   expenses: Array<{ id: string; description: string; amount: number; cost_center: string; category: string; expense_date: string; status: string; supplier?: string | null; company?: string; card_name?: string | null; allocations?: Allocation[] | null | unknown }>;
   payments: Array<{ id: string; description: string; amount: number; cost_center: string; category: string; status: string; payment_date?: string | null; request_date?: string | null; due_date?: string | null; supplier?: string | null; company?: string; payment_method?: string | null; allocations?: Allocation[] | null | unknown }>;
+  recurringRuns?: Array<{ id: string; recurring_expense_id: string; year: number; month: number; paid: boolean; paid_date?: string | null; due_date?: string | null; amount: number }>;
+  recurringTemplates?: Array<{ id: string; branch: string; category: string; macrobloco?: string | null; description: string; supplier?: string | null; company?: string | null; cost_center?: string | null; payment_method?: string | null }>;
 }): ConsumedItem[] {
-  const { year, month, expenses, payments } = args;
+  const { year, month, expenses, payments, recurringRuns, recurringTemplates } = args;
   const list: ConsumedItem[] = [];
 
   expenses.forEach(e => {
