@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useOperationalBudgets } from '@/hooks/use-operational-budgets';
 import { useExpenses } from '@/hooks/use-expenses';
 import { usePaymentRequests } from '@/hooks/use-payment-requests';
+import { useRecurringExpenses, useRecurringExpenseRuns } from '@/hooks/use-recurring-expenses';
 import { ALL_BRANCHES, BRANCH_LABELS, OPERATIONAL_MACROBLOCOS, OPERATIONAL_CATEGORIES_BY_MACROBLOCO, MONTH_LABELS_PT } from '@/lib/types';
 import { buildConsumedList, fmtBRL, sumBudget } from '@/lib/operational-utils';
 
