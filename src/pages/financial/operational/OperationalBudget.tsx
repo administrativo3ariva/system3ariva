@@ -20,12 +20,16 @@ export default function OperationalBudget() {
   const { data: budgets = [] } = useOperationalBudgets(year);
   const { data: expenses = [] } = useExpenses();
   const { data: payments = [] } = usePaymentRequests();
+  const { data: recurringTemplates = [] } = useRecurringExpenses();
+  const { data: recurringRuns = [] } = useRecurringExpenseRuns();
 
   const consumed = useMemo(() => buildConsumedList({
     year, month,
     expenses: expenses as Parameters<typeof buildConsumedList>[0]['expenses'],
     payments: payments as Parameters<typeof buildConsumedList>[0]['payments'],
-  }), [expenses, payments, year, month]);
+    recurringRuns,
+    recurringTemplates,
+  }), [expenses, payments, year, month, recurringRuns, recurringTemplates]);
 
   const branchBudgets = budgets.filter(b => b.branch === branch && b.month === month);
   const branchConsumed = consumed.filter(c => c.branch === branch && c.status === 'realizado');
