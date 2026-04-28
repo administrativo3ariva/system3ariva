@@ -46,13 +46,17 @@ export default function OperationalOverview() {
   const { data: budgets = [] } = useOperationalBudgets(YEAR);
   const { data: expenses = [] } = useExpenses();
   const { data: payments = [] } = usePaymentRequests();
+  const { data: recurringTemplates = [] } = useRecurringExpenses();
+  const { data: recurringRuns = [] } = useRecurringExpenseRuns();
 
   // Year-wide consumed list
   const consumedYear = useMemo(() => buildConsumedList({
     year: YEAR,
     expenses: expenses as Parameters<typeof buildConsumedList>[0]['expenses'],
     payments: payments as Parameters<typeof buildConsumedList>[0]['payments'],
-  }), [expenses, payments]);
+    recurringRuns,
+    recurringTemplates,
+  }), [expenses, payments, recurringRuns, recurringTemplates]);
 
   const budgetsBranch = branchFilter === 'all' ? budgets : budgets.filter(b => b.branch === branchFilter);
   const consumedBranch = branchFilter === 'all' ? consumedYear : consumedYear.filter(c => c.branch === branchFilter);
