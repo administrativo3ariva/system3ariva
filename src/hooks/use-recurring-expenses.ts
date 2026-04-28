@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export type CompanyAllocation = { company: string; amount: number };
+
 export interface RecurringExpense {
   id: string;
   branch: string;
@@ -17,6 +19,7 @@ export interface RecurringExpense {
   payment_method?: string | null;
   active: boolean;
   notes?: string | null;
+  company_allocations?: CompanyAllocation[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -28,6 +31,10 @@ export interface RecurringExpenseRun {
   month: number;
   payment_request_id?: string | null;
   generated_at: string;
+  paid: boolean;
+  paid_date?: string | null;
+  due_date?: string | null;
+  amount: number;
 }
 
 export function useRecurringExpenses() {
@@ -105,12 +112,15 @@ export function useDeleteRecurringExpense() {
   });
 }
 
-/** Generates payment_requests for the given (year, month) for all active templates that haven't been run yet. */
+/**
+ * Generates run rows for the given (year, month) for all active templates that haven't been run yet.
+ * NOTE: As of the new flow, runs are SELF-CONTAINED — no payment_requests are created. The runs
+ * track their own paid status, due_date and amount, and live exclusively inside the Recurring tab.
+ */
 export function useGenerateRecurringMonth() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ year, month }: { year: number; month: number }) => {
-      // Load templates and existing runs
       const [{ data: templates, error: e1 }, { data: existing, error: e2 }] = await Promise.all([
         supabase.from('recurring_expenses' as any).select('*').eq('active', true),
         supabase.from('recurring_expense_runs' as any).select('*').eq('year', year).eq('month', month),
@@ -123,30 +133,9 @@ export function useGenerateRecurringMonth() {
 
       let created = 0;
       for (const t of toGenerate as any[]) {
-        // Resolve due date safely (clamp day to month length)
         const lastDay = new Date(year, month, 0).getDate();
         const day = Math.min(t.due_day || 5, lastDay);
         const dueDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
-        const { data: pr, error: prErr } = await supabase
-          .from('payment_requests')
-          .insert({
-            description: `[Recorrente] ${t.description}`,
-            amount: t.amount,
-            cost_center: t.cost_center,
-            company: t.company,
-            category: t.category,
-            supplier: t.supplier,
-            supplier_id: t.supplier_id,
-            payment_method: t.payment_method,
-            due_date: dueDate,
-            request_date: dueDate,
-            status: 'aprovado',
-            notes: `Gerado automaticamente do template recorrente ${t.id}`,
-          } as any)
-          .select()
-          .single();
-        if (prErr) throw prErr;
 
         const { error: runErr } = await supabase
           .from('recurring_expense_runs' as any)
@@ -154,7 +143,9 @@ export function useGenerateRecurringMonth() {
             recurring_expense_id: t.id,
             year,
             month,
-            payment_request_id: pr.id,
+            due_date: dueDate,
+            amount: t.amount,
+            paid: false,
           } as any);
         if (runErr) throw runErr;
         created++;
@@ -162,10 +153,45 @@ export function useGenerateRecurringMonth() {
       return { created, skipped: (templates?.length || 0) - toGenerate.length };
     },
     onSuccess: ({ created, skipped }) => {
-      qc.invalidateQueries({ queryKey: ['recurring_expenses'] });
       qc.invalidateQueries({ queryKey: ['recurring_expense_runs'] });
-      qc.invalidateQueries({ queryKey: ['payment_requests'] });
       toast.success(`${created} lançamento(s) gerado(s). ${skipped} já existiam.`);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Toggle paid status of a single run (sets/clears paid_date). */
+export function useToggleRunPaid() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, paid }: { id: string; paid: boolean }) => {
+      const { error } = await supabase
+        .from('recurring_expense_runs' as any)
+        .update({
+          paid,
+          paid_date: paid ? new Date().toISOString().slice(0, 10) : null,
+        } as any)
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['recurring_expense_runs'] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+/** Delete a single generated run (revert generation for that month). */
+export function useDeleteRun() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('recurring_expense_runs' as any).delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['recurring_expense_runs'] });
+      toast.success('Lançamento removido');
     },
     onError: (e: Error) => toast.error(e.message),
   });

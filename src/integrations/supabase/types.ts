@@ -571,25 +571,37 @@ export type Database = {
       }
       recurring_expense_runs: {
         Row: {
+          amount: number
+          due_date: string | null
           generated_at: string
           id: string
           month: number
+          paid: boolean
+          paid_date: string | null
           payment_request_id: string | null
           recurring_expense_id: string
           year: number
         }
         Insert: {
+          amount?: number
+          due_date?: string | null
           generated_at?: string
           id?: string
           month: number
+          paid?: boolean
+          paid_date?: string | null
           payment_request_id?: string | null
           recurring_expense_id: string
           year: number
         }
         Update: {
+          amount?: number
+          due_date?: string | null
           generated_at?: string
           id?: string
           month?: number
+          paid?: boolean
+          paid_date?: string | null
           payment_request_id?: string | null
           recurring_expense_id?: string
           year?: number
@@ -611,6 +623,7 @@ export type Database = {
           branch: string
           category: string
           company: string
+          company_allocations: Json | null
           cost_center: string
           created_at: string
           description: string
@@ -629,6 +642,7 @@ export type Database = {
           branch: string
           category: string
           company: string
+          company_allocations?: Json | null
           cost_center: string
           created_at?: string
           description: string
@@ -647,6 +661,7 @@ export type Database = {
           branch?: string
           category?: string
           company?: string
+          company_allocations?: Json | null
           cost_center?: string
           created_at?: string
           description?: string
