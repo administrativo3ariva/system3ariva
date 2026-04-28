@@ -56,17 +56,23 @@ function mapRequestStatus(s: string): LaunchStatus {
   return 'comprometido'; // pendente, aprovado, etc.
 }
 
-/** Aggregates corporate-card expenses + payment_requests
+/** Aggregates corporate-card expenses + payment_requests (+ optional recurring runs)
  *  into a unified consumption list filtered by year + optional month.
  *  Entries with `allocations` are exploded into one slice per category, so
- *  rateios are reflected accurately in dashboards and budget consumption. */
+ *  rateios are reflected accurately in dashboards and budget consumption.
+ *  NOTE: `recurringRuns` should ONLY be passed for Operational module screens
+ *  (OperationalBudget / OperationalOverview). Other surfaces (FinancialDashboard,
+ *  Reports, PaymentRequestsList) MUST NOT include them — recurring lives only in
+ *  the Recurring tab and bleeds into Operational budget tracking exclusively. */
 export function buildConsumedList(args: {
   year: number;
   month?: number; // 1-12 optional
   expenses: Array<{ id: string; description: string; amount: number; cost_center: string; category: string; expense_date: string; status: string; supplier?: string | null; company?: string; card_name?: string | null; allocations?: Allocation[] | null | unknown }>;
   payments: Array<{ id: string; description: string; amount: number; cost_center: string; category: string; status: string; payment_date?: string | null; request_date?: string | null; due_date?: string | null; supplier?: string | null; company?: string; payment_method?: string | null; allocations?: Allocation[] | null | unknown }>;
+  recurringRuns?: Array<{ id: string; recurring_expense_id: string; year: number; month: number; paid: boolean; paid_date?: string | null; due_date?: string | null; amount: number }>;
+  recurringTemplates?: Array<{ id: string; branch: string; category: string; macrobloco?: string | null; description: string; supplier?: string | null; company?: string | null; cost_center?: string | null; payment_method?: string | null }>;
 }): ConsumedItem[] {
-  const { year, month, expenses, payments } = args;
+  const { year, month, expenses, payments, recurringRuns, recurringTemplates } = args;
   const list: ConsumedItem[] = [];
 
   expenses.forEach(e => {
@@ -131,6 +137,36 @@ export function buildConsumedList(args: {
       });
     });
   });
+
+  if (recurringRuns && recurringTemplates) {
+    const tplMap = new Map(recurringTemplates.map(t => [t.id, t]));
+    recurringRuns.forEach(r => {
+      const tpl = tplMap.get(r.recurring_expense_id);
+      if (!tpl) return;
+      // date reference: paid_date when paid, else due_date, else year-month-01
+      const ref = r.paid && r.paid_date ? r.paid_date : (r.due_date || `${r.year}-${String(r.month).padStart(2, '0')}-01`);
+      const d = new Date(ref);
+      if (d.getFullYear() !== year) return;
+      if (month && d.getMonth() + 1 !== month) return;
+      if (isNonBudgetCategory(tpl.category)) return;
+      list.push({
+        id: `rec::${r.id}`,
+        branch: tpl.branch,
+        macrobloco: tpl.macrobloco || CATEGORY_TO_MACROBLOCO[tpl.category] || '—',
+        category: tpl.category,
+        amount: Number(r.amount) || 0,
+        date: ref,
+        source: 'request',
+        status: r.paid ? 'realizado' : 'comprometido',
+        rawStatus: r.paid ? 'pago' : 'pendente',
+        description: tpl.description,
+        supplier: tpl.supplier ?? null,
+        company: tpl.company ?? null,
+        cost_center: tpl.cost_center ?? null,
+        payment_method: tpl.payment_method ?? 'Recorrência',
+      });
+    });
+  }
 
   return list;
 }

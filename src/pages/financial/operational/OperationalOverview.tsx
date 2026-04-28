@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useOperationalBudgets } from '@/hooks/use-operational-budgets';
 import { useExpenses } from '@/hooks/use-expenses';
 import { usePaymentRequests } from '@/hooks/use-payment-requests';
+import { useRecurringExpenses, useRecurringExpenseRuns } from '@/hooks/use-recurring-expenses';
 import { ALL_BRANCHES, BRANCH_LABELS, OPERATIONAL_MACROBLOCOS, MONTH_LABELS_PT } from '@/lib/types';
 import { buildConsumedList, fmtBRL, fmtBRLk, sumBudget, COMMITTED_MACROBLOCO } from '@/lib/operational-utils';
 import { AlertTriangle, TrendingUp, Wallet, CircleDollarSign, AlertCircle, Receipt, Lock, CreditCard, FileText } from 'lucide-react';
@@ -45,13 +46,17 @@ export default function OperationalOverview() {
   const { data: budgets = [] } = useOperationalBudgets(YEAR);
   const { data: expenses = [] } = useExpenses();
   const { data: payments = [] } = usePaymentRequests();
+  const { data: recurringTemplates = [] } = useRecurringExpenses();
+  const { data: recurringRuns = [] } = useRecurringExpenseRuns();
 
   // Year-wide consumed list
   const consumedYear = useMemo(() => buildConsumedList({
     year: YEAR,
     expenses: expenses as Parameters<typeof buildConsumedList>[0]['expenses'],
     payments: payments as Parameters<typeof buildConsumedList>[0]['payments'],
-  }), [expenses, payments]);
+    recurringRuns,
+    recurringTemplates,
+  }), [expenses, payments, recurringRuns, recurringTemplates]);
 
   const budgetsBranch = branchFilter === 'all' ? budgets : budgets.filter(b => b.branch === branchFilter);
   const consumedBranch = branchFilter === 'all' ? consumedYear : consumedYear.filter(c => c.branch === branchFilter);

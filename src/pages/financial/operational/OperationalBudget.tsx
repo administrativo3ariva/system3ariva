@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { useOperationalBudgets } from '@/hooks/use-operational-budgets';
 import { useExpenses } from '@/hooks/use-expenses';
 import { usePaymentRequests } from '@/hooks/use-payment-requests';
+import { useRecurringExpenses, useRecurringExpenseRuns } from '@/hooks/use-recurring-expenses';
 import { ALL_BRANCHES, BRANCH_LABELS, OPERATIONAL_MACROBLOCOS, OPERATIONAL_CATEGORIES_BY_MACROBLOCO, MONTH_LABELS_PT } from '@/lib/types';
 import { buildConsumedList, fmtBRL, sumBudget } from '@/lib/operational-utils';
 
@@ -19,12 +20,16 @@ export default function OperationalBudget() {
   const { data: budgets = [] } = useOperationalBudgets(year);
   const { data: expenses = [] } = useExpenses();
   const { data: payments = [] } = usePaymentRequests();
+  const { data: recurringTemplates = [] } = useRecurringExpenses();
+  const { data: recurringRuns = [] } = useRecurringExpenseRuns();
 
   const consumed = useMemo(() => buildConsumedList({
     year, month,
     expenses: expenses as Parameters<typeof buildConsumedList>[0]['expenses'],
     payments: payments as Parameters<typeof buildConsumedList>[0]['payments'],
-  }), [expenses, payments, year, month]);
+    recurringRuns,
+    recurringTemplates,
+  }), [expenses, payments, year, month, recurringRuns, recurringTemplates]);
 
   const branchBudgets = budgets.filter(b => b.branch === branch && b.month === month);
   const branchConsumed = consumed.filter(c => c.branch === branch && c.status === 'realizado');
@@ -91,7 +96,14 @@ export default function OperationalBudget() {
               </div>
             </CardHeader>
             <CardContent>
-              <Table>
+              <Table className="table-fixed w-full">
+                <colgroup>
+                  <col style={{ width: '40%' }} />
+                  <col style={{ width: '15%' }} />
+                  <col style={{ width: '15%' }} />
+                  <col style={{ width: '15%' }} />
+                  <col style={{ width: '15%' }} />
+                </colgroup>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Categoria</TableHead>
@@ -108,10 +120,10 @@ export default function OperationalBudget() {
                     const balance = v.budget - v.spent;
                     return (
                       <TableRow key={cat}>
-                        <TableCell>{cat}</TableCell>
-                        <TableCell className="text-right">{fmtBRL(v.budget)}</TableCell>
-                        <TableCell className="text-right">{fmtBRL(v.spent)}</TableCell>
-                        <TableCell className={`text-right ${balance < 0 ? 'text-destructive' : ''}`}>{fmtBRL(balance)}</TableCell>
+                        <TableCell className="truncate">{cat}</TableCell>
+                        <TableCell className="text-right tabular-nums">{fmtBRL(v.budget)}</TableCell>
+                        <TableCell className="text-right tabular-nums">{fmtBRL(v.spent)}</TableCell>
+                        <TableCell className={`text-right tabular-nums ${balance < 0 ? 'text-destructive' : ''}`}>{fmtBRL(balance)}</TableCell>
                         <TableCell className="text-right">
                           {v.budget === 0 ? (
                             v.spent > 0 ? <Badge variant="outline" className="border-warning text-warning">Sem orçamento</Badge> : <Badge variant="outline">—</Badge>
