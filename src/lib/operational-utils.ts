@@ -170,6 +170,8 @@ export function buildConsumedList(args: {
 
   return list;
 }
+
+export function getMonthIndex(dateStr: string): number {
   return new Date(dateStr).getMonth();
 }
 
