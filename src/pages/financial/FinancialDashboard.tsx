@@ -112,8 +112,34 @@ export default function FinancialDashboard() {
 
   // Filtrar apenas dados a partir de Janeiro/2026
   const cutoffDate = '2026-01-01';
-  const expenses = useMemo(() => allExpenses.filter(e => e.expense_date >= cutoffDate), [allExpenses]);
-  const requests = useMemo(() => allRequests.filter(r => (r.request_date || r.created_at) >= cutoffDate), [allRequests]);
+  // Remove lançamentos/fatias do macrobloco "Ocupação e Infraestrutura".
+  // Para rateios mistos, mantém o lançamento mas com amount reduzido às fatias permitidas.
+  const stripExcluded = <T extends { amount: number | string; category?: string | null; allocations?: any }>(rows: T[]): T[] => {
+    const out: T[] = [];
+    rows.forEach(r => {
+      const slices = expandAllocations(r as any);
+      const kept = slices.filter(s => !isExcludedCategory(s.category));
+      if (kept.length === 0) return;
+      const keptTotal = kept.reduce((s, x) => s + x.amount, 0);
+      const originalTotal = slices.reduce((s, x) => s + x.amount, 0);
+      if (kept.length === slices.length || keptTotal === originalTotal) {
+        out.push(r);
+      } else {
+        // Reconstruir allocations apenas com as fatias mantidas
+        const newAllocations = kept.map(k => ({ category: k.category, amount: k.amount }));
+        out.push({ ...r, amount: keptTotal, allocations: newAllocations } as T);
+      }
+    });
+    return out;
+  };
+  const expenses = useMemo(
+    () => stripExcluded(allExpenses.filter(e => e.expense_date >= cutoffDate)),
+    [allExpenses]
+  );
+  const requests = useMemo(
+    () => stripExcluded(allRequests.filter(r => (r.request_date || r.created_at) >= cutoffDate)),
+    [allRequests]
+  );
 
   const totalExpenses = expenses.reduce((s, e) => s + Number(e.amount), 0);
   const totalRequests = requests.reduce((s, r) => s + Number(r.amount), 0);
