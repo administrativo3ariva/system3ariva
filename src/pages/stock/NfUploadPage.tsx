@@ -252,9 +252,31 @@ export default function NfUploadPage() {
                     <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="truncate max-w-[220px]">{nf.file_name}</span>
                     {nf.file_url && (
-                      <a href={nf.file_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            const res = await fetch(nf.file_url!);
+                            const blob = await res.blob();
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = nf.file_name;
+                            a.target = '_blank';
+                            a.rel = 'noopener noreferrer';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            setTimeout(() => URL.revokeObjectURL(url), 1000);
+                          } catch {
+                            window.open(nf.file_url!, '_blank', 'noopener,noreferrer');
+                          }
+                        }}
+                        title={`Abrir ${nf.file_name}`}
+                      >
                         <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                      </a>
+                      </button>
                     )}
                   </div>
                 </TableCell>
