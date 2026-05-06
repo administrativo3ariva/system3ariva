@@ -70,6 +70,34 @@ function isImage(url: string) {
   }
 }
 
+function getOriginalFileName(url: string, fallback: string) {
+  try {
+    const pathname = new URL(url).pathname;
+    const last = decodeURIComponent(pathname.split('/').pop() || '');
+    return last || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+async function downloadWithOriginalName(url: string, fallback: string) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('fetch failed');
+    const blob = await res.blob();
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objUrl;
+    a.download = getOriginalFileName(url, fallback);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
+  } catch {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+}
+
 function openUrl(url: string) {
   window.open(url, '_blank', 'noopener,noreferrer');
 }
