@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, TrendingUp, TrendingDown, RefreshCw, Eye, Pencil, Trash2, Calendar, Package, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { Plus, TrendingUp, TrendingDown, RefreshCw, Eye, Pencil, Trash2, Calendar, Package, ArrowUpCircle, ArrowDownCircle, Layers, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useProducts, useAddProduct } from '@/hooks/use-products';
 import { useMovements, useAddMovement, useUpdateMovement, useDeleteMovement, DbMovement } from '@/hooks/use-movements';
