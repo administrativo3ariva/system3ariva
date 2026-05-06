@@ -68,6 +68,17 @@ export default function StockMovements() {
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  // Bulk movement state
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [bulkForm, setBulkForm] = useState({
+    type: 'entrada' as 'entrada' | 'saida' | 'ajuste',
+    responsible: '', notes: '', floor: '', sala: '',
+  });
+  const [bulkItems, setBulkItems] = useState<Array<{ productId: string; quantity: string }>>([
+    { productId: '', quantity: '' },
+  ]);
+  const [bulkProductSearch, setBulkProductSearch] = useState('');
+
   const activeCollabs = collaborators.filter(c => c.active);
   const filtered = filterType === 'all' ? movements : movements.filter(m => m.type === filterType);
 
