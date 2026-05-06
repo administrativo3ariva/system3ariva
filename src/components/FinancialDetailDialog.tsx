@@ -70,6 +70,34 @@ function isImage(url: string) {
   }
 }
 
+function getOriginalFileName(url: string, fallback: string) {
+  try {
+    const pathname = new URL(url).pathname;
+    const last = decodeURIComponent(pathname.split('/').pop() || '');
+    return last || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+async function downloadWithOriginalName(url: string, fallback: string) {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('fetch failed');
+    const blob = await res.blob();
+    const objUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objUrl;
+    a.download = getOriginalFileName(url, fallback);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
+  } catch {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+}
+
 function openUrl(url: string) {
   window.open(url, '_blank', 'noopener,noreferrer');
 }
@@ -228,14 +256,23 @@ export function FinancialDetailDialog({
                         </div>
                       </a>
                     )}
-                    <a
-                      href={att.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-1.5 w-full rounded-none border-t text-xs h-8 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors no-underline"
-                    >
-                      Abrir em nova aba <ExternalLink className="h-3 w-3" />
-                    </a>
+                    <div className="flex border-t">
+                      <a
+                        href={att.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center gap-1.5 text-xs h-8 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors no-underline"
+                      >
+                        Abrir <ExternalLink className="h-3 w-3" />
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => downloadWithOriginalName(att.url, att.label)}
+                        className="flex-1 flex items-center justify-center gap-1.5 text-xs h-8 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors border-l"
+                      >
+                        Baixar <Download className="h-3 w-3" />
+                      </button>
+                    </div>
                   </div>
                 );
               })}
