@@ -102,6 +102,7 @@ export default function NfUploadPage() {
         (previewNf.nf_items || []).map(item => ({ ...item, category: item.category || '' }))
       );
       setFinancialLink('');
+      setSelectedIndices(new Set());
     }
   }, [previewNf]);
 
