@@ -784,40 +784,99 @@ export default function StockMovements() {
                 />
               </div>
 
-              <div className="space-y-2 max-h-[280px] overflow-y-auto rounded-md border p-2">
+              <div className="space-y-2 max-h-[320px] overflow-y-auto rounded-md border p-2">
                 {bulkItems.map((item, idx) => {
                   const filteredProducts = products.filter(p =>
                     !bulkProductSearch || p.name.toLowerCase().includes(bulkProductSearch.toLowerCase())
                   );
+                  const selectedProduct = products.find(p => p.id === item.productId);
+                  const uom = selectedProduct?.unit_of_measure || 'UN';
+                  const currentQty = selectedProduct ? Number(selectedProduct.quantity) : 0;
+                  const formatStock = (n: number) => uom === 'KG' ? n.toFixed(3) : (Number.isInteger(n) ? String(n) : n.toFixed(2));
+                  const step = uom === 'KG' ? 0.001 : 1;
+                  const isAddOp = bulkForm.type === 'entrada';
+                  const opSign = bulkForm.type === 'entrada' ? '+' : bulkForm.type === 'saida' ? '−' : '±';
+                  const opColor = bulkForm.type === 'entrada' ? 'text-emerald-600 dark:text-emerald-400' : bulkForm.type === 'saida' ? 'text-red-500 dark:text-red-400' : 'text-blue-500 dark:text-blue-400';
+                  const adjust = (delta: number) => {
+                    setBulkItems(prev => prev.map((it, i) => {
+                      if (i !== idx) return it;
+                      const cur = parseFloat(it.quantity) || 0;
+                      const next = Math.max(0, +(cur + delta).toFixed(3));
+                      return { ...it, quantity: String(next) };
+                    }));
+                  };
                   return (
-                    <div key={idx} className="grid grid-cols-[1fr_110px_36px] gap-2 items-center">
-                      <Select
-                        value={item.productId || undefined}
-                        onValueChange={v => setBulkItems(prev => prev.map((it, i) => i === idx ? { ...it, productId: v } : it))}
-                      >
-                        <SelectTrigger className="h-9"><SelectValue placeholder="Selecione o produto" /></SelectTrigger>
-                        <SelectContent>
-                          {filteredProducts.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        type="number"
-                        step="0.001"
-                        placeholder="Qtd"
-                        value={item.quantity}
-                        onChange={e => setBulkItems(prev => prev.map((it, i) => i === idx ? { ...it, quantity: e.target.value } : it))}
-                        className="h-9"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 text-destructive"
-                        onClick={() => setBulkItems(prev => prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev)}
-                        disabled={bulkItems.length === 1}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+                    <div key={idx} className="rounded-md border bg-muted/20 p-2 space-y-1.5">
+                      <div className="grid grid-cols-[1fr_36px] gap-2 items-center">
+                        <Select
+                          value={item.productId || undefined}
+                          onValueChange={v => setBulkItems(prev => prev.map((it, i) => i === idx ? { ...it, productId: v } : it))}
+                        >
+                          <SelectTrigger className="h-9"><SelectValue placeholder="Selecione o produto" /></SelectTrigger>
+                          <SelectContent>
+                            {filteredProducts.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-destructive"
+                          onClick={() => setBulkItems(prev => prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev)}
+                          disabled={bulkItems.length === 1}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {selectedProduct && (
+                        <div className="flex items-center justify-between gap-2 pl-1">
+                          <div className="text-xs text-muted-foreground">
+                            Estoque atual: <span className="font-semibold text-foreground">{formatStock(currentQty)} {uom}</span>
+                            {item.quantity && parseFloat(item.quantity) > 0 && (
+                              <>
+                                {' → '}
+                                <span className={cn("font-semibold", opColor)}>
+                                  {isAddOp
+                                    ? formatStock(currentQty + parseFloat(item.quantity))
+                                    : bulkForm.type === 'saida'
+                                      ? formatStock(currentQty - parseFloat(item.quantity))
+                                      : formatStock(parseFloat(item.quantity))}
+                                  {' '}{uom}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => adjust(-step)} disabled={!item.quantity || parseFloat(item.quantity) <= 0}>
+                              <span className="text-base font-semibold">−</span>
+                            </Button>
+                            <div className="relative">
+                              <Input
+                                type="number"
+                                step={step}
+                                placeholder="0"
+                                value={item.quantity}
+                                onChange={e => setBulkItems(prev => prev.map((it, i) => i === idx ? { ...it, quantity: e.target.value } : it))}
+                                className={cn("h-8 w-24 text-center font-semibold", opColor)}
+                              />
+                              <span className={cn("absolute left-2 top-1/2 -translate-y-1/2 text-xs font-bold pointer-events-none", opColor)}>{opSign}</span>
+                            </div>
+                            <Button type="button" variant="outline" size="icon" className="h-8 w-8" onClick={() => adjust(step)}>
+                              <span className="text-base font-semibold">+</span>
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      {!selectedProduct && (
+                        <Input
+                          type="number"
+                          step="0.001"
+                          placeholder="Quantidade"
+                          value={item.quantity}
+                          onChange={e => setBulkItems(prev => prev.map((it, i) => i === idx ? { ...it, quantity: e.target.value } : it))}
+                          className="h-8"
+                        />
+                      )}
                     </div>
                   );
                 })}
