@@ -724,6 +724,125 @@ export default function StockMovements() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bulk Movement Dialog */}
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display">Movimentação em Lote</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-2">
+            {/* Shared fields */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <Label>Tipo</Label>
+                <Select value={bulkForm.type} onValueChange={v => setBulkForm(f => ({ ...f, type: v as any }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="entrada">Entrada</SelectItem>
+                    <SelectItem value="saida">Saída</SelectItem>
+                    <SelectItem value="ajuste">Ajuste</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {bulkForm.type === 'saida' && (
+                <div className="grid gap-2">
+                  <Label>Responsável pela Retirada</Label>
+                  <Select value={bulkForm.responsible || undefined} onValueChange={v => setBulkForm(f => ({ ...f, responsible: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>{activeCollabs.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            {selectedBranch === 'BH-Matriz' && (
+              <FloorPicker
+                value={bulkForm.floor}
+                onChange={v => setBulkForm(f => ({ ...f, floor: v, sala: '' }))}
+                sala={bulkForm.sala}
+                onSalaChange={v => setBulkForm(f => ({ ...f, sala: v }))}
+              />
+            )}
+
+            <div className="grid gap-2">
+              <Label>Observações (aplicadas a todos os itens)</Label>
+              <Textarea value={bulkForm.notes} onChange={e => setBulkForm(f => ({ ...f, notes: e.target.value }))} rows={2} />
+            </div>
+
+            <Separator />
+
+            {/* Items list */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Produtos ({bulkItems.length})</Label>
+                <Input
+                  placeholder="Filtrar produtos..."
+                  value={bulkProductSearch}
+                  onChange={e => setBulkProductSearch(e.target.value)}
+                  className="h-8 w-56"
+                />
+              </div>
+
+              <div className="space-y-2 max-h-[280px] overflow-y-auto rounded-md border p-2">
+                {bulkItems.map((item, idx) => {
+                  const filteredProducts = products.filter(p =>
+                    !bulkProductSearch || p.name.toLowerCase().includes(bulkProductSearch.toLowerCase())
+                  );
+                  return (
+                    <div key={idx} className="grid grid-cols-[1fr_110px_36px] gap-2 items-center">
+                      <Select
+                        value={item.productId || undefined}
+                        onValueChange={v => setBulkItems(prev => prev.map((it, i) => i === idx ? { ...it, productId: v } : it))}
+                      >
+                        <SelectTrigger className="h-9"><SelectValue placeholder="Selecione o produto" /></SelectTrigger>
+                        <SelectContent>
+                          {filteredProducts.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="number"
+                        step="0.001"
+                        placeholder="Qtd"
+                        value={item.quantity}
+                        onChange={e => setBulkItems(prev => prev.map((it, i) => i === idx ? { ...it, quantity: e.target.value } : it))}
+                        className="h-9"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 text-destructive"
+                        onClick={() => setBulkItems(prev => prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev)}
+                        disabled={bulkItems.length === 1}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setBulkItems(prev => [...prev, { productId: '', quantity: '' }])}
+              >
+                <Plus className="h-4 w-4 mr-1" /> Adicionar produto
+              </Button>
+            </div>
+
+            <Button
+              onClick={handleBulkAdd}
+              disabled={addMovement.isPending}
+              className="bg-accent text-accent-foreground hover:bg-accent/90"
+            >
+              {addMovement.isPending ? 'Registrando...' : `Registrar ${bulkItems.filter(i => i.productId && parseFloat(i.quantity) > 0).length} movimentação(ões)`}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
