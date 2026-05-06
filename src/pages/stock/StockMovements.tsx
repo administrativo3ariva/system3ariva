@@ -416,6 +416,9 @@ export default function StockMovements() {
               <SelectItem value="ajuste">Ajustes</SelectItem>
             </SelectContent>
           </Select>
+          <Button variant="outline" onClick={() => setBulkOpen(true)}>
+            <Layers className="h-4 w-4 mr-2" /> Movimentar em Lote
+          </Button>
           <Dialog open={dialogOpen} onOpenChange={o => { setDialogOpen(o); if (!o) setIsNewProduct(false); }}>
             <DialogTrigger asChild>
               <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
