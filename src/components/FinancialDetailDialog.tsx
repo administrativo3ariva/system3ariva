@@ -21,6 +21,7 @@ interface FinancialDetailDialogProps {
   paymentLabel?: string;
   fields: DetailField[];
   receiptUrl?: string | null;
+  boletoUrl?: string | null;
   notes?: string | null;
   installmentInfo?: string | null;
   /** Primary category — used to compute allocation breakdown when allocations exist. */
