@@ -224,6 +224,41 @@ export default function StockMovements() {
     deleteMovement.mutate(deleteId, { onSuccess: () => setDeleteId(null) });
   };
 
+  const handleBulkAdd = async () => {
+    const valid = bulkItems.filter(it => it.productId && (parseFloat(it.quantity) || 0) > 0);
+    if (valid.length === 0) { toast.error('Adicione ao menos um produto com quantidade'); return; }
+    if (bulkForm.type === 'saida' && !bulkForm.responsible) { toast.error('Selecione o responsável pela retirada'); return; }
+
+    let finalNotes = bulkForm.notes || '';
+    if (selectedBranch === 'BH-Matriz' && bulkForm.floor === '8º andar' && bulkForm.sala) {
+      const salaNote = `Sala ${bulkForm.sala}`;
+      finalNotes = finalNotes ? `${salaNote} | ${finalNotes}` : salaNote;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    let success = 0;
+    for (const it of valid) {
+      const product = products.find(p => p.id === it.productId);
+      if (!product) continue;
+      try {
+        await new Promise<void>((resolve, reject) => {
+          addMovement.mutate({
+            product_id: product.id, product_name: product.name, type: bulkForm.type,
+            quantity: parseFloat(it.quantity) || 0, date: today, user: 'Admin',
+            responsible: bulkForm.type === 'saida' ? bulkForm.responsible : null,
+            notes: finalNotes || null, unit: selectedBranch,
+            floor: selectedBranch === 'BH-Matriz' ? (bulkForm.floor || null) : null,
+            unit_of_measure: product.unit_of_measure || 'UN',
+          }, { onSuccess: () => { success++; resolve(); }, onError: () => reject() });
+        });
+      } catch { /* skip */ }
+    }
+    if (success > 0) toast.success(`${success} movimentação(ões) registrada(s)`);
+    setBulkItems([{ productId: '', quantity: '' }]);
+    setBulkForm({ type: 'entrada', responsible: '', notes: '', floor: '', sala: '' });
+    setBulkOpen(false);
+  };
+
   const typeIcon = (t: string) => {
     if (t === 'entrada') return <TrendingUp className="h-3.5 w-3.5" />;
     if (t === 'saida') return <TrendingDown className="h-3.5 w-3.5" />;
