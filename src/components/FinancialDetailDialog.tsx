@@ -21,6 +21,7 @@ interface FinancialDetailDialogProps {
   paymentLabel?: string;
   fields: DetailField[];
   receiptUrl?: string | null;
+  boletoUrl?: string | null;
   notes?: string | null;
   installmentInfo?: string | null;
   /** Primary category — used to compute allocation breakdown when allocations exist. */
@@ -75,7 +76,7 @@ function openUrl(url: string) {
 
 export function FinancialDetailDialog({
   open, onOpenChange, title, status, amount, paymentLabel,
-  fields, receiptUrl, notes, installmentInfo,
+  fields, receiptUrl, boletoUrl, notes, installmentInfo,
   primaryCategory, allocations,
 }: FinancialDetailDialogProps) {
   const PaymentIcon = paymentLabel ? (paymentIcons[paymentLabel.toLowerCase()] || CreditCard) : CreditCard;
@@ -87,8 +88,9 @@ export function FinancialDetailDialog({
     : [];
   const isRateado = slices.length > 1;
 
-  const receiptIsPdf = receiptUrl ? isPdf(receiptUrl) : false;
-  const receiptIsImage = receiptUrl ? isImage(receiptUrl) : false;
+  const attachments: Array<{ url: string; label: string }> = [];
+  if (boletoUrl) attachments.push({ url: boletoUrl, label: 'Boleto' });
+  if (receiptUrl && receiptUrl !== boletoUrl) attachments.push({ url: receiptUrl, label: 'Comprovante / NF' });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -189,45 +191,54 @@ export function FinancialDetailDialog({
             </div>
           </div>
 
-          {/* Right: Receipt preview */}
-          {receiptUrl && (
-            <div className="w-[220px] shrink-0">
-              <div className="rounded-lg border overflow-hidden h-full flex flex-col">
-             {receiptIsImage ? (
-                  <a href={receiptUrl} target="_blank" rel="noopener noreferrer">
-                    <img
-                      src={receiptUrl}
-                      alt="Comprovante"
-                      className="w-full object-contain cursor-pointer"
-                    />
-                  </a>
-                ) : (
-                  <a
-                    href={receiptUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 min-h-[200px] flex flex-col items-center justify-center gap-3 bg-muted/20 p-4 cursor-pointer hover:bg-muted/40 transition-colors no-underline"
-                  >
-                    <div className="rounded-full bg-primary/10 p-4">
-                      <FileText className="h-8 w-8 text-primary" />
+          {/* Right: Attachments preview (Boleto + Comprovante) */}
+          {attachments.length > 0 && (
+            <div className="w-[220px] shrink-0 space-y-3">
+              {attachments.map((att) => {
+                const attIsPdf = isPdf(att.url);
+                const attIsImage = isImage(att.url);
+                return (
+                  <div key={att.url} className="rounded-lg border overflow-hidden flex flex-col">
+                    <div className="px-3 py-1.5 border-b bg-muted/30 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {att.label}
                     </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium text-foreground">
-                        {receiptIsPdf ? 'Documento PDF' : 'Comprovante'}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">Clique para visualizar</p>
-                    </div>
-                  </a>
-                )}
-                <a
-                  href={receiptUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 w-full rounded-none border-t text-xs h-9 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors no-underline"
-                >
-                  Abrir em nova aba <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
+                    {attIsImage ? (
+                      <a href={att.url} target="_blank" rel="noopener noreferrer">
+                        <img
+                          src={att.url}
+                          alt={att.label}
+                          className="w-full object-contain cursor-pointer"
+                        />
+                      </a>
+                    ) : (
+                      <a
+                        href={att.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 min-h-[160px] flex flex-col items-center justify-center gap-2 bg-muted/20 p-4 cursor-pointer hover:bg-muted/40 transition-colors no-underline"
+                      >
+                        <div className="rounded-full bg-primary/10 p-3">
+                          <FileText className="h-6 w-6 text-primary" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs font-medium text-foreground">
+                            {attIsPdf ? 'Documento PDF' : 'Arquivo'}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">Clique para visualizar</p>
+                        </div>
+                      </a>
+                    )}
+                    <a
+                      href={att.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-1.5 w-full rounded-none border-t text-xs h-8 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors no-underline"
+                    >
+                      Abrir em nova aba <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

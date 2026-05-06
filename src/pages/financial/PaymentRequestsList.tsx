@@ -261,7 +261,8 @@ export default function PaymentRequestsList() {
             { label: 'Agência', value: viewItem.bank_agency },
             { label: 'Conta', value: viewItem.bank_account },
           ]}
-          receiptUrl={viewItem.receipt_url || viewItem.boleto_url}
+          receiptUrl={viewItem.receipt_url}
+          boletoUrl={viewItem.boleto_url}
           notes={viewItem.notes}
           primaryCategory={viewItem.category}
           allocations={viewItem.allocations}

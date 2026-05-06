@@ -188,8 +188,9 @@ export default function ExpenseForm() {
 
     if (receiptFile) {
       setUploading(true);
-      const ext = receiptFile.name.split('.').pop();
-      const path = `receipts/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const safeName = receiptFile.name.replace(/[^\w.\-() ]+/g, '_');
+      const folder = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const path = `receipts/${folder}/${safeName}`;
       const { error: uploadError } = await supabase.storage.from('nf-files').upload(path, receiptFile);
       if (uploadError) {
         toast.error('Erro ao enviar comprovante: ' + uploadError.message);
