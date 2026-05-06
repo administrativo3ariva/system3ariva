@@ -76,7 +76,7 @@ function openUrl(url: string) {
 
 export function FinancialDetailDialog({
   open, onOpenChange, title, status, amount, paymentLabel,
-  fields, receiptUrl, notes, installmentInfo,
+  fields, receiptUrl, boletoUrl, notes, installmentInfo,
   primaryCategory, allocations,
 }: FinancialDetailDialogProps) {
   const PaymentIcon = paymentLabel ? (paymentIcons[paymentLabel.toLowerCase()] || CreditCard) : CreditCard;
@@ -88,8 +88,9 @@ export function FinancialDetailDialog({
     : [];
   const isRateado = slices.length > 1;
 
-  const receiptIsPdf = receiptUrl ? isPdf(receiptUrl) : false;
-  const receiptIsImage = receiptUrl ? isImage(receiptUrl) : false;
+  const attachments: Array<{ url: string; label: string }> = [];
+  if (boletoUrl) attachments.push({ url: boletoUrl, label: 'Boleto' });
+  if (receiptUrl && receiptUrl !== boletoUrl) attachments.push({ url: receiptUrl, label: 'Comprovante / NF' });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
