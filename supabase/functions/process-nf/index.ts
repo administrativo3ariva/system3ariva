@@ -347,7 +347,9 @@ serve(async (req) => {
     }
 
     if (!fileUrl && fileBytes) {
-      const storagePath = `${crypto.randomUUID()}-${sanitizeStorageFileName(originalFileName)}`;
+      // Place the file inside a unique subfolder so the URL preserves the
+      // user's original (sanitized) filename as the last path segment.
+      const storagePath = `${crypto.randomUUID()}/${sanitizeStorageFileName(originalFileName)}`;
       const { error: uploadError } = await supabaseAdmin.storage
         .from("nf-files")
         .upload(storagePath, fileBytes, {
