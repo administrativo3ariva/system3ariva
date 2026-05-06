@@ -540,12 +540,33 @@ export default function NfUploadPage() {
               })()}
 
               <div>
-                <Label className="text-muted-foreground text-xs mb-2 block flex items-center gap-1">
-                  <Pencil className="h-3 w-3" /> Itens Extraídos via IA <span className="text-muted-foreground/60">(editável)</span>
-                </Label>
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <Label className="text-muted-foreground text-xs flex items-center gap-1">
+                    <Pencil className="h-3 w-3" /> Itens Extraídos via IA <span className="text-muted-foreground/60">(editável)</span>
+                  </Label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={selectedIndices.size < 2}
+                    onClick={() => { setMergeName(''); setMergeOpen(true); }}
+                  >
+                    Mesclar selecionados ({selectedIndices.size})
+                  </Button>
+                </div>
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[40px] text-center">
+                        <input
+                          type="checkbox"
+                          checked={editedItems.length > 0 && selectedIndices.size === editedItems.length}
+                          onChange={e => {
+                            if (e.target.checked) setSelectedIndices(new Set(editedItems.map((_, i) => i)));
+                            else setSelectedIndices(new Set());
+                          }}
+                        />
+                      </TableHead>
                       <TableHead className="min-w-[220px] text-center">Item</TableHead>
                       <TableHead className="min-w-[150px] text-center">Categoria</TableHead>
                       <TableHead className="min-w-[70px] text-center">Und.</TableHead>
@@ -558,13 +579,20 @@ export default function NfUploadPage() {
                   <TableBody>
                     {editedItems.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center text-muted-foreground">
                           Nenhum item extraído
                         </TableCell>
                       </TableRow>
                     )}
                     {editedItems.map((item, i) => (
-                      <TableRow key={i}>
+                      <TableRow key={i} className={selectedIndices.has(i) ? 'bg-muted/40' : ''}>
+                        <TableCell className="align-middle text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedIndices.has(i)}
+                            onChange={() => toggleSelected(i)}
+                          />
+                        </TableCell>
                         <TableCell className="align-middle">
                           <Input
                             value={item.name}
