@@ -48,7 +48,51 @@ export default function NfUploadPage() {
   const [financialLink, setFinancialLink] = useState<FinancialLinkChoice | ''>('');
   const [dragOver, setDragOver] = useState(false);
   const [pendingApproval, setPendingApproval] = useState<DbNfUpload | null>(null);
+  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const [mergeName, setMergeName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const toggleSelected = (i: number) => {
+    setSelectedIndices(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  };
+
+  const handleMergeSelected = () => {
+    const indices = Array.from(selectedIndices).sort((a, b) => a - b);
+    if (indices.length < 2) {
+      toast.error('Selecione pelo menos 2 itens para mesclar.');
+      return;
+    }
+    const name = mergeName.trim();
+    if (!name) {
+      toast.error('Informe um nome para o conjunto.');
+      return;
+    }
+    const selectedItems = indices.map(i => editedItems[i]);
+    const totalQty = selectedItems.reduce((s, it) => s + Number(it.quantity || 0), 0);
+    const totalPrice = selectedItems.reduce((s, it) => s + Number(it.total_price || 0), 0);
+    const unitPrice = totalQty > 0 ? totalPrice / totalQty : 0;
+    const first = selectedItems[0];
+    const merged: DbNfItem = {
+      ...first,
+      name,
+      quantity: +totalQty.toFixed(3),
+      unit_price: +unitPrice.toFixed(4),
+      total_price: +totalPrice.toFixed(2),
+    };
+    const remaining = editedItems.filter((_, i) => !selectedIndices.has(i));
+    const insertAt = indices[0];
+    const next = [...remaining.slice(0, insertAt), merged, ...remaining.slice(insertAt)];
+    setEditedItems(next);
+    setSelectedIndices(new Set());
+    setMergeName('');
+    setMergeOpen(false);
+    toast.success(`${indices.length} itens mesclados em "${name}".`);
+  };
 
   const allCategories = [...PRODUCT_CATEGORIES, ...customCategories.filter(c => !PRODUCT_CATEGORIES.includes(c))];
 
