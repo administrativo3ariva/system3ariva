@@ -37,12 +37,14 @@ type AiGatewayError = Error & {
 const AI_MODEL = "google/gemini-3-flash-preview";
 
 function sanitizeStorageFileName(fileName: string) {
+  // Preserve spaces, parentheses and common punctuation. Strip diacritics
+  // and only replace characters that are unsafe for storage paths/URLs.
   return fileName
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9._-]/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_+|_+$/g, "") || `nf-${Date.now()}`;
+    .replace(/[\\/?#%&]+/g, "_")
+    .replace(/\s+/g, " ")
+    .trim() || `nf-${Date.now()}`;
 }
 
 function guessFileType(fileName?: string | null) {
