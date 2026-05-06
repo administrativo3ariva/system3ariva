@@ -182,8 +182,11 @@ export default function PaymentRequestForm() {
   }, [form]);
 
   const uploadFile = async (file: File, prefix: string) => {
-    const ext = file.name.split('.').pop();
-    const path = `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    // Preserve the original filename by placing it inside a unique folder.
+    // This way the public URL ends with the user's original file name.
+    const safeName = file.name.replace(/[^\w.\-() ]+/g, '_');
+    const folder = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const path = `${prefix}/${folder}/${safeName}`;
     const { error } = await supabase.storage.from('nf-files').upload(path, file);
     if (error) throw error;
     const { data: urlData } = supabase.storage.from('nf-files').getPublicUrl(path);
