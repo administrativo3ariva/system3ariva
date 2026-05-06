@@ -809,6 +809,33 @@ export default function NfUploadPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={mergeOpen} onOpenChange={setMergeOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Mesclar itens selecionados</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {selectedIndices.size} itens serão combinados em um único item, somando quantidades e valores.
+            </p>
+            <div>
+              <Label className="text-xs">Nome do conjunto</Label>
+              <Input
+                value={mergeName}
+                onChange={e => setMergeName(e.target.value)}
+                placeholder="Ex.: Material de limpeza geral"
+                className="mt-1"
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setMergeOpen(false)}>Cancelar</Button>
+              <Button onClick={handleMergeSelected}>Mesclar</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={!!pendingApproval} onOpenChange={(open) => { if (!open) setPendingApproval(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
