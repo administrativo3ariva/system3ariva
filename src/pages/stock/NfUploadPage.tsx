@@ -48,7 +48,51 @@ export default function NfUploadPage() {
   const [financialLink, setFinancialLink] = useState<FinancialLinkChoice | ''>('');
   const [dragOver, setDragOver] = useState(false);
   const [pendingApproval, setPendingApproval] = useState<DbNfUpload | null>(null);
+  const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const [mergeName, setMergeName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const toggleSelected = (i: number) => {
+    setSelectedIndices(prev => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  };
+
+  const handleMergeSelected = () => {
+    const indices = Array.from(selectedIndices).sort((a, b) => a - b);
+    if (indices.length < 2) {
+      toast.error('Selecione pelo menos 2 itens para mesclar.');
+      return;
+    }
+    const name = mergeName.trim();
+    if (!name) {
+      toast.error('Informe um nome para o conjunto.');
+      return;
+    }
+    const selectedItems = indices.map(i => editedItems[i]);
+    const totalQty = selectedItems.reduce((s, it) => s + Number(it.quantity || 0), 0);
+    const totalPrice = selectedItems.reduce((s, it) => s + Number(it.total_price || 0), 0);
+    const unitPrice = totalQty > 0 ? totalPrice / totalQty : 0;
+    const first = selectedItems[0];
+    const merged: DbNfItem = {
+      ...first,
+      name,
+      quantity: +totalQty.toFixed(3),
+      unit_price: +unitPrice.toFixed(4),
+      total_price: +totalPrice.toFixed(2),
+    };
+    const remaining = editedItems.filter((_, i) => !selectedIndices.has(i));
+    const insertAt = indices[0];
+    const next = [...remaining.slice(0, insertAt), merged, ...remaining.slice(insertAt)];
+    setEditedItems(next);
+    setSelectedIndices(new Set());
+    setMergeName('');
+    setMergeOpen(false);
+    toast.success(`${indices.length} itens mesclados em "${name}".`);
+  };
 
   const allCategories = [...PRODUCT_CATEGORIES, ...customCategories.filter(c => !PRODUCT_CATEGORIES.includes(c))];
 
@@ -58,6 +102,7 @@ export default function NfUploadPage() {
         (previewNf.nf_items || []).map(item => ({ ...item, category: item.category || '' }))
       );
       setFinancialLink('');
+      setSelectedIndices(new Set());
     }
   }, [previewNf]);
 
@@ -495,12 +540,33 @@ export default function NfUploadPage() {
               })()}
 
               <div>
-                <Label className="text-muted-foreground text-xs mb-2 block flex items-center gap-1">
-                  <Pencil className="h-3 w-3" /> Itens Extraídos via IA <span className="text-muted-foreground/60">(editável)</span>
-                </Label>
+                <div className="flex items-center justify-between mb-2 gap-2">
+                  <Label className="text-muted-foreground text-xs flex items-center gap-1">
+                    <Pencil className="h-3 w-3" /> Itens Extraídos via IA <span className="text-muted-foreground/60">(editável)</span>
+                  </Label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={selectedIndices.size < 2}
+                    onClick={() => { setMergeName(''); setMergeOpen(true); }}
+                  >
+                    Mesclar selecionados ({selectedIndices.size})
+                  </Button>
+                </div>
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[40px] text-center">
+                        <input
+                          type="checkbox"
+                          checked={editedItems.length > 0 && selectedIndices.size === editedItems.length}
+                          onChange={e => {
+                            if (e.target.checked) setSelectedIndices(new Set(editedItems.map((_, i) => i)));
+                            else setSelectedIndices(new Set());
+                          }}
+                        />
+                      </TableHead>
                       <TableHead className="min-w-[220px] text-center">Item</TableHead>
                       <TableHead className="min-w-[150px] text-center">Categoria</TableHead>
                       <TableHead className="min-w-[70px] text-center">Und.</TableHead>
@@ -513,13 +579,20 @@ export default function NfUploadPage() {
                   <TableBody>
                     {editedItems.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground">
+                        <TableCell colSpan={8} className="text-center text-muted-foreground">
                           Nenhum item extraído
                         </TableCell>
                       </TableRow>
                     )}
                     {editedItems.map((item, i) => (
-                      <TableRow key={i}>
+                      <TableRow key={i} className={selectedIndices.has(i) ? 'bg-muted/40' : ''}>
+                        <TableCell className="align-middle text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedIndices.has(i)}
+                            onChange={() => toggleSelected(i)}
+                          />
+                        </TableCell>
                         <TableCell className="align-middle">
                           <Input
                             value={item.name}
@@ -733,6 +806,33 @@ export default function NfUploadPage() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={mergeOpen} onOpenChange={setMergeOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Mesclar itens selecionados</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {selectedIndices.size} itens serão combinados em um único item, somando quantidades e valores.
+            </p>
+            <div>
+              <Label className="text-xs">Nome do conjunto</Label>
+              <Input
+                value={mergeName}
+                onChange={e => setMergeName(e.target.value)}
+                placeholder="Ex.: Material de limpeza geral"
+                className="mt-1"
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setMergeOpen(false)}>Cancelar</Button>
+              <Button onClick={handleMergeSelected}>Mesclar</Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
