@@ -1,0 +1,1 @@
+DELETE FROM public.nf_items WHERE nf_upload_id='0928d7f5-23a0-4119-895f-50ed18005c00' AND name NOT IN (SELECT DISTINCT product_name FROM public.stock_movements WHERE notes LIKE '%VERDEMAR%');
