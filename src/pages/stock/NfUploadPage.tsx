@@ -159,8 +159,23 @@ export default function NfUploadPage() {
     executeApproval(nf);
   };
 
-  const executeApproval = (nf: DbNfUpload) => {
+  const executeApproval = async (nf: DbNfUpload) => {
     const allocations = buildAllocationsFromItems(editedItems);
+
+    // Sync DB nf_items with edited list: delete rows that were merged/removed
+    // so totals (and re-opened previews) don't end up duplicated.
+    const keepIds = new Set(editedItems.map(i => i.id).filter(Boolean));
+    const orphanIds = (nf.nf_items || [])
+      .map(i => i.id)
+      .filter(id => id && !keepIds.has(id));
+    if (orphanIds.length > 0) {
+      const { error: delErr } = await supabase.from('nf_items').delete().in('id', orphanIds);
+      if (delErr) {
+        toast.error('Erro ao sincronizar itens mesclados.');
+        return;
+      }
+    }
+
     approveNf.mutate(
       { ...nf, nf_items: editedItems },
       {
