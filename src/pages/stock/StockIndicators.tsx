@@ -221,46 +221,8 @@ export default function StockIndicators() {
     return Array.from(map.values()).sort((a, b) => b.value - a.value).slice(0, 10);
   }, [filtered, productMap]);
 
-  // 5) Top 10 itens por consumo
-  const topConsumo = useMemo(() => {
-    const map = new Map<string, { name: string; qty: number }>();
-    filtered.filter(m => m.type === 'saida').forEach(m => {
-      const e = map.get(m.product_id) || { name: m.product_name, qty: 0 };
-      e.qty += m.quantity;
-      map.set(m.product_id, e);
-    });
-    return Array.from(map.values()).sort((a, b) => b.qty - a.qty).slice(0, 10);
-  }, [filtered]);
+  // 5) removed (Top 10 itens por consumo)
 
-  // 6) Custo médio por item ao longo do tempo (top 5 items)
-  const avgCostTimeline = useMemo(() => {
-    const topIds = topGasto.slice(0, 5).map(t => {
-      for (const [id, p] of productMap) if (p.name === t.name || id === Object.keys(t)[0]) return id;
-      return '';
-    }).filter(Boolean);
-    // simpler: use product_name
-    const topNames = topGasto.slice(0, 5).map(t => t.name);
-    const broader = filterMovements(allMovements, { from: subMonths(range.from, 5), to: range.to }, selBranches, selCategories, productMap, selItem !== '__all__' ? selItem : undefined);
-    const monthMap = new Map<string, Map<string, { totalVal: number; totalQty: number }>>();
-    broader.filter(m => m.type === 'entrada' && topNames.includes(m.product_name)).forEach(m => {
-      const mon = format(parseISO(m.date), 'yyyy-MM');
-      if (!monthMap.has(mon)) monthMap.set(mon, new Map());
-      const im = monthMap.get(mon)!;
-      const e = im.get(m.product_name) || { totalVal: 0, totalQty: 0 };
-      const p = productMap.get(m.product_id);
-      e.totalVal += m.quantity * (p?.unit_price ?? 0);
-      e.totalQty += m.quantity;
-      im.set(m.product_name, e);
-    });
-    return Array.from(monthMap.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([mon, im]) => {
-      const row: any = { month: format(parseISO(mon + '-01'), 'MMM/yy', { locale: ptBR }) };
-      topNames.forEach(n => {
-        const e = im.get(n);
-        row[n] = e ? e.totalVal / e.totalQty : null;
-      });
-      return row;
-    });
-  }, [allMovements, range, topGasto, productMap, selBranches, selCategories, selItem]);
 
   // 7) Variação de consumo por item
   const consumoVar = useMemo(() => {
@@ -524,7 +486,7 @@ export default function StockIndicators() {
     );
   }
 
-  const topCostNames = topGasto.slice(0, 5).map(t => t.name);
+  
 
 
 
@@ -844,69 +806,6 @@ export default function StockIndicators() {
         </Card>
 
         {/* 5. Top 10 itens por consumo */}
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Top 10 Itens por Consumo</CardTitle></CardHeader>
-          <CardContent>
-            <div style={{ height: Math.max(280, topConsumo.length * 32) }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={topConsumo}
-                  layout="vertical"
-                  margin={{ top: 8, right: 56, left: 8, bottom: 8 }}
-                  barCategoryGap={6}
-                >
-                  <defs>
-                    <linearGradient id="topConsumoGrad" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="hsl(150 60% 45%)" stopOpacity={0.85} />
-                      <stop offset="100%" stopColor="hsl(190 70% 45%)" stopOpacity={0.95} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border/40" />
-                  <XAxis type="number" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <YAxis
-                    dataKey="name"
-                    type="category"
-                    tick={{ fontSize: 11 }}
-                    width={150}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={(v: string) => v.length > 22 ? v.slice(0, 22) + '…' : v}
-                  />
-                  <Tooltip cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} content={<CustomTooltip />} />
-                  <Bar dataKey="qty" name="Quantidade" fill="url(#topConsumoGrad)" radius={[0, 6, 6, 0]} barSize={18}>
-                    <LabelList
-                      dataKey="qty"
-                      position="right"
-                      formatter={(v: number) => v.toLocaleString('pt-BR')}
-                      style={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-                    />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 6. Custo médio ao longo do tempo */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Evolução do Custo Médio (Top 5)</CardTitle></CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={avgCostTimeline}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `R$${v.toFixed(0)}`} />
-                  <Tooltip cursor={{ stroke: 'hsl(var(--muted-foreground) / 0.3)' }} content={<CustomTooltip prefix="R$ " />} />
-                  {topCostNames.map((name, i) => (
-                    <Line key={name} dataKey={name} stroke={COLORS[i]} strokeWidth={2} dot={{ r: 3 }} connectNulls />
-                  ))}
-                  <Legend wrapperStyle={{ fontSize: 10 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* ─── INSIGHTS ─── */}
