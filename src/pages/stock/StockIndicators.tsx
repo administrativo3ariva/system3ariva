@@ -486,7 +486,7 @@ export default function StockIndicators() {
     );
   }
 
-  const topCostNames = topGasto.slice(0, 5).map(t => t.name);
+  
 
 
 
