@@ -221,16 +221,7 @@ export default function StockIndicators() {
     return Array.from(map.values()).sort((a, b) => b.value - a.value).slice(0, 10);
   }, [filtered, productMap]);
 
-  // 5) Top 10 itens por consumo
-  const topConsumo = useMemo(() => {
-    const map = new Map<string, { name: string; qty: number }>();
-    filtered.filter(m => m.type === 'saida').forEach(m => {
-      const e = map.get(m.product_id) || { name: m.product_name, qty: 0 };
-      e.qty += m.quantity;
-      map.set(m.product_id, e);
-    });
-    return Array.from(map.values()).sort((a, b) => b.qty - a.qty).slice(0, 10);
-  }, [filtered]);
+  // 5) removed (Top 10 itens por consumo)
 
   // 6) Custo médio por item ao longo do tempo (top 5 items)
   const avgCostTimeline = useMemo(() => {
