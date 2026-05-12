@@ -132,20 +132,27 @@ export function useApproveNf() {
     mutationFn: async (nf: DbNfUpload) => {
       const items = nf.nf_items || [];
 
-      // 1) Persist per-item category so they survive (link type no longer used per-item)
-      for (const item of items) {
-        await supabase
-          .from('nf_items')
-          .update({
-            category: item.category || null,
-            financial_link_type: null,
-            name: item.name,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            total_price: item.total_price,
-            unit_of_measure: item.unit_of_measure || 'UN',
-          })
-          .eq('id', item.id);
+      // 1) Replace all nf_items for this NF with the edited list to avoid duplication
+      //    after merges/edits. Delete-then-insert is safer than diffing ids.
+      const { error: delAllErr } = await supabase
+        .from('nf_items')
+        .delete()
+        .eq('nf_upload_id', nf.id);
+      if (delAllErr) throw delAllErr;
+
+      if (items.length > 0) {
+        const rows = items.map(item => ({
+          nf_upload_id: nf.id,
+          name: item.name,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total_price: item.total_price,
+          unit_of_measure: item.unit_of_measure || 'UN',
+          category: item.category || null,
+          financial_link_type: null,
+        }));
+        const { error: insErr } = await supabase.from('nf_items').insert(rows);
+        if (insErr) throw insErr;
       }
 
       const targetUnit = nf.unit || 'BH-Matriz';
