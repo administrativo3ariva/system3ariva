@@ -5,6 +5,7 @@ import { Pencil, Plus, CreditCard, Landmark } from 'lucide-react';
 import { Upload, FileText, Check, X, Eye, Loader2, Trash2, ExternalLink } from 'lucide-react';
 import { useNfUploads, useUploadAndProcessNf, useUpdateNfUpload, useDeleteNfUpload, useApproveNf } from '@/hooks/use-nf-uploads';
 import type { DbNfUpload, DbNfItem } from '@/hooks/use-nf-uploads';
+import { supabase } from '@/integrations/supabase/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -159,8 +160,23 @@ export default function NfUploadPage() {
     executeApproval(nf);
   };
 
-  const executeApproval = (nf: DbNfUpload) => {
+  const executeApproval = async (nf: DbNfUpload) => {
     const allocations = buildAllocationsFromItems(editedItems);
+
+    // Sync DB nf_items with edited list: delete rows that were merged/removed
+    // so totals (and re-opened previews) don't end up duplicated.
+    const keepIds = new Set(editedItems.map(i => i.id).filter(Boolean));
+    const orphanIds = (nf.nf_items || [])
+      .map(i => i.id)
+      .filter(id => id && !keepIds.has(id));
+    if (orphanIds.length > 0) {
+      const { error: delErr } = await supabase.from('nf_items').delete().in('id', orphanIds);
+      if (delErr) {
+        toast.error('Erro ao sincronizar itens mesclados.');
+        return;
+      }
+    }
+
     approveNf.mutate(
       { ...nf, nf_items: editedItems },
       {
