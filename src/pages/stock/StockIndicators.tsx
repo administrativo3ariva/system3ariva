@@ -747,17 +747,17 @@ export default function StockIndicators() {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Distribuição por Categoria</CardTitle></CardHeader>
           <CardContent>
-            <div className="h-72">
+            <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <RPieChart>
                   <Pie
                     data={catData}
                     dataKey="value"
                     nameKey="name"
-                    cx="42%"
+                    cx="35%"
                     cy="50%"
-                    innerRadius={55}
-                    outerRadius={95}
+                    innerRadius={65}
+                    outerRadius={110}
                     paddingAngle={2}
                     stroke="hsl(var(--background))"
                     strokeWidth={2}
@@ -765,7 +765,6 @@ export default function StockIndicators() {
                     {catData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
                   <Tooltip
-                    cursor={{ fill: 'hsl(var(--muted) / 0.3)' }}
                     content={({ active, payload }: any) => {
                       if (!active || !payload?.length) return null;
                       const p = payload[0];
@@ -785,7 +784,7 @@ export default function StockIndicators() {
                     verticalAlign="middle"
                     iconType="circle"
                     wrapperStyle={{ fontSize: 11, paddingLeft: 12 }}
-                    formatter={(value: string, _entry, idx: number) => {
+                    formatter={(value: string, _entry: any, idx: number) => {
                       const item = catData[idx];
                       return (
                         <span className="text-foreground">
