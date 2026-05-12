@@ -10,7 +10,7 @@ import { format, parseISO, subMonths, startOfMonth, endOfMonth, startOfYear } fr
 import { ptBR } from 'date-fns/locale';
 import {
   BarChart, Bar, LineChart, Line, PieChart as RPieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList,
 } from 'recharts';
 
 import { useAllMovements } from '@/hooks/use-all-movements';
@@ -743,7 +743,7 @@ export default function StockIndicators() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip content={<CustomTooltip prefix="R$ " />} />
+                  <Tooltip cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} content={<CustomTooltip prefix="R$ " />} />
                   <Bar dataKey="gasto" name="Gasto" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                   <Line dataKey="gasto" type="monotone" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
                 </BarChart>
@@ -773,7 +773,7 @@ export default function StockIndicators() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                   <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
                   <YAxis dataKey="branch" type="category" tick={{ fontSize: 10 }} width={80} />
-                  <Tooltip content={<CustomTooltip prefix="R$ " />} />
+                  <Tooltip cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} content={<CustomTooltip prefix="R$ " />} />
                   <Bar dataKey={viewMode === 'perCapita' ? 'perCapita' : 'gasto'} name={viewMode === 'perCapita' ? 'Por colaborador' : 'Gasto'} fill="hsl(210 70% 55%)" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -791,7 +791,7 @@ export default function StockIndicators() {
                   <Pie data={catData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={2}>
                     {catData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={(v: number) => formatBRL(v)} />
+                  <Tooltip content={<CustomTooltip prefix="R$ " />} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                 </RPieChart>
               </ResponsiveContainer>
@@ -803,14 +803,40 @@ export default function StockIndicators() {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Top 10 Itens por Gasto</CardTitle></CardHeader>
           <CardContent>
-            <div className="h-64">
+            <div style={{ height: Math.max(280, topGasto.length * 32) }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={topGasto} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={v => `R$${(v / 1000).toFixed(1)}k`} />
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: 9 }} width={120} />
-                  <Tooltip content={<CustomTooltip prefix="R$ " />} />
-                  <Bar dataKey="value" name="Gasto" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                <BarChart
+                  data={topGasto}
+                  layout="vertical"
+                  margin={{ top: 8, right: 56, left: 8, bottom: 8 }}
+                  barCategoryGap={6}
+                >
+                  <defs>
+                    <linearGradient id="topGastoGrad" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.85} />
+                      <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0.95} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border/40" />
+                  <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={v => `R$${(v / 1000).toFixed(1)}k`} axisLine={false} tickLine={false} />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    tick={{ fontSize: 11 }}
+                    width={150}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v: string) => v.length > 22 ? v.slice(0, 22) + '…' : v}
+                  />
+                  <Tooltip cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} content={<CustomTooltip prefix="R$ " />} />
+                  <Bar dataKey="value" name="Gasto" fill="url(#topGastoGrad)" radius={[0, 6, 6, 0]} barSize={18}>
+                    <LabelList
+                      dataKey="value"
+                      position="right"
+                      formatter={(v: number) => `R$${(v / 1000).toFixed(1)}k`}
+                      style={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -821,14 +847,40 @@ export default function StockIndicators() {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Top 10 Itens por Consumo</CardTitle></CardHeader>
           <CardContent>
-            <div className="h-64">
+            <div style={{ height: Math.max(280, topConsumo.length * 32) }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={topConsumo} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: 9 }} width={120} />
-                  <Tooltip />
-                  <Bar dataKey="qty" name="Quantidade" fill="hsl(150 60% 45%)" radius={[0, 4, 4, 0]} />
+                <BarChart
+                  data={topConsumo}
+                  layout="vertical"
+                  margin={{ top: 8, right: 56, left: 8, bottom: 8 }}
+                  barCategoryGap={6}
+                >
+                  <defs>
+                    <linearGradient id="topConsumoGrad" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="hsl(150 60% 45%)" stopOpacity={0.85} />
+                      <stop offset="100%" stopColor="hsl(190 70% 45%)" stopOpacity={0.95} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border/40" />
+                  <XAxis type="number" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    tick={{ fontSize: 11 }}
+                    width={150}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v: string) => v.length > 22 ? v.slice(0, 22) + '…' : v}
+                  />
+                  <Tooltip cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} content={<CustomTooltip />} />
+                  <Bar dataKey="qty" name="Quantidade" fill="url(#topConsumoGrad)" radius={[0, 6, 6, 0]} barSize={18}>
+                    <LabelList
+                      dataKey="qty"
+                      position="right"
+                      formatter={(v: number) => v.toLocaleString('pt-BR')}
+                      style={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -836,7 +888,7 @@ export default function StockIndicators() {
         </Card>
 
         {/* 6. Custo médio ao longo do tempo */}
-        <Card>
+        <Card className="lg:col-span-2">
           <CardHeader className="pb-2"><CardTitle className="text-sm">Evolução do Custo Médio (Top 5)</CardTitle></CardHeader>
           <CardContent>
             <div className="h-64">
@@ -845,34 +897,12 @@ export default function StockIndicators() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `R$${v.toFixed(0)}`} />
-                  <Tooltip content={<CustomTooltip prefix="R$ " />} />
+                  <Tooltip cursor={{ stroke: 'hsl(var(--muted-foreground) / 0.3)' }} content={<CustomTooltip prefix="R$ " />} />
                   {topCostNames.map((name, i) => (
                     <Line key={name} dataKey={name} stroke={COLORS[i]} strokeWidth={2} dot={{ r: 3 }} connectNulls />
                   ))}
                   <Legend wrapperStyle={{ fontSize: 10 }} />
                 </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 7. Variação de consumo por item */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Variação de Consumo por Item</CardTitle></CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={consumoVar}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                  <XAxis dataKey="name" tick={{ fontSize: 9 }} angle={-20} textAnchor="end" height={50} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${v.toFixed(0)}%`} />
-                  <Tooltip formatter={(v: number) => `${v.toFixed(1)}%`} />
-                  <Bar dataKey="var" name="Variação %" radius={[4, 4, 0, 0]}>
-                    {consumoVar.map((d, i) => (
-                      <Cell key={i} fill={d.var > 0 ? 'hsl(0 70% 55%)' : 'hsl(150 60% 45%)'} />
-                    ))}
-                  </Bar>
-                </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
