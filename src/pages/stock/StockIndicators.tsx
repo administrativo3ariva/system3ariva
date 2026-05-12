@@ -773,7 +773,7 @@ export default function StockIndicators() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                   <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
                   <YAxis dataKey="branch" type="category" tick={{ fontSize: 10 }} width={80} />
-                  <Tooltip content={<CustomTooltip prefix="R$ " />} />
+                  <Tooltip cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} content={<CustomTooltip prefix="R$ " />} />
                   <Bar dataKey={viewMode === 'perCapita' ? 'perCapita' : 'gasto'} name={viewMode === 'perCapita' ? 'Por colaborador' : 'Gasto'} fill="hsl(210 70% 55%)" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
