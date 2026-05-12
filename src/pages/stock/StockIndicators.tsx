@@ -10,7 +10,7 @@ import { format, parseISO, subMonths, startOfMonth, endOfMonth, startOfYear } fr
 import { ptBR } from 'date-fns/locale';
 import {
   BarChart, Bar, LineChart, Line, PieChart as RPieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, LabelList,
 } from 'recharts';
 
 import { useAllMovements } from '@/hooks/use-all-movements';
