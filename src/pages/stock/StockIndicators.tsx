@@ -791,7 +791,7 @@ export default function StockIndicators() {
                   <Pie data={catData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={2}>
                     {catData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={(v: number) => formatBRL(v)} />
+                  <Tooltip content={<CustomTooltip prefix="R$ " />} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                 </RPieChart>
               </ResponsiveContainer>
