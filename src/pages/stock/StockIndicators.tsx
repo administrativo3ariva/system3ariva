@@ -747,14 +747,53 @@ export default function StockIndicators() {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Distribuição por Categoria</CardTitle></CardHeader>
           <CardContent>
-            <div className="h-64">
+            <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <RPieChart>
-                  <Pie data={catData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={2}>
+                  <Pie
+                    data={catData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="42%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={95}
+                    paddingAngle={2}
+                    stroke="hsl(var(--background))"
+                    strokeWidth={2}
+                  >
                     {catData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
-                  <Tooltip content={<CustomTooltip prefix="R$ " />} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Tooltip
+                    cursor={{ fill: 'hsl(var(--muted) / 0.3)' }}
+                    content={({ active, payload }: any) => {
+                      if (!active || !payload?.length) return null;
+                      const p = payload[0];
+                      return (
+                        <div className="rounded-lg border bg-background px-3 py-2 shadow-md text-xs">
+                          <p className="font-medium mb-1">{p.name}</p>
+                          <p style={{ color: p.payload.fill }}>
+                            {formatBRL(p.value)} <span className="text-muted-foreground">({p.payload.pct.toFixed(1)}%)</span>
+                          </p>
+                        </div>
+                      );
+                    }}
+                  />
+                  <Legend
+                    layout="vertical"
+                    align="right"
+                    verticalAlign="middle"
+                    iconType="circle"
+                    wrapperStyle={{ fontSize: 11, paddingLeft: 12 }}
+                    formatter={(value: string, _entry, idx: number) => {
+                      const item = catData[idx];
+                      return (
+                        <span className="text-foreground">
+                          {value} <span className="text-muted-foreground">· {item ? item.pct.toFixed(1) : '0.0'}%</span>
+                        </span>
+                      );
+                    }}
+                  />
                 </RPieChart>
               </ResponsiveContainer>
             </div>
@@ -765,38 +804,39 @@ export default function StockIndicators() {
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Top 10 Itens por Gasto</CardTitle></CardHeader>
           <CardContent>
-            <div style={{ height: Math.max(280, topGasto.length * 32) }}>
+            <div style={{ height: Math.max(320, topGasto.length * 38) }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={topGasto}
                   layout="vertical"
-                  margin={{ top: 8, right: 56, left: 8, bottom: 8 }}
-                  barCategoryGap={6}
+                  margin={{ top: 8, right: 72, left: 8, bottom: 8 }}
+                  barCategoryGap={10}
                 >
                   <defs>
                     <linearGradient id="topGastoGrad" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.85} />
-                      <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0.95} />
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.7} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={1} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border/40" />
-                  <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={v => `R$${(v / 1000).toFixed(1)}k`} axisLine={false} tickLine={false} />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={v => `R$${(v / 1000).toFixed(1)}k`} axisLine={false} tickLine={false} />
                   <YAxis
                     dataKey="name"
                     type="category"
-                    tick={{ fontSize: 11 }}
-                    width={150}
+                    tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+                    width={170}
                     axisLine={false}
                     tickLine={false}
-                    tickFormatter={(v: string) => v.length > 22 ? v.slice(0, 22) + '…' : v}
+                    interval={0}
+                    tickFormatter={(v: string) => v.length > 24 ? v.slice(0, 24) + '…' : v}
                   />
                   <Tooltip cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} content={<CustomTooltip prefix="R$ " />} />
-                  <Bar dataKey="value" name="Gasto" fill="url(#topGastoGrad)" radius={[0, 6, 6, 0]} barSize={18}>
+                  <Bar dataKey="value" name="Gasto" fill="url(#topGastoGrad)" radius={[0, 6, 6, 0]} barSize={22}>
                     <LabelList
                       dataKey="value"
                       position="right"
                       formatter={(v: number) => `R$${(v / 1000).toFixed(1)}k`}
-                      style={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                      style={{ fontSize: 10, fill: 'hsl(var(--foreground))', fontWeight: 500 }}
                     />
                   </Bar>
                 </BarChart>
