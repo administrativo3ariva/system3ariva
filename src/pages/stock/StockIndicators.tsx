@@ -1117,7 +1117,7 @@ function BHFloorView({ data }: { data: any }) {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                   <XAxis type="number" tick={{ fontSize: 11 }} />
                   <YAxis dataKey="label" type="category" tick={{ fontSize: 10 }} width={110} />
-                  <Tooltip formatter={(v: number) => `${Number(v).toFixed(1)} un.`} />
+                  <Tooltip cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} content={<CustomTooltip prefix="" />} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                   <Bar dataKey="consumoDirect" stackId="c" name="Direto" fill="hsl(150 60% 45%)" />
                   <Bar dataKey="consumoShared" stackId="c" name="Rateio" fill="hsl(35 90% 55%)" radius={[0, 4, 4, 0]} />
