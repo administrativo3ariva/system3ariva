@@ -223,35 +223,6 @@ export default function StockIndicators() {
 
   // 5) removed (Top 10 itens por consumo)
 
-  // 6) Custo médio por item ao longo do tempo (top 5 items)
-  const avgCostTimeline = useMemo(() => {
-    const topIds = topGasto.slice(0, 5).map(t => {
-      for (const [id, p] of productMap) if (p.name === t.name || id === Object.keys(t)[0]) return id;
-      return '';
-    }).filter(Boolean);
-    // simpler: use product_name
-    const topNames = topGasto.slice(0, 5).map(t => t.name);
-    const broader = filterMovements(allMovements, { from: subMonths(range.from, 5), to: range.to }, selBranches, selCategories, productMap, selItem !== '__all__' ? selItem : undefined);
-    const monthMap = new Map<string, Map<string, { totalVal: number; totalQty: number }>>();
-    broader.filter(m => m.type === 'entrada' && topNames.includes(m.product_name)).forEach(m => {
-      const mon = format(parseISO(m.date), 'yyyy-MM');
-      if (!monthMap.has(mon)) monthMap.set(mon, new Map());
-      const im = monthMap.get(mon)!;
-      const e = im.get(m.product_name) || { totalVal: 0, totalQty: 0 };
-      const p = productMap.get(m.product_id);
-      e.totalVal += m.quantity * (p?.unit_price ?? 0);
-      e.totalQty += m.quantity;
-      im.set(m.product_name, e);
-    });
-    return Array.from(monthMap.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([mon, im]) => {
-      const row: any = { month: format(parseISO(mon + '-01'), 'MMM/yy', { locale: ptBR }) };
-      topNames.forEach(n => {
-        const e = im.get(n);
-        row[n] = e ? e.totalVal / e.totalQty : null;
-      });
-      return row;
-    });
-  }, [allMovements, range, topGasto, productMap, selBranches, selCategories, selItem]);
 
   // 7) Variação de consumo por item
   const consumoVar = useMemo(() => {
