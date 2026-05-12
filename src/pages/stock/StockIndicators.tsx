@@ -743,7 +743,7 @@ export default function StockIndicators() {
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `R$${(v / 1000).toFixed(0)}k`} />
-                  <Tooltip content={<CustomTooltip prefix="R$ " />} />
+                  <Tooltip cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} content={<CustomTooltip prefix="R$ " />} />
                   <Bar dataKey="gasto" name="Gasto" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                   <Line dataKey="gasto" type="monotone" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
                 </BarChart>
