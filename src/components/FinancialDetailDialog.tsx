@@ -122,7 +122,7 @@ export function FinancialDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[760px] p-0 gap-0 overflow-hidden">
         {/* Header */}
         <div className="p-6 pb-4">
           <DialogHeader>
@@ -158,7 +158,7 @@ export function FinancialDetailDialog({
         <Separator />
 
         {/* Body */}
-        <div className="p-6 grid gap-6 sm:grid-cols-[1fr_auto]">
+        <div className="px-7 py-6 grid gap-8 sm:grid-cols-[1fr_220px]">
           {/* Left: Details */}
           <div className="space-y-5">
             {/* Amount */}
