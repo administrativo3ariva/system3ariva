@@ -305,7 +305,14 @@ export default function RecurringExpensesTab() {
                         return (
                           <TableCell key={m} className="text-center px-1">
                             <button
-                              onClick={() => togglePaid.mutate({ id: run.id, paid: !run.paid })}
+                              onClick={() => {
+                                if (run.paid) {
+                                  togglePaid.mutate({ id: run.id, paid: false });
+                                } else {
+                                  setPayRun(run);
+                                  setPayDate(new Date().toISOString().slice(0, 10));
+                                }
+                              }}
                               className={cn(
                                 'inline-flex flex-col items-center gap-0.5 px-2 py-1 rounded-md border w-full transition-colors',
                                 run.paid
