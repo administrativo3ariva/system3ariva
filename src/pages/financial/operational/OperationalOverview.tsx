@@ -206,7 +206,7 @@ export default function OperationalOverview() {
       </div>
 
       {/* KPI Cards row 2 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><Lock className="h-4 w-4" />Comprometido (Ocupação)</CardTitle></CardHeader>
           <CardContent><div className="number-safe text-2xl font-bold">{fmtBRL(comprometidoFixo)}</div></CardContent>
@@ -216,8 +216,21 @@ export default function OperationalOverview() {
           <CardContent><div className="number-safe text-2xl font-bold">{launchCount}</div></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><AlertCircle className="h-4 w-4" />Cat. Estouradas / 80%+</CardTitle></CardHeader>
-          <CardContent><div className="number-safe text-2xl font-bold">{overBudgetCats.length} / {nearLimitCats.length}</div></CardContent>
+          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><AlertCircle className="h-4 w-4" />Status das Categorias</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex items-stretch divide-x divide-border">
+              <div className="flex-1 pr-4">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Estouradas</p>
+                <p className={`number-safe text-2xl font-bold leading-tight ${overBudgetCats.length > 0 ? 'text-destructive' : ''}`}>{overBudgetCats.length}</p>
+                <p className="text-[11px] text-muted-foreground">acima de 100%</p>
+              </div>
+              <div className="flex-1 pl-4">
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Em alerta</p>
+                <p className={`number-safe text-2xl font-bold leading-tight ${nearLimitCats.length > 0 ? 'text-warning' : ''}`}>{nearLimitCats.length}</p>
+                <p className="text-[11px] text-muted-foreground">entre 80–100%</p>
+              </div>
+            </div>
+          </CardContent>
         </Card>
       </div>
 
