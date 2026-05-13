@@ -158,7 +158,7 @@ export function FinancialDetailDialog({
         <Separator />
 
         {/* Body */}
-        <div className="p-6 grid gap-6 sm:grid-cols-[1fr_auto]">
+        <div className="px-7 py-6 grid gap-8 sm:grid-cols-[1fr_220px]">
           {/* Left: Details */}
           <div className="space-y-5">
             {/* Amount */}
