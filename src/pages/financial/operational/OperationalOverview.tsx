@@ -250,7 +250,7 @@ export default function OperationalOverview() {
                 <ReferenceLine x={MONTH_LABELS_PT[monthFilter - 1]} stroke="hsl(var(--warning))" strokeDasharray="3 3" label={{ value: 'Mês', fill: 'hsl(var(--warning))', fontSize: 10, position: 'top' }} />
                 <Bar dataKey="Orçamento" fill="url(#gradBudget)" radius={[4, 4, 0, 0]} maxBarSize={28} />
                 <Bar dataKey="Realizado" fill="url(#gradReal)" radius={[4, 4, 0, 0]} maxBarSize={28} />
-                <Bar dataKey="Comprometido" fill={CHART_COLORS.committed} radius={[4, 4, 0, 0]} maxBarSize={28} />
+                
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
