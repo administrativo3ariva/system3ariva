@@ -64,6 +64,8 @@ export default function RecurringExpensesTab() {
   const [splitCompany, setSplitCompany] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteRunId, setDeleteRunId] = useState<string | null>(null);
+  const [payRun, setPayRun] = useState<RecurringExpenseRun | null>(null);
+  const [payDate, setPayDate] = useState<string>('');
   const [genMonth, setGenMonth] = useState<number>(new Date().getMonth() + 1);
   const [filterBranch, setFilterBranch] = useState<string>('all');
   const [view, setView] = useState<ProgrammingTab>('programming');
@@ -303,7 +305,14 @@ export default function RecurringExpensesTab() {
                         return (
                           <TableCell key={m} className="text-center px-1">
                             <button
-                              onClick={() => togglePaid.mutate({ id: run.id, paid: !run.paid })}
+                              onClick={() => {
+                                if (run.paid) {
+                                  togglePaid.mutate({ id: run.id, paid: false });
+                                } else {
+                                  setPayRun(run);
+                                  setPayDate(new Date().toISOString().slice(0, 10));
+                                }
+                              }}
                               className={cn(
                                 'inline-flex flex-col items-center gap-0.5 px-2 py-1 rounded-md border w-full transition-colors',
                                 run.paid
@@ -594,6 +603,39 @@ export default function RecurringExpensesTab() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={() => { if (deleteRunId) { deleteRun.mutate(deleteRunId); setDeleteRunId(null); } }}>Remover</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm payment date */}
+      <AlertDialog open={!!payRun} onOpenChange={(o) => !o && setPayRun(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar pagamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Informe a data em que este lançamento foi pago.
+              {payRun?.due_date && (
+                <span className="block mt-1 text-xs">Vencimento: {format(parseISO(payRun.due_date), 'dd/MM/yyyy')} · Valor: {fmtBRL(Number(payRun.amount))}</span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-2">
+            <Label htmlFor="paydate" className="text-sm">Data de pagamento</Label>
+            <Input id="paydate" type="date" value={payDate} onChange={e => setPayDate(e.target.value)} className="mt-1" />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!payDate}
+              onClick={() => {
+                if (payRun && payDate) {
+                  togglePaid.mutate({ id: payRun.id, paid: true, paidDate: payDate });
+                  setPayRun(null);
+                }
+              }}
+            >
+              Confirmar
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
