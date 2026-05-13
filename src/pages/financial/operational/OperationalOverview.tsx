@@ -212,10 +212,6 @@ export default function OperationalOverview() {
           <CardContent><div className="number-safe text-2xl font-bold">{fmtBRL(comprometidoFixo)}</div></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><AlertTriangle className="h-4 w-4" />Comprometido (Pendente/Aprovado)</CardTitle></CardHeader>
-          <CardContent><div className="number-safe text-2xl font-bold">{fmtBRL(comprometidoMonth)}</div></CardContent>
-        </Card>
-        <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><Receipt className="h-4 w-4" />Lançamentos no Mês</CardTitle></CardHeader>
           <CardContent><div className="number-safe text-2xl font-bold">{launchCount}</div></CardContent>
         </Card>
