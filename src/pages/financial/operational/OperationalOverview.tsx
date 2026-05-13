@@ -182,52 +182,88 @@ export default function OperationalOverview() {
         </div>
       </div>
 
-      {/* KPI Cards row 1 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><Wallet className="h-4 w-4" />Orçamento do Mês</CardTitle></CardHeader>
-          <CardContent><div className="number-safe text-2xl font-bold">{fmtBRL(totalBudgetMonth)}</div></CardContent>
+      {/* KPI Cards row 1 — main monetary metrics (3 cards) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="h-full">
+          <CardHeader className="pb-1.5">
+            <CardTitle className="text-xs font-medium uppercase tracking-wide flex items-center gap-2 text-muted-foreground">
+              <Wallet className="h-3.5 w-3.5" />Orçamento do Mês
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="number-safe text-3xl font-bold tracking-tight leading-none">{fmtBRL(totalBudgetMonth)}</div>
+          </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><TrendingUp className="h-4 w-4" />Realizado</CardTitle></CardHeader>
-          <CardContent><div className="number-safe text-2xl font-bold">{fmtBRL(realizadoMonth)}</div></CardContent>
+        <Card className="h-full">
+          <CardHeader className="pb-1.5">
+            <CardTitle className="text-xs font-medium uppercase tracking-wide flex items-center gap-2 text-muted-foreground">
+              <TrendingUp className="h-3.5 w-3.5" />Realizado
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="number-safe text-3xl font-bold tracking-tight leading-none">{fmtBRL(realizadoMonth)}</div>
+          </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><CircleDollarSign className="h-4 w-4" />Saldo</CardTitle></CardHeader>
-          <CardContent><div className={`number-safe text-2xl font-bold ${balanceMonth < 0 ? 'text-destructive' : ''}`}>{fmtBRL(balanceMonth)}</div></CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><TrendingUp className="h-4 w-4" />% Consumido</CardTitle></CardHeader>
-          <CardContent>
-            <div className={`number-safe text-2xl font-bold ${pctMonth > 100 ? 'text-destructive' : pctMonth >= 80 ? 'text-warning' : ''}`}>{pctMonth.toFixed(1)}%</div>
-            <Progress value={Math.min(pctMonth, 100)} className="mt-2" />
+        <Card className="h-full">
+          <CardHeader className="pb-1.5">
+            <CardTitle className="text-xs font-medium uppercase tracking-wide flex items-center gap-2 text-muted-foreground">
+              <CircleDollarSign className="h-3.5 w-3.5" />Saldo
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className={`number-safe text-3xl font-bold tracking-tight leading-none ${balanceMonth < 0 ? 'text-destructive' : 'text-success'}`}>{fmtBRL(balanceMonth)}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* KPI Cards row 2 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><Lock className="h-4 w-4" />Comprometido (Ocupação)</CardTitle></CardHeader>
-          <CardContent><div className="number-safe text-2xl font-bold">{fmtBRL(comprometidoFixo)}</div></CardContent>
+      {/* KPI Cards row 2 — secondary metrics (4 cards) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="h-full">
+          <CardHeader className="pb-1.5">
+            <CardTitle className="text-xs font-medium uppercase tracking-wide flex items-center gap-2 text-muted-foreground">
+              <TrendingUp className="h-3.5 w-3.5" />% Consumido
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className={`number-safe text-2xl font-bold tracking-tight leading-none ${pctMonth > 100 ? 'text-destructive' : pctMonth >= 80 ? 'text-warning' : ''}`}>{pctMonth.toFixed(1)}%</div>
+            <Progress value={Math.min(pctMonth, 100)} className="mt-2 h-1.5" />
+          </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><Receipt className="h-4 w-4" />Lançamentos no Mês</CardTitle></CardHeader>
-          <CardContent><div className="number-safe text-2xl font-bold">{launchCount}</div></CardContent>
+        <Card className="h-full">
+          <CardHeader className="pb-1.5">
+            <CardTitle className="text-xs font-medium uppercase tracking-wide flex items-center gap-2 text-muted-foreground">
+              <Lock className="h-3.5 w-3.5" />Comprometido (Ocupação)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="number-safe text-2xl font-bold tracking-tight leading-none">{fmtBRL(comprometidoFixo)}</div>
+          </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><AlertCircle className="h-4 w-4" />Status das Categorias</CardTitle></CardHeader>
-          <CardContent>
-            <div className="flex items-stretch divide-x divide-border">
-              <div className="flex-1 pr-4">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Estouradas</p>
-                <p className={`number-safe text-2xl font-bold leading-tight ${overBudgetCats.length > 0 ? 'text-destructive' : ''}`}>{overBudgetCats.length}</p>
-                <p className="text-[11px] text-muted-foreground">acima de 100%</p>
+        <Card className="h-full">
+          <CardHeader className="pb-1.5">
+            <CardTitle className="text-xs font-medium uppercase tracking-wide flex items-center gap-2 text-muted-foreground">
+              <Receipt className="h-3.5 w-3.5" />Lançamentos no Mês
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="number-safe text-2xl font-bold tracking-tight leading-none">{launchCount}</div>
+          </CardContent>
+        </Card>
+        <Card className="h-full">
+          <CardHeader className="pb-1.5">
+            <CardTitle className="text-xs font-medium uppercase tracking-wide flex items-center gap-2 text-muted-foreground">
+              <AlertCircle className="h-3.5 w-3.5" />Status das Categorias
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="flex items-center divide-x divide-border">
+              <div className="flex-1 pr-3">
+                <p className={`number-safe text-2xl font-bold leading-none tracking-tight ${overBudgetCats.length > 0 ? 'text-destructive' : ''}`}>{overBudgetCats.length}</p>
+                <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">Estouradas</p>
               </div>
-              <div className="flex-1 pl-4">
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Em alerta</p>
-                <p className={`number-safe text-2xl font-bold leading-tight ${nearLimitCats.length > 0 ? 'text-warning' : ''}`}>{nearLimitCats.length}</p>
-                <p className="text-[11px] text-muted-foreground">entre 80–100%</p>
+              <div className="flex-1 pl-3">
+                <p className={`number-safe text-2xl font-bold leading-none tracking-tight ${nearLimitCats.length > 0 ? 'text-warning' : ''}`}>{nearLimitCats.length}</p>
+                <p className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">Em alerta 80%+</p>
               </div>
             </div>
           </CardContent>
