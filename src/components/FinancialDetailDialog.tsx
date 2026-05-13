@@ -122,7 +122,7 @@ export function FinancialDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[760px] p-0 gap-0 overflow-hidden">
         {/* Header */}
         <div className="p-6 pb-4">
           <DialogHeader>
