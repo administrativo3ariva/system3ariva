@@ -64,6 +64,8 @@ export default function RecurringExpensesTab() {
   const [splitCompany, setSplitCompany] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteRunId, setDeleteRunId] = useState<string | null>(null);
+  const [payRun, setPayRun] = useState<RecurringExpenseRun | null>(null);
+  const [payDate, setPayDate] = useState<string>('');
   const [genMonth, setGenMonth] = useState<number>(new Date().getMonth() + 1);
   const [filterBranch, setFilterBranch] = useState<string>('all');
   const [view, setView] = useState<ProgrammingTab>('programming');
