@@ -212,10 +212,6 @@ export default function OperationalOverview() {
           <CardContent><div className="number-safe text-2xl font-bold">{fmtBRL(comprometidoFixo)}</div></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><AlertTriangle className="h-4 w-4" />Comprometido (Pendente/Aprovado)</CardTitle></CardHeader>
-          <CardContent><div className="number-safe text-2xl font-bold">{fmtBRL(comprometidoMonth)}</div></CardContent>
-        </Card>
-        <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2 text-muted-foreground"><Receipt className="h-4 w-4" />Lançamentos no Mês</CardTitle></CardHeader>
           <CardContent><div className="number-safe text-2xl font-bold">{launchCount}</div></CardContent>
         </Card>
@@ -254,7 +250,7 @@ export default function OperationalOverview() {
                 <ReferenceLine x={MONTH_LABELS_PT[monthFilter - 1]} stroke="hsl(var(--warning))" strokeDasharray="3 3" label={{ value: 'Mês', fill: 'hsl(var(--warning))', fontSize: 10, position: 'top' }} />
                 <Bar dataKey="Orçamento" fill="url(#gradBudget)" radius={[4, 4, 0, 0]} maxBarSize={28} />
                 <Bar dataKey="Realizado" fill="url(#gradReal)" radius={[4, 4, 0, 0]} maxBarSize={28} />
-                <Bar dataKey="Comprometido" fill={CHART_COLORS.committed} radius={[4, 4, 0, 0]} maxBarSize={28} />
+                
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -281,7 +277,6 @@ export default function OperationalOverview() {
                   <Bar dataKey="Realizado" fill={CHART_COLORS.realized} radius={[0, 4, 4, 0]} maxBarSize={18}>
                     <LabelList dataKey="pct" position="right" formatter={(v: number) => v >= 999 ? 's/orç.' : `${v.toFixed(0)}%`} style={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
                   </Bar>
-                  <Bar dataKey="Comprometido" fill={CHART_COLORS.committed} radius={[0, 4, 4, 0]} maxBarSize={18} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -309,7 +304,6 @@ export default function OperationalOverview() {
                   <Bar dataKey="Realizado" fill={CHART_COLORS.realized} radius={[0, 4, 4, 0]} maxBarSize={18}>
                     <LabelList dataKey="pct" position="right" formatter={(v: number) => `${v.toFixed(0)}%`} style={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
                   </Bar>
-                  <Bar dataKey="Comprometido" fill={CHART_COLORS.committed} radius={[0, 4, 4, 0]} maxBarSize={18} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -337,7 +331,6 @@ export default function OperationalOverview() {
                   <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" />
                   <Bar dataKey="Orçamento" fill={CHART_COLORS.budgetMuted} radius={[4, 4, 0, 0]} maxBarSize={26} />
                   <Bar dataKey="Realizado" fill={CHART_COLORS.realized} radius={[4, 4, 0, 0]} maxBarSize={26} />
-                  <Bar dataKey="Comprometido" fill={CHART_COLORS.committed} radius={[4, 4, 0, 0]} maxBarSize={26} />
                 </BarChart>
               </ResponsiveContainer>
             )}
