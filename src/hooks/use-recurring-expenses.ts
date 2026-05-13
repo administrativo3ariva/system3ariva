@@ -164,12 +164,12 @@ export function useGenerateRecurringMonth() {
 export function useToggleRunPaid() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, paid }: { id: string; paid: boolean }) => {
+    mutationFn: async ({ id, paid, paidDate }: { id: string; paid: boolean; paidDate?: string }) => {
       const { error } = await supabase
         .from('recurring_expense_runs' as any)
         .update({
           paid,
-          paid_date: paid ? new Date().toISOString().slice(0, 10) : null,
+          paid_date: paid ? (paidDate || new Date().toISOString().slice(0, 10)) : null,
         } as any)
         .eq('id', id);
       if (error) throw error;
