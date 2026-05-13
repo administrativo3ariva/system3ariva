@@ -606,6 +606,39 @@ export default function RecurringExpensesTab() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Confirm payment date */}
+      <AlertDialog open={!!payRun} onOpenChange={(o) => !o && setPayRun(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar pagamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Informe a data em que este lançamento foi pago.
+              {payRun?.due_date && (
+                <span className="block mt-1 text-xs">Vencimento: {format(parseISO(payRun.due_date), 'dd/MM/yyyy')} · Valor: {fmtBRL(Number(payRun.amount))}</span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-2">
+            <Label htmlFor="paydate" className="text-sm">Data de pagamento</Label>
+            <Input id="paydate" type="date" value={payDate} onChange={e => setPayDate(e.target.value)} className="mt-1" />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!payDate}
+              onClick={() => {
+                if (payRun && payDate) {
+                  togglePaid.mutate({ id: payRun.id, paid: true, paidDate: payDate });
+                  setPayRun(null);
+                }
+              }}
+            >
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
