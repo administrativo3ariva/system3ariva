@@ -403,12 +403,13 @@ export default function StockIndicators() {
     const totalCollabs = Object.values(collabCounts).reduce((a, b) => a + b, 0);
 
     // BH movements within current filter range/categories/item
-    const bhMoves = filtered.filter(m => m.unit === 'BH-Matriz');
+    // Gasto = SAÍDA quantity × unit_price (consumo financeiro)
+    const bhMoves = filtered.filter(m => m.unit === 'BH-Matriz' && m.type === 'saida');
 
-    type FloorAgg = { gastoDirect: number; gastoShared: number; consumoDirect: number; consumoShared: number; itens: Map<string, { name: string; qty: number; val: number }> };
+    type FloorAgg = { gasto: number; consumo: number; itens: Map<string, { name: string; qty: number; val: number }> };
     const agg: Record<string, FloorAgg> = {};
     FLOOR_KEYS.forEach(f => {
-      agg[f] = { gastoDirect: 0, gastoShared: 0, consumoDirect: 0, consumoShared: 0, itens: new Map() };
+      agg[f] = { gasto: 0, consumo: 0, itens: new Map() };
     });
 
     let unallocGasto = 0;
@@ -421,28 +422,27 @@ export default function StockIndicators() {
       const f = m.floor;
       if (f && FLOOR_KEYS.includes(f as any)) {
         const a = agg[f];
-        if (m.type === 'entrada') a.gastoDirect += val;
-        if (m.type === 'saida') a.consumoDirect += m.quantity;
+        a.gasto += val;
+        a.consumo += m.quantity;
         const e = a.itens.get(m.product_id) || { name: m.product_name, qty: 0, val: 0 };
-        if (m.type === 'saida') e.qty += m.quantity;
-        if (m.type === 'entrada') e.val += val;
+        e.qty += m.quantity;
+        e.val += val;
         a.itens.set(m.product_id, e);
       } else {
-        if (m.type === 'entrada') unallocGasto += val;
-        if (m.type === 'saida') unallocConsumo += m.quantity;
+        unallocGasto += val;
+        unallocConsumo += m.quantity;
         const e = unallocItems.get(m.product_id) || { name: m.product_name, qty: 0, val: 0 };
-        if (m.type === 'saida') e.qty += m.quantity;
-        if (m.type === 'entrada') e.val += val;
+        e.qty += m.quantity;
+        e.val += val;
         unallocItems.set(m.product_id, e);
       }
     });
 
-    // Proportional split by collaborator share
+    // Proportional split by collaborator share (rateio embutido no total, sem separação visual)
     FLOOR_KEYS.forEach(f => {
       const share = totalCollabs > 0 ? collabCounts[f] / totalCollabs : 0;
-      agg[f].gastoShared = unallocGasto * share;
-      agg[f].consumoShared = unallocConsumo * share;
-      // also distribute item amounts proportionally
+      agg[f].gasto += unallocGasto * share;
+      agg[f].consumo += unallocConsumo * share;
       unallocItems.forEach((v, k) => {
         const e = agg[f].itens.get(k) || { name: v.name, qty: 0, val: 0 };
         e.qty += v.qty * share;
@@ -458,25 +458,20 @@ export default function StockIndicators() {
       rows: FLOOR_KEYS.map(f => {
         const a = agg[f];
         const collabs = collabCounts[f];
-        const gasto = a.gastoDirect + a.gastoShared;
-        const consumo = a.consumoDirect + a.consumoShared;
         const topItens = Array.from(a.itens.values()).sort((x, y) => y.val - x.val).slice(0, 5);
         return {
           floor: f,
           label: FLOOR_DISPLAY[f],
           collabs,
-          gastoDirect: a.gastoDirect,
-          gastoShared: a.gastoShared,
-          gasto,
-          consumoDirect: a.consumoDirect,
-          consumoShared: a.consumoShared,
-          consumo,
-          gastoPerCollab: collabs > 0 ? gasto / collabs : 0,
+          gasto: a.gasto,
+          consumo: a.consumo,
+          gastoPerCollab: collabs > 0 ? a.gasto / collabs : 0,
           topItens,
         };
       }),
     };
   }, [allCollabs, filtered, productMap]);
+
 
   if (loading) {
     return (
