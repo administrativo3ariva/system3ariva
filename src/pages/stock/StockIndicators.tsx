@@ -1187,6 +1187,51 @@ function BHFloorView({ data }: { data: any }) {
         </Card>
       </div>
 
+      {/* Comparison: Real vs Alocação esperada (por colaboradores) */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Gasto Real × Alocação Esperada por Andar</CardTitle>
+          <p className="text-[11px] text-muted-foreground">
+            Alocação esperada = participação do andar no total de colaboradores aplicada ao gasto total de BH.
+            Desvio positivo = andar consumiu acima da sua proporção; negativo = abaixo.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={enriched} margin={{ top: 20, left: 10, right: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `R$${(v / 1000).toFixed(1)}k`} />
+                <Tooltip
+                  cursor={{ fill: 'hsl(var(--muted) / 0.3)' }}
+                  content={({ active, payload, label }: any) => {
+                    if (!active || !payload?.length) return null;
+                    const real = payload.find((p: any) => p.dataKey === 'gasto')?.value ?? 0;
+                    const esp = payload.find((p: any) => p.dataKey === 'gastoEsperado')?.value ?? 0;
+                    const desv = real - esp;
+                    return (
+                      <div className="rounded-lg border bg-background px-3 py-2 shadow-md text-xs space-y-1">
+                        <p className="font-medium">{label}</p>
+                        <p style={{ color: 'hsl(var(--primary))' }}>Gasto real: {formatBRL(real)}</p>
+                        <p style={{ color: 'hsl(var(--accent))' }}>Esperado: {formatBRL(esp)}</p>
+                        <div className="pt-1 border-t border-border/40">
+                          <p className={desv >= 0 ? 'text-destructive font-semibold' : 'text-emerald-500 font-semibold'}>
+                            Desvio: {desv >= 0 ? '+' : ''}{formatBRL(desv)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="gasto" name="Gasto real" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="gastoEsperado" name="Alocação esperada (% colab.)" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Detail table */}
       <Card>
@@ -1194,40 +1239,60 @@ function BHFloorView({ data }: { data: any }) {
           <CardTitle className="text-sm">Detalhamento por Andar</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs">Andar</TableHead>
-                <TableHead className="text-xs text-right">Colaboradores</TableHead>
-                <TableHead className="text-xs text-right">Gasto Total</TableHead>
-                <TableHead className="text-xs text-right">% do Gasto BH</TableHead>
-                <TableHead className="text-xs text-right">Por Colab.</TableHead>
-                <TableHead className="text-xs text-right">Consumo (un.)</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((r: any) => (
-                <TableRow key={r.floor}>
-                  <TableCell className="text-xs font-medium">{r.label}</TableCell>
-                  <TableCell className="text-xs text-right">{r.collabs}</TableCell>
-                  <TableCell className="text-xs text-right font-semibold">{formatBRL(r.gasto)}</TableCell>
-                  <TableCell className="text-xs text-right">{totalGastoBH > 0 ? ((r.gasto / totalGastoBH) * 100).toFixed(1) : '0.0'}%</TableCell>
-                  <TableCell className="text-xs text-right">{r.collabs > 0 ? formatBRL(r.gastoPerCollab) : '—'}</TableCell>
-                  <TableCell className="text-xs text-right">{r.consumo.toFixed(1)}</TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Andar</TableHead>
+                  <TableHead className="text-xs text-right">Colab.</TableHead>
+                  <TableHead className="text-xs text-right">Gasto Real</TableHead>
+                  <TableHead className="text-xs text-right">% Real</TableHead>
+                  <TableHead className="text-xs text-right">% Esperada</TableHead>
+                  <TableHead className="text-xs text-right">Alocação Esperada</TableHead>
+                  <TableHead className="text-xs text-right">Desvio</TableHead>
+                  <TableHead className="text-xs text-right">Por Colab.</TableHead>
+                  <TableHead className="text-xs text-right">Consumo (un.)</TableHead>
                 </TableRow>
-              ))}
-              <TableRow className="bg-muted/30 font-semibold">
-                <TableCell className="text-xs">Total BH</TableCell>
-                <TableCell className="text-xs text-right">{totalCollabs}</TableCell>
-                <TableCell className="text-xs text-right">{formatBRL(totalGastoBH)}</TableCell>
-                <TableCell className="text-xs text-right">100%</TableCell>
-                <TableCell className="text-xs text-right">{totalCollabs > 0 ? formatBRL(totalGastoBH / totalCollabs) : '—'}</TableCell>
-                <TableCell className="text-xs text-right">{totalConsumoBH.toFixed(1)}</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {enriched.map((r: any) => {
+                  const desvioUp = r.desvioValor >= 0;
+                  return (
+                    <TableRow key={r.floor}>
+                      <TableCell className="text-xs font-medium">{r.label}</TableCell>
+                      <TableCell className="text-xs text-right">{r.collabs}</TableCell>
+                      <TableCell className="text-xs text-right font-semibold">{formatBRL(r.gasto)}</TableCell>
+                      <TableCell className="text-xs text-right">{r.pctReal.toFixed(1)}%</TableCell>
+                      <TableCell className="text-xs text-right text-muted-foreground">{r.pctEsperado.toFixed(1)}%</TableCell>
+                      <TableCell className="text-xs text-right text-muted-foreground">{formatBRL(r.gastoEsperado)}</TableCell>
+                      <TableCell className={cn('text-xs text-right font-medium', desvioUp ? 'text-destructive' : 'text-emerald-500')}>
+                        {desvioUp ? '+' : ''}{formatBRL(r.desvioValor)}
+                        <span className="block text-[10px] opacity-75">
+                          {desvioUp ? '+' : ''}{r.desvioPct.toFixed(1)} p.p.
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-xs text-right">{r.collabs > 0 ? formatBRL(r.gastoPerCollab) : '—'}</TableCell>
+                      <TableCell className="text-xs text-right">{r.consumo.toFixed(1)}</TableCell>
+                    </TableRow>
+                  );
+                })}
+                <TableRow className="bg-muted/30 font-semibold">
+                  <TableCell className="text-xs">Total BH</TableCell>
+                  <TableCell className="text-xs text-right">{totalCollabs}</TableCell>
+                  <TableCell className="text-xs text-right">{formatBRL(totalGastoBH)}</TableCell>
+                  <TableCell className="text-xs text-right">100%</TableCell>
+                  <TableCell className="text-xs text-right">100%</TableCell>
+                  <TableCell className="text-xs text-right">{formatBRL(totalGastoBH)}</TableCell>
+                  <TableCell className="text-xs text-right">—</TableCell>
+                  <TableCell className="text-xs text-right">{totalCollabs > 0 ? formatBRL(totalGastoBH / totalCollabs) : '—'}</TableCell>
+                  <TableCell className="text-xs text-right">{totalConsumoBH.toFixed(1)}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
+
 
       {/* Top items per floor */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
