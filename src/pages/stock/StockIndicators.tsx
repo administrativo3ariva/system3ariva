@@ -403,12 +403,13 @@ export default function StockIndicators() {
     const totalCollabs = Object.values(collabCounts).reduce((a, b) => a + b, 0);
 
     // BH movements within current filter range/categories/item
-    const bhMoves = filtered.filter(m => m.unit === 'BH-Matriz');
+    // Gasto = SAÍDA quantity × unit_price (consumo financeiro)
+    const bhMoves = filtered.filter(m => m.unit === 'BH-Matriz' && m.type === 'saida');
 
-    type FloorAgg = { gastoDirect: number; gastoShared: number; consumoDirect: number; consumoShared: number; itens: Map<string, { name: string; qty: number; val: number }> };
+    type FloorAgg = { gasto: number; consumo: number; itens: Map<string, { name: string; qty: number; val: number }> };
     const agg: Record<string, FloorAgg> = {};
     FLOOR_KEYS.forEach(f => {
-      agg[f] = { gastoDirect: 0, gastoShared: 0, consumoDirect: 0, consumoShared: 0, itens: new Map() };
+      agg[f] = { gasto: 0, consumo: 0, itens: new Map() };
     });
 
     let unallocGasto = 0;
@@ -421,28 +422,27 @@ export default function StockIndicators() {
       const f = m.floor;
       if (f && FLOOR_KEYS.includes(f as any)) {
         const a = agg[f];
-        if (m.type === 'entrada') a.gastoDirect += val;
-        if (m.type === 'saida') a.consumoDirect += m.quantity;
+        a.gasto += val;
+        a.consumo += m.quantity;
         const e = a.itens.get(m.product_id) || { name: m.product_name, qty: 0, val: 0 };
-        if (m.type === 'saida') e.qty += m.quantity;
-        if (m.type === 'entrada') e.val += val;
+        e.qty += m.quantity;
+        e.val += val;
         a.itens.set(m.product_id, e);
       } else {
-        if (m.type === 'entrada') unallocGasto += val;
-        if (m.type === 'saida') unallocConsumo += m.quantity;
+        unallocGasto += val;
+        unallocConsumo += m.quantity;
         const e = unallocItems.get(m.product_id) || { name: m.product_name, qty: 0, val: 0 };
-        if (m.type === 'saida') e.qty += m.quantity;
-        if (m.type === 'entrada') e.val += val;
+        e.qty += m.quantity;
+        e.val += val;
         unallocItems.set(m.product_id, e);
       }
     });
 
-    // Proportional split by collaborator share
+    // Proportional split by collaborator share (rateio embutido no total, sem separação visual)
     FLOOR_KEYS.forEach(f => {
       const share = totalCollabs > 0 ? collabCounts[f] / totalCollabs : 0;
-      agg[f].gastoShared = unallocGasto * share;
-      agg[f].consumoShared = unallocConsumo * share;
-      // also distribute item amounts proportionally
+      agg[f].gasto += unallocGasto * share;
+      agg[f].consumo += unallocConsumo * share;
       unallocItems.forEach((v, k) => {
         const e = agg[f].itens.get(k) || { name: v.name, qty: 0, val: 0 };
         e.qty += v.qty * share;
@@ -458,25 +458,20 @@ export default function StockIndicators() {
       rows: FLOOR_KEYS.map(f => {
         const a = agg[f];
         const collabs = collabCounts[f];
-        const gasto = a.gastoDirect + a.gastoShared;
-        const consumo = a.consumoDirect + a.consumoShared;
         const topItens = Array.from(a.itens.values()).sort((x, y) => y.val - x.val).slice(0, 5);
         return {
           floor: f,
           label: FLOOR_DISPLAY[f],
           collabs,
-          gastoDirect: a.gastoDirect,
-          gastoShared: a.gastoShared,
-          gasto,
-          consumoDirect: a.consumoDirect,
-          consumoShared: a.consumoShared,
-          consumo,
-          gastoPerCollab: collabs > 0 ? gasto / collabs : 0,
+          gasto: a.gasto,
+          consumo: a.consumo,
+          gastoPerCollab: collabs > 0 ? a.gasto / collabs : 0,
           topItens,
         };
       }),
     };
   }, [allCollabs, filtered, productMap]);
+
 
   if (loading) {
     return (
@@ -1091,7 +1086,7 @@ function BHFloorView({ data }: { data: any }) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Gasto por Andar</CardTitle>
-            <p className="text-[11px] text-muted-foreground">Valor total das movimentações + % proveniente de rateio</p>
+            <p className="text-[11px] text-muted-foreground">Valor consumido = saídas × preço unitário do item</p>
           </CardHeader>
           <CardContent>
             <div className="h-72">
@@ -1104,42 +1099,26 @@ function BHFloorView({ data }: { data: any }) {
                     cursor={{ fill: 'hsl(var(--muted) / 0.3)' }}
                     content={({ active, payload, label }: any) => {
                       if (!active || !payload?.length) return null;
-                      const direct = payload.find((p: any) => p.dataKey === 'gastoDirect')?.value ?? 0;
-                      const shared = payload.find((p: any) => p.dataKey === 'gastoShared')?.value ?? 0;
-                      const total = direct + shared;
-                      const pct = total > 0 ? (shared / total) * 100 : 0;
+                      const v = payload[0]?.value ?? 0;
                       return (
-                        <div className="rounded-lg border bg-background px-3 py-2 shadow-md text-xs space-y-1">
-                          <p className="font-medium">{label}</p>
-                          <p style={{ color: 'hsl(var(--primary))' }}>Direto: {formatBRL(direct)}</p>
-                          <p style={{ color: 'hsl(var(--accent))' }}>Rateio: {formatBRL(shared)}</p>
-                          <div className="pt-1 border-t border-border/40">
-                            <p className="font-semibold">Total: {formatBRL(total)}</p>
-                            <p className="text-muted-foreground">{pct.toFixed(1)}% via rateio</p>
-                          </div>
+                        <div className="rounded-lg border bg-background px-3 py-2 shadow-md text-xs">
+                          <p className="font-medium mb-1">{label}</p>
+                          <p className="font-semibold">{formatBRL(v)}</p>
                         </div>
                       );
                     }}
                   />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="gastoDirect" stackId="g" name="Direto (lançado no andar)" fill="hsl(var(--primary))" />
-                  <Bar dataKey="gastoShared" stackId="g" name="Rateio (proporcional)" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]}>
+                  <Bar dataKey="gasto" name="Gasto" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
                     <LabelList
                       content={({ x, y, width, height, index }: any) => {
                         const r = rows[index];
                         if (!r || r.gasto <= 0) return null;
-                        const pct = r.gasto > 0 ? (r.gastoShared / r.gasto) * 100 : 0;
                         const tx = Number(x) + Number(width) + 6;
                         const ty = Number(y) + Number(height) / 2;
                         return (
-                          <g>
-                            <text x={tx} y={ty - 2} className="fill-foreground" style={{ fontSize: 11, fontWeight: 600 }}>
-                              {formatBRL(r.gasto)}
-                            </text>
-                            <text x={tx} y={ty + 10} className="fill-muted-foreground" style={{ fontSize: 10 }}>
-                              {pct.toFixed(1)}% rateio
-                            </text>
-                          </g>
+                          <text x={tx} y={ty + 4} className="fill-foreground" style={{ fontSize: 11, fontWeight: 600 }}>
+                            {formatBRL(r.gasto)}
+                          </text>
                         );
                       }}
                     />
@@ -1153,7 +1132,7 @@ function BHFloorView({ data }: { data: any }) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Consumo por Andar (unidades)</CardTitle>
-            <p className="text-[11px] text-muted-foreground">Quantidade movimentada + % proveniente de rateio</p>
+            <p className="text-[11px] text-muted-foreground">Quantidade total saída do estoque por andar</p>
           </CardHeader>
           <CardContent>
             <div className="h-72">
@@ -1166,42 +1145,26 @@ function BHFloorView({ data }: { data: any }) {
                     cursor={{ fill: 'hsl(var(--muted) / 0.3)' }}
                     content={({ active, payload, label }: any) => {
                       if (!active || !payload?.length) return null;
-                      const direct = payload.find((p: any) => p.dataKey === 'consumoDirect')?.value ?? 0;
-                      const shared = payload.find((p: any) => p.dataKey === 'consumoShared')?.value ?? 0;
-                      const total = direct + shared;
-                      const pct = total > 0 ? (shared / total) * 100 : 0;
+                      const v = payload[0]?.value ?? 0;
                       return (
-                        <div className="rounded-lg border bg-background px-3 py-2 shadow-md text-xs space-y-1">
-                          <p className="font-medium">{label}</p>
-                          <p style={{ color: 'hsl(150 60% 45%)' }}>Direto: {direct.toFixed(1)} un.</p>
-                          <p style={{ color: 'hsl(35 90% 55%)' }}>Rateio: {shared.toFixed(1)} un.</p>
-                          <div className="pt-1 border-t border-border/40">
-                            <p className="font-semibold">Total: {total.toFixed(1)} un.</p>
-                            <p className="text-muted-foreground">{pct.toFixed(1)}% via rateio</p>
-                          </div>
+                        <div className="rounded-lg border bg-background px-3 py-2 shadow-md text-xs">
+                          <p className="font-medium mb-1">{label}</p>
+                          <p className="font-semibold">{v.toFixed(1)} un.</p>
                         </div>
                       );
                     }}
                   />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="consumoDirect" stackId="c" name="Direto" fill="hsl(150 60% 45%)" />
-                  <Bar dataKey="consumoShared" stackId="c" name="Rateio" fill="hsl(35 90% 55%)" radius={[0, 4, 4, 0]}>
+                  <Bar dataKey="consumo" name="Consumo" fill="hsl(150 60% 45%)" radius={[0, 4, 4, 0]}>
                     <LabelList
                       content={({ x, y, width, height, index }: any) => {
                         const r = rows[index];
                         if (!r || r.consumo <= 0) return null;
-                        const pct = r.consumo > 0 ? (r.consumoShared / r.consumo) * 100 : 0;
                         const tx = Number(x) + Number(width) + 6;
                         const ty = Number(y) + Number(height) / 2;
                         return (
-                          <g>
-                            <text x={tx} y={ty - 2} className="fill-foreground" style={{ fontSize: 11, fontWeight: 600 }}>
-                              {r.consumo.toFixed(1)} un.
-                            </text>
-                            <text x={tx} y={ty + 10} className="fill-muted-foreground" style={{ fontSize: 10 }}>
-                              {pct.toFixed(1)}% rateio
-                            </text>
-                          </g>
+                          <text x={tx} y={ty + 4} className="fill-foreground" style={{ fontSize: 11, fontWeight: 600 }}>
+                            {r.consumo.toFixed(1)} un.
+                          </text>
                         );
                       }}
                     />
@@ -1212,6 +1175,7 @@ function BHFloorView({ data }: { data: any }) {
           </CardContent>
         </Card>
       </div>
+
 
       {/* Detail table */}
       <Card>
@@ -1224,8 +1188,6 @@ function BHFloorView({ data }: { data: any }) {
               <TableRow>
                 <TableHead className="text-xs">Andar</TableHead>
                 <TableHead className="text-xs text-right">Colaboradores</TableHead>
-                <TableHead className="text-xs text-right">Gasto Direto</TableHead>
-                <TableHead className="text-xs text-right">Rateio</TableHead>
                 <TableHead className="text-xs text-right">Gasto Total</TableHead>
                 <TableHead className="text-xs text-right">% do Gasto BH</TableHead>
                 <TableHead className="text-xs text-right">Por Colab.</TableHead>
@@ -1237,8 +1199,6 @@ function BHFloorView({ data }: { data: any }) {
                 <TableRow key={r.floor}>
                   <TableCell className="text-xs font-medium">{r.label}</TableCell>
                   <TableCell className="text-xs text-right">{r.collabs}</TableCell>
-                  <TableCell className="text-xs text-right">{formatBRL(r.gastoDirect)}</TableCell>
-                  <TableCell className="text-xs text-right text-muted-foreground">{formatBRL(r.gastoShared)}</TableCell>
                   <TableCell className="text-xs text-right font-semibold">{formatBRL(r.gasto)}</TableCell>
                   <TableCell className="text-xs text-right">{totalGastoBH > 0 ? ((r.gasto / totalGastoBH) * 100).toFixed(1) : '0.0'}%</TableCell>
                   <TableCell className="text-xs text-right">{r.collabs > 0 ? formatBRL(r.gastoPerCollab) : '—'}</TableCell>
@@ -1248,8 +1208,6 @@ function BHFloorView({ data }: { data: any }) {
               <TableRow className="bg-muted/30 font-semibold">
                 <TableCell className="text-xs">Total BH</TableCell>
                 <TableCell className="text-xs text-right">{totalCollabs}</TableCell>
-                <TableCell className="text-xs text-right">{formatBRL(rows.reduce((s: number, r: any) => s + r.gastoDirect, 0))}</TableCell>
-                <TableCell className="text-xs text-right">{formatBRL(unalloc.gasto)}</TableCell>
                 <TableCell className="text-xs text-right">{formatBRL(totalGastoBH)}</TableCell>
                 <TableCell className="text-xs text-right">100%</TableCell>
                 <TableCell className="text-xs text-right">{totalCollabs > 0 ? formatBRL(totalGastoBH / totalCollabs) : '—'}</TableCell>
