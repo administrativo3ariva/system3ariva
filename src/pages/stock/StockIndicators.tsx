@@ -1089,18 +1089,61 @@ function BHFloorView({ data }: { data: any }) {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Gasto por Andar</CardTitle></CardHeader>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Gasto por Andar</CardTitle>
+            <p className="text-[11px] text-muted-foreground">Valor total das movimentações + % proveniente de rateio</p>
+          </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={rows} layout="vertical" margin={{ left: 10, right: 20 }}>
+                <BarChart data={rows} layout="vertical" margin={{ left: 10, right: 110 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                   <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={v => `R$${(v / 1000).toFixed(1)}k`} />
                   <YAxis dataKey="label" type="category" tick={{ fontSize: 10 }} width={110} />
-                  <Tooltip cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} content={<CustomTooltip prefix="R$ " />} />
+                  <Tooltip
+                    cursor={{ fill: 'hsl(var(--muted) / 0.3)' }}
+                    content={({ active, payload, label }: any) => {
+                      if (!active || !payload?.length) return null;
+                      const direct = payload.find((p: any) => p.dataKey === 'gastoDirect')?.value ?? 0;
+                      const shared = payload.find((p: any) => p.dataKey === 'gastoShared')?.value ?? 0;
+                      const total = direct + shared;
+                      const pct = total > 0 ? (shared / total) * 100 : 0;
+                      return (
+                        <div className="rounded-lg border bg-background px-3 py-2 shadow-md text-xs space-y-1">
+                          <p className="font-medium">{label}</p>
+                          <p style={{ color: 'hsl(var(--primary))' }}>Direto: {formatBRL(direct)}</p>
+                          <p style={{ color: 'hsl(var(--accent))' }}>Rateio: {formatBRL(shared)}</p>
+                          <div className="pt-1 border-t border-border/40">
+                            <p className="font-semibold">Total: {formatBRL(total)}</p>
+                            <p className="text-muted-foreground">{pct.toFixed(1)}% via rateio</p>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="gastoDirect" stackId="g" name="Direto (lançado no andar)" fill="hsl(var(--primary))" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="gastoShared" stackId="g" name="Rateio (proporcional)" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="gastoDirect" stackId="g" name="Direto (lançado no andar)" fill="hsl(var(--primary))" />
+                  <Bar dataKey="gastoShared" stackId="g" name="Rateio (proporcional)" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]}>
+                    <LabelList
+                      content={({ x, y, width, height, index }: any) => {
+                        const r = rows[index];
+                        if (!r || r.gasto <= 0) return null;
+                        const pct = r.gasto > 0 ? (r.gastoShared / r.gasto) * 100 : 0;
+                        const tx = Number(x) + Number(width) + 6;
+                        const ty = Number(y) + Number(height) / 2;
+                        return (
+                          <g>
+                            <text x={tx} y={ty - 2} className="fill-foreground" style={{ fontSize: 11, fontWeight: 600 }}>
+                              {formatBRL(r.gasto)}
+                            </text>
+                            <text x={tx} y={ty + 10} className="fill-muted-foreground" style={{ fontSize: 10 }}>
+                              {pct.toFixed(1)}% rateio
+                            </text>
+                          </g>
+                        );
+                      }}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -1108,18 +1151,61 @@ function BHFloorView({ data }: { data: any }) {
         </Card>
 
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Consumo por Andar (unidades)</CardTitle></CardHeader>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Consumo por Andar (unidades)</CardTitle>
+            <p className="text-[11px] text-muted-foreground">Quantidade movimentada + % proveniente de rateio</p>
+          </CardHeader>
           <CardContent>
-            <div className="h-64">
+            <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={rows} layout="vertical" margin={{ left: 10, right: 20 }}>
+                <BarChart data={rows} layout="vertical" margin={{ left: 10, right: 110 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
                   <XAxis type="number" tick={{ fontSize: 11 }} />
                   <YAxis dataKey="label" type="category" tick={{ fontSize: 10 }} width={110} />
-                  <Tooltip cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} content={<CustomTooltip prefix="" />} />
+                  <Tooltip
+                    cursor={{ fill: 'hsl(var(--muted) / 0.3)' }}
+                    content={({ active, payload, label }: any) => {
+                      if (!active || !payload?.length) return null;
+                      const direct = payload.find((p: any) => p.dataKey === 'consumoDirect')?.value ?? 0;
+                      const shared = payload.find((p: any) => p.dataKey === 'consumoShared')?.value ?? 0;
+                      const total = direct + shared;
+                      const pct = total > 0 ? (shared / total) * 100 : 0;
+                      return (
+                        <div className="rounded-lg border bg-background px-3 py-2 shadow-md text-xs space-y-1">
+                          <p className="font-medium">{label}</p>
+                          <p style={{ color: 'hsl(150 60% 45%)' }}>Direto: {direct.toFixed(1)} un.</p>
+                          <p style={{ color: 'hsl(35 90% 55%)' }}>Rateio: {shared.toFixed(1)} un.</p>
+                          <div className="pt-1 border-t border-border/40">
+                            <p className="font-semibold">Total: {total.toFixed(1)} un.</p>
+                            <p className="text-muted-foreground">{pct.toFixed(1)}% via rateio</p>
+                          </div>
+                        </div>
+                      );
+                    }}
+                  />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                   <Bar dataKey="consumoDirect" stackId="c" name="Direto" fill="hsl(150 60% 45%)" />
-                  <Bar dataKey="consumoShared" stackId="c" name="Rateio" fill="hsl(35 90% 55%)" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="consumoShared" stackId="c" name="Rateio" fill="hsl(35 90% 55%)" radius={[0, 4, 4, 0]}>
+                    <LabelList
+                      content={({ x, y, width, height, index }: any) => {
+                        const r = rows[index];
+                        if (!r || r.consumo <= 0) return null;
+                        const pct = r.consumo > 0 ? (r.consumoShared / r.consumo) * 100 : 0;
+                        const tx = Number(x) + Number(width) + 6;
+                        const ty = Number(y) + Number(height) / 2;
+                        return (
+                          <g>
+                            <text x={tx} y={ty - 2} className="fill-foreground" style={{ fontSize: 11, fontWeight: 600 }}>
+                              {r.consumo.toFixed(1)} un.
+                            </text>
+                            <text x={tx} y={ty + 10} className="fill-muted-foreground" style={{ fontSize: 10 }}>
+                              {pct.toFixed(1)}% rateio
+                            </text>
+                          </g>
+                        );
+                      }}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
