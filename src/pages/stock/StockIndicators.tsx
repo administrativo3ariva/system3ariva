@@ -1188,8 +1188,6 @@ function BHFloorView({ data }: { data: any }) {
               <TableRow>
                 <TableHead className="text-xs">Andar</TableHead>
                 <TableHead className="text-xs text-right">Colaboradores</TableHead>
-                <TableHead className="text-xs text-right">Gasto Direto</TableHead>
-                <TableHead className="text-xs text-right">Rateio</TableHead>
                 <TableHead className="text-xs text-right">Gasto Total</TableHead>
                 <TableHead className="text-xs text-right">% do Gasto BH</TableHead>
                 <TableHead className="text-xs text-right">Por Colab.</TableHead>
@@ -1201,8 +1199,6 @@ function BHFloorView({ data }: { data: any }) {
                 <TableRow key={r.floor}>
                   <TableCell className="text-xs font-medium">{r.label}</TableCell>
                   <TableCell className="text-xs text-right">{r.collabs}</TableCell>
-                  <TableCell className="text-xs text-right">{formatBRL(r.gastoDirect)}</TableCell>
-                  <TableCell className="text-xs text-right text-muted-foreground">{formatBRL(r.gastoShared)}</TableCell>
                   <TableCell className="text-xs text-right font-semibold">{formatBRL(r.gasto)}</TableCell>
                   <TableCell className="text-xs text-right">{totalGastoBH > 0 ? ((r.gasto / totalGastoBH) * 100).toFixed(1) : '0.0'}%</TableCell>
                   <TableCell className="text-xs text-right">{r.collabs > 0 ? formatBRL(r.gastoPerCollab) : '—'}</TableCell>
@@ -1212,8 +1208,6 @@ function BHFloorView({ data }: { data: any }) {
               <TableRow className="bg-muted/30 font-semibold">
                 <TableCell className="text-xs">Total BH</TableCell>
                 <TableCell className="text-xs text-right">{totalCollabs}</TableCell>
-                <TableCell className="text-xs text-right">{formatBRL(rows.reduce((s: number, r: any) => s + r.gastoDirect, 0))}</TableCell>
-                <TableCell className="text-xs text-right">{formatBRL(unalloc.gasto)}</TableCell>
                 <TableCell className="text-xs text-right">{formatBRL(totalGastoBH)}</TableCell>
                 <TableCell className="text-xs text-right">100%</TableCell>
                 <TableCell className="text-xs text-right">{totalCollabs > 0 ? formatBRL(totalGastoBH / totalCollabs) : '—'}</TableCell>
