@@ -1031,6 +1031,17 @@ function BHFloorView({ data }: { data: any }) {
   const totalGastoBH = rows.reduce((s: number, r: any) => s + r.gasto, 0);
   const totalConsumoBH = rows.reduce((s: number, r: any) => s + r.consumo, 0);
 
+  // Enrich rows with expected allocation (by collaborator share) vs real gasto
+  const enriched = rows.map((r: any) => {
+    const pctReal = totalGastoBH > 0 ? (r.gasto / totalGastoBH) * 100 : 0;
+    const pctEsperado = totalCollabs > 0 ? (r.collabs / totalCollabs) * 100 : 0;
+    const gastoEsperado = totalGastoBH * (pctEsperado / 100);
+    const desvioValor = r.gasto - gastoEsperado;
+    const desvioPct = pctReal - pctEsperado;
+    return { ...r, pctReal, pctEsperado, gastoEsperado, desvioValor, desvioPct };
+  });
+
+
   if (totalCollabs === 0) {
     return (
       <Card>
