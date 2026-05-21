@@ -320,6 +320,10 @@ export default function StockMovements() {
   ) => (
     <>
       <div className="grid gap-2">
+        <Label>Data da movimentação</Label>
+        <Input type="date" value={formState.date || ''} onChange={e => setFormState((f: any) => ({ ...f, date: e.target.value }))} />
+      </div>
+      <div className="grid gap-2">
         <Label>Tipo</Label>
         <Select value={formState.type} onValueChange={v => setFormState((f: any) => ({ ...f, type: v }))}>
           <SelectTrigger><SelectValue /></SelectTrigger>
