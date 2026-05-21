@@ -1073,15 +1073,15 @@ export default function StockIndicators() {
 
 /* ═══════════════ BH Floor View ═══════════════ */
 function BHFloorView({ data }: { data: any }) {
-  const { rows, totalCollabs, unalloc } = data;
+  const { rows, totalCollabs, nfTotal } = data;
   const totalGastoBH = rows.reduce((s: number, r: any) => s + r.gasto, 0);
   const totalConsumoBH = rows.reduce((s: number, r: any) => s + r.consumo, 0);
 
-  // Enrich rows with expected allocation (by collaborator share) vs real gasto
+  // Enrich rows with expected allocation from monthly NF total vs real movement-based spend
   const enriched = rows.map((r: any) => {
     const pctReal = totalGastoBH > 0 ? (r.gasto / totalGastoBH) * 100 : 0;
     const pctEsperado = totalCollabs > 0 ? (r.collabs / totalCollabs) * 100 : 0;
-    const gastoEsperado = totalGastoBH * (pctEsperado / 100);
+    const gastoEsperado = r.gastoEsperado ?? 0;
     const desvioValor = r.gasto - gastoEsperado;
     const desvioPct = pctReal - pctEsperado;
     return { ...r, pctReal, pctEsperado, gastoEsperado, desvioValor, desvioPct };
@@ -1110,7 +1110,7 @@ function BHFloorView({ data }: { data: any }) {
             <Users className="h-3.5 w-3.5" /> {totalCollabs} colaboradores
           </div>
           <div className="text-muted-foreground">
-            Movimentações sem andar específico são <strong className="text-foreground">rateadas proporcionalmente</strong> ao número de colaboradores por andar.
+            Alocação esperada baseada em <strong className="text-foreground">{formatBRL(nfTotal || 0)}</strong> de NFs no período, rateada por colaboradores.
           </div>
         </CardContent>
       </Card>
@@ -1143,7 +1143,7 @@ function BHFloorView({ data }: { data: any }) {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">Gasto por Andar</CardTitle>
           <p className="text-[11px] text-muted-foreground">
-            Gasto Real = saídas × preço unitário. Alocação Esperada = participação do andar no total de colaboradores aplicada ao gasto total de BH.
+            Gasto Real = saídas × preço unitário. Alocação Esperada = total das NFs de produtos no período dividido proporcionalmente por colaboradores do andar.
           </p>
         </CardHeader>
         <CardContent>
