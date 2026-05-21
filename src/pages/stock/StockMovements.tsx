@@ -373,10 +373,17 @@ export default function StockMovements() {
               </div>
             </div>
           ) : (
-            <Select value={(formState as typeof form).productId || undefined} onValueChange={v => setFormState((f: any) => ({ ...f, productId: v }))}>
-              <SelectTrigger><SelectValue placeholder="Selecione o produto" /></SelectTrigger>
-              <SelectContent>{products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
-            </Select>
+            (() => {
+              const availableProducts = formState.type === 'entrada'
+                ? products
+                : products.filter(p => Number(p.quantity) > 0);
+              return (
+                <Select value={(formState as typeof form).productId || undefined} onValueChange={v => setFormState((f: any) => ({ ...f, productId: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o produto" /></SelectTrigger>
+                  <SelectContent>{availableProducts.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+                </Select>
+              );
+            })()
           )}
         </>
       )}
