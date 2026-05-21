@@ -797,18 +797,24 @@ export default function NfUploadPage() {
               </div>
 
               {previewNf.status === 'pendente' && (
-                <div className="flex justify-end gap-3 pt-2">
-                  <Button variant="outline" onClick={() => handleReject(previewNf.id)} className="text-destructive">
-                    <X className="h-4 w-4 mr-2" /> Rejeitar
-                  </Button>
-                  <Button
-                    onClick={() => handleApprove(previewNf)}
-                    disabled={!financialLink || approveNf.isPending}
-                    className="bg-success text-success-foreground hover:bg-success/90"
-                  >
-                    <Check className="h-4 w-4 mr-2" />
-                    {approveNf.isPending ? 'Processando...' : 'Aprovar Entrada'}
-                  </Button>
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pt-2">
+                  <div className="grid gap-1.5 sm:max-w-xs w-full">
+                    <Label className="text-xs font-medium text-muted-foreground">Data de entrada no estoque</Label>
+                    <Input type="date" value={entryDate} onChange={e => setEntryDate(e.target.value)} className="h-10" />
+                  </div>
+                  <div className="flex justify-end gap-3">
+                    <Button variant="outline" onClick={() => handleReject(previewNf.id)} className="text-destructive">
+                      <X className="h-4 w-4 mr-2" /> Rejeitar
+                    </Button>
+                    <Button
+                      onClick={() => handleApprove(previewNf)}
+                      disabled={!financialLink || approveNf.isPending}
+                      className="bg-success text-success-foreground hover:bg-success/90"
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      {approveNf.isPending ? 'Processando...' : 'Aprovar Entrada'}
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
