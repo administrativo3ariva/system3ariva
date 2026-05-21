@@ -39,9 +39,9 @@ import { supabase } from '@/integrations/supabase/client';
 
 /* ─── colors ─── */
 const COLORS = [
-  'hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(210 70% 55%)',
-  'hsl(150 60% 45%)', 'hsl(35 90% 55%)', 'hsl(280 60% 55%)',
-  'hsl(0 70% 55%)', 'hsl(190 70% 45%)', 'hsl(55 80% 50%)', 'hsl(320 60% 50%)',
+  'hsl(221, 83%, 53%)', 'hsl(142, 71%, 45%)', 'hsl(38, 92%, 50%)',
+  'hsl(262, 83%, 58%)', 'hsl(0, 84%, 60%)', 'hsl(190, 90%, 50%)',
+  'hsl(330, 80%, 55%)', 'hsl(45, 93%, 47%)', 'hsl(160, 60%, 45%)', 'hsl(280, 65%, 60%)',
 ];
 
 type BhNfUploadForIndicators = {
