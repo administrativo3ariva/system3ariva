@@ -47,6 +47,7 @@ export default function NfUploadPage() {
   const [newCategoryInput, setNewCategoryInput] = useState('');
   const [addingCategoryForIndex, setAddingCategoryForIndex] = useState<number | null>(null);
   const [financialLink, setFinancialLink] = useState<FinancialLinkChoice | ''>('');
+  const [entryDate, setEntryDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [dragOver, setDragOver] = useState(false);
   const [pendingApproval, setPendingApproval] = useState<DbNfUpload | null>(null);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
