@@ -238,7 +238,7 @@ export default function StockMovements() {
       finalNotes = finalNotes ? `${salaNote} | ${finalNotes}` : salaNote;
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const bulkDate = bulkForm.date || todayStr;
     let success = 0;
     for (const it of valid) {
       const product = products.find(p => p.id === it.productId);
@@ -247,7 +247,7 @@ export default function StockMovements() {
         await new Promise<void>((resolve, reject) => {
           addMovement.mutate({
             product_id: product.id, product_name: product.name, type: bulkForm.type,
-            quantity: parseFloat(it.quantity) || 0, date: today, user: 'Admin',
+            quantity: parseFloat(it.quantity) || 0, date: bulkDate, user: 'Admin',
             responsible: bulkForm.type === 'saida' ? bulkForm.responsible : null,
             notes: finalNotes || null, unit: selectedBranch,
             floor: selectedBranch === 'BH-Matriz' ? (bulkForm.floor || null) : null,
@@ -258,7 +258,7 @@ export default function StockMovements() {
     }
     if (success > 0) toast.success(`${success} movimentação(ões) registrada(s)`);
     setBulkItems([{ productId: '', quantity: '' }]);
-    setBulkForm({ type: 'entrada', responsible: '', notes: '', floor: '', sala: '' });
+    setBulkForm({ type: 'entrada', responsible: '', notes: '', floor: '', sala: '', date: todayStr });
     setBulkOpen(false);
   };
 
