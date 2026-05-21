@@ -831,8 +831,11 @@ export default function StockMovements() {
 
               <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1 -mr-1">
                 {bulkItems.map((item, idx) => {
+                  const selectedIds = new Set(bulkItems.map((it, i) => i !== idx ? it.productId : '').filter(Boolean));
                   const filteredProducts = products.filter(p =>
-                    !bulkProductSearch || p.name.toLowerCase().includes(bulkProductSearch.toLowerCase())
+                    (!bulkProductSearch || p.name.toLowerCase().includes(bulkProductSearch.toLowerCase()))
+                    && !selectedIds.has(p.id)
+                    && (bulkForm.type === 'entrada' || Number(p.quantity) > 0 || p.id === item.productId)
                   );
                   const selectedProduct = products.find(p => p.id === item.productId);
                   const uom = selectedProduct?.unit_of_measure || 'UN';
