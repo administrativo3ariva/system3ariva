@@ -53,10 +53,12 @@ export default function StockMovements() {
   const [isNewProduct, setIsNewProduct] = useState(false);
   const [newCategoryInput, setNewCategoryInput] = useState('');
   const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const todayStr = new Date().toISOString().split('T')[0];
   const [form, setForm] = useState({
     productId: '', type: 'entrada' as 'entrada' | 'saida' | 'ajuste',
     quantity: '', responsible: '', notes: '', floor: '', sala: '',
     newProductName: '', newProductCategory: '', newProductPrice: '',
+    date: todayStr,
   });
 
   const [viewMovement, setViewMovement] = useState<DbMovement | null>(null);
@@ -64,7 +66,7 @@ export default function StockMovements() {
   const [nfLoading, setNfLoading] = useState(false);
   const [editMovement, setEditMovement] = useState<DbMovement | null>(null);
   const [editForm, setEditForm] = useState({
-    type: 'entrada' as string, quantity: '', responsible: '', notes: '', floor: '', sala: '',
+    type: 'entrada' as string, quantity: '', responsible: '', notes: '', floor: '', sala: '', date: todayStr,
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -72,7 +74,7 @@ export default function StockMovements() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkForm, setBulkForm] = useState({
     type: 'entrada' as 'entrada' | 'saida' | 'ajuste',
-    responsible: '', notes: '', floor: '', sala: '',
+    responsible: '', notes: '', floor: '', sala: '', date: todayStr,
   });
   const [bulkItems, setBulkItems] = useState<Array<{ productId: string; quantity: string }>>([
     { productId: '', quantity: '' },
