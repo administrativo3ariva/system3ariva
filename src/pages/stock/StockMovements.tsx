@@ -755,6 +755,10 @@ export default function StockMovements() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="grid gap-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Data da movimentação</Label>
+                  <Input type="date" className="h-10" value={bulkForm.date || ''} onChange={e => setBulkForm(f => ({ ...f, date: e.target.value }))} />
+                </div>
+                <div className="grid gap-1.5">
                   <Label className="text-xs font-medium text-muted-foreground">Tipo de movimentação</Label>
                   <Select value={bulkForm.type} onValueChange={v => setBulkForm(f => ({ ...f, type: v as any }))}>
                     <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
