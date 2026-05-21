@@ -47,6 +47,7 @@ export default function NfUploadPage() {
   const [newCategoryInput, setNewCategoryInput] = useState('');
   const [addingCategoryForIndex, setAddingCategoryForIndex] = useState<number | null>(null);
   const [financialLink, setFinancialLink] = useState<FinancialLinkChoice | ''>('');
+  const [entryDate, setEntryDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [dragOver, setDragOver] = useState(false);
   const [pendingApproval, setPendingApproval] = useState<DbNfUpload | null>(null);
   const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
@@ -104,6 +105,7 @@ export default function NfUploadPage() {
       );
       setFinancialLink('');
       setSelectedIndices(new Set());
+      setEntryDate(previewNf.issue_date || new Date().toISOString().split('T')[0]);
     }
   }, [previewNf]);
 
@@ -167,7 +169,7 @@ export default function NfUploadPage() {
     // so merges/edits never leave orphan rows behind.
 
     approveNf.mutate(
-      { ...nf, nf_items: editedItems },
+      { nf: { ...nf, nf_items: editedItems }, entryDate },
       {
         onSuccess: () => {
           setPreviewNf(null);
@@ -795,18 +797,24 @@ export default function NfUploadPage() {
               </div>
 
               {previewNf.status === 'pendente' && (
-                <div className="flex justify-end gap-3 pt-2">
-                  <Button variant="outline" onClick={() => handleReject(previewNf.id)} className="text-destructive">
-                    <X className="h-4 w-4 mr-2" /> Rejeitar
-                  </Button>
-                  <Button
-                    onClick={() => handleApprove(previewNf)}
-                    disabled={!financialLink || approveNf.isPending}
-                    className="bg-success text-success-foreground hover:bg-success/90"
-                  >
-                    <Check className="h-4 w-4 mr-2" />
-                    {approveNf.isPending ? 'Processando...' : 'Aprovar Entrada'}
-                  </Button>
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pt-2">
+                  <div className="grid gap-1.5 sm:max-w-xs w-full">
+                    <Label className="text-xs font-medium text-muted-foreground">Data de entrada no estoque</Label>
+                    <Input type="date" value={entryDate} onChange={e => setEntryDate(e.target.value)} className="h-10" />
+                  </div>
+                  <div className="flex justify-end gap-3">
+                    <Button variant="outline" onClick={() => handleReject(previewNf.id)} className="text-destructive">
+                      <X className="h-4 w-4 mr-2" /> Rejeitar
+                    </Button>
+                    <Button
+                      onClick={() => handleApprove(previewNf)}
+                      disabled={!financialLink || approveNf.isPending}
+                      className="bg-success text-success-foreground hover:bg-success/90"
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      {approveNf.isPending ? 'Processando...' : 'Aprovar Entrada'}
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

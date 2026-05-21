@@ -129,8 +129,9 @@ export function useUpdateNfUpload() {
 export function useApproveNf() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (nf: DbNfUpload) => {
+    mutationFn: async ({ nf, entryDate }: { nf: DbNfUpload; entryDate?: string }) => {
       const items = nf.nf_items || [];
+      const moveDate = entryDate || new Date().toISOString().split('T')[0];
 
       // 1) Replace all nf_items for this NF with the edited list to avoid duplication
       //    after merges/edits. Delete-then-insert is safer than diffing ids.
@@ -196,6 +197,7 @@ export function useApproveNf() {
           product_name: productName,
           type: 'entrada',
           quantity: item.quantity,
+          date: moveDate,
           unit: targetUnit,
           responsible: 'Sistema',
           notes: `NF: ${nf.file_name} — ${nf.supplier || 'Fornecedor não identificado'}`,

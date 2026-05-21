@@ -53,10 +53,12 @@ export default function StockMovements() {
   const [isNewProduct, setIsNewProduct] = useState(false);
   const [newCategoryInput, setNewCategoryInput] = useState('');
   const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const todayStr = new Date().toISOString().split('T')[0];
   const [form, setForm] = useState({
     productId: '', type: 'entrada' as 'entrada' | 'saida' | 'ajuste',
     quantity: '', responsible: '', notes: '', floor: '', sala: '',
     newProductName: '', newProductCategory: '', newProductPrice: '',
+    date: todayStr,
   });
 
   const [viewMovement, setViewMovement] = useState<DbMovement | null>(null);
@@ -64,7 +66,7 @@ export default function StockMovements() {
   const [nfLoading, setNfLoading] = useState(false);
   const [editMovement, setEditMovement] = useState<DbMovement | null>(null);
   const [editForm, setEditForm] = useState({
-    type: 'entrada' as string, quantity: '', responsible: '', notes: '', floor: '', sala: '',
+    type: 'entrada' as string, quantity: '', responsible: '', notes: '', floor: '', sala: '', date: todayStr,
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -72,7 +74,7 @@ export default function StockMovements() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkForm, setBulkForm] = useState({
     type: 'entrada' as 'entrada' | 'saida' | 'ajuste',
-    responsible: '', notes: '', floor: '', sala: '',
+    responsible: '', notes: '', floor: '', sala: '', date: todayStr,
   });
   const [bulkItems, setBulkItems] = useState<Array<{ productId: string; quantity: string }>>([
     { productId: '', quantity: '' },
@@ -180,14 +182,14 @@ export default function StockMovements() {
 
     addMovement.mutate({
       product_id: productId, product_name: productName, type: form.type,
-      quantity: qty, date: new Date().toISOString().split('T')[0], user: 'Admin',
+      quantity: qty, date: form.date || todayStr, user: 'Admin',
       responsible: form.type === 'saida' ? form.responsible : null,
       notes: finalNotes || null, unit: selectedBranch,
       floor: selectedBranch === 'BH-Matriz' ? (form.floor || null) : null,
       unit_of_measure: 'UN',
     }, {
       onSuccess: () => {
-        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', floor: '', sala: '', newProductName: '', newProductCategory: '', newProductPrice: '' });
+        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', floor: '', sala: '', newProductName: '', newProductCategory: '', newProductPrice: '', date: todayStr });
         setIsNewProduct(false);
         setDialogOpen(false);
       }
@@ -196,7 +198,7 @@ export default function StockMovements() {
 
   const openEdit = (m: DbMovement) => {
     setEditMovement(m);
-    setEditForm({ type: m.type, quantity: String(m.quantity), responsible: m.responsible || '', notes: m.notes || '', floor: m.floor || '', sala: '' });
+    setEditForm({ type: m.type, quantity: String(m.quantity), responsible: m.responsible || '', notes: m.notes || '', floor: m.floor || '', sala: '', date: m.date || todayStr });
   };
 
   const handleEdit = () => {
@@ -216,6 +218,7 @@ export default function StockMovements() {
       responsible: editForm.type === 'saida' ? editForm.responsible : null,
       notes: finalNotes || null,
       floor: selectedBranch === 'BH-Matriz' ? (editForm.floor || null) : null,
+      date: editForm.date || todayStr,
     }, { onSuccess: () => setEditMovement(null) });
   };
 
@@ -235,7 +238,7 @@ export default function StockMovements() {
       finalNotes = finalNotes ? `${salaNote} | ${finalNotes}` : salaNote;
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const bulkDate = bulkForm.date || todayStr;
     let success = 0;
     for (const it of valid) {
       const product = products.find(p => p.id === it.productId);
@@ -244,7 +247,7 @@ export default function StockMovements() {
         await new Promise<void>((resolve, reject) => {
           addMovement.mutate({
             product_id: product.id, product_name: product.name, type: bulkForm.type,
-            quantity: parseFloat(it.quantity) || 0, date: today, user: 'Admin',
+            quantity: parseFloat(it.quantity) || 0, date: bulkDate, user: 'Admin',
             responsible: bulkForm.type === 'saida' ? bulkForm.responsible : null,
             notes: finalNotes || null, unit: selectedBranch,
             floor: selectedBranch === 'BH-Matriz' ? (bulkForm.floor || null) : null,
@@ -255,7 +258,7 @@ export default function StockMovements() {
     }
     if (success > 0) toast.success(`${success} movimentação(ões) registrada(s)`);
     setBulkItems([{ productId: '', quantity: '' }]);
-    setBulkForm({ type: 'entrada', responsible: '', notes: '', floor: '', sala: '' });
+    setBulkForm({ type: 'entrada', responsible: '', notes: '', floor: '', sala: '', date: todayStr });
     setBulkOpen(false);
   };
 
@@ -316,6 +319,10 @@ export default function StockMovements() {
     isEdit = false,
   ) => (
     <>
+      <div className="grid gap-2">
+        <Label>Data da movimentação</Label>
+        <Input type="date" value={formState.date || ''} onChange={e => setFormState((f: any) => ({ ...f, date: e.target.value }))} />
+      </div>
       <div className="grid gap-2">
         <Label>Tipo</Label>
         <Select value={formState.type} onValueChange={v => setFormState((f: any) => ({ ...f, type: v }))}>
@@ -747,6 +754,10 @@ export default function StockMovements() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid gap-1.5">
+                  <Label className="text-xs font-medium text-muted-foreground">Data da movimentação</Label>
+                  <Input type="date" className="h-10" value={bulkForm.date || ''} onChange={e => setBulkForm(f => ({ ...f, date: e.target.value }))} />
+                </div>
                 <div className="grid gap-1.5">
                   <Label className="text-xs font-medium text-muted-foreground">Tipo de movimentação</Label>
                   <Select value={bulkForm.type} onValueChange={v => setBulkForm(f => ({ ...f, type: v as any }))}>
