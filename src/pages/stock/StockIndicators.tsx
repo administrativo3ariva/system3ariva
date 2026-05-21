@@ -787,16 +787,16 @@ export default function StockIndicators() {
         {/* 3. Gasto por categoria (donut) */}
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Distribuição por Categoria</CardTitle></CardHeader>
-          <CardContent className="h-72 flex flex-col">
-            <div className="min-h-0 flex-1">
+          <CardContent className="h-80 flex gap-3">
+            <div className="min-w-0 flex-1">
               <ResponsiveContainer width="100%" height="100%">
-                <RPieChart margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+                <RPieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
                   <Pie
                     data={catData}
                     cx="50%"
                     cy="50%"
-                    innerRadius="46%"
-                    outerRadius="74%"
+                    innerRadius="55%"
+                    outerRadius="95%"
                     dataKey="value"
                     nameKey="name"
                     paddingAngle={2}
@@ -808,7 +808,7 @@ export default function StockIndicators() {
                 </RPieChart>
               </ResponsiveContainer>
             </div>
-            <div className="mt-2 max-h-16 space-y-1 overflow-y-auto pr-1 text-[11px]">
+            <div className="w-36 shrink-0 space-y-1.5 overflow-y-auto pr-1 text-[11px] self-center max-h-full">
               {catData.map((item, i) => (
                 <div key={item.name} className="flex items-start gap-2 text-foreground">
                   <span className="mt-1 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
