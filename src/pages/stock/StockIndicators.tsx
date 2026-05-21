@@ -1160,17 +1160,11 @@ function BHFloorView({ data }: { data: any }) {
                     if (!active || !payload?.length) return null;
                     const real = payload.find((p: any) => p.dataKey === 'gasto')?.value ?? 0;
                     const esp = payload.find((p: any) => p.dataKey === 'gastoEsperado')?.value ?? 0;
-                    const desv = real - esp;
                     return (
                       <div className="rounded-lg border bg-background px-3 py-2 shadow-md text-xs space-y-1">
                         <p className="font-medium">{label}</p>
                         <p style={{ color: 'hsl(var(--primary))' }}>Gasto real: {formatBRL(real)}</p>
                         <p style={{ color: 'hsl(var(--accent))' }}>Alocação esperada: {formatBRL(esp)}</p>
-                        <div className="pt-1 border-t border-border/40">
-                          <p className={desv >= 0 ? 'text-destructive font-semibold' : 'text-emerald-500 font-semibold'}>
-                            Desvio: {desv >= 0 ? '+' : ''}{formatBRL(desv)}
-                          </p>
-                        </div>
                       </div>
                     );
                   }}
