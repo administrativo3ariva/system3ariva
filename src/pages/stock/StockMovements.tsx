@@ -373,10 +373,17 @@ export default function StockMovements() {
               </div>
             </div>
           ) : (
-            <Select value={(formState as typeof form).productId || undefined} onValueChange={v => setFormState((f: any) => ({ ...f, productId: v }))}>
-              <SelectTrigger><SelectValue placeholder="Selecione o produto" /></SelectTrigger>
-              <SelectContent>{products.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
-            </Select>
+            (() => {
+              const availableProducts = formState.type === 'entrada'
+                ? products
+                : products.filter(p => Number(p.quantity) > 0);
+              return (
+                <Select value={(formState as typeof form).productId || undefined} onValueChange={v => setFormState((f: any) => ({ ...f, productId: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o produto" /></SelectTrigger>
+                  <SelectContent>{availableProducts.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+                </Select>
+              );
+            })()
           )}
         </>
       )}
@@ -824,8 +831,11 @@ export default function StockMovements() {
 
               <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1 -mr-1">
                 {bulkItems.map((item, idx) => {
+                  const selectedIds = new Set(bulkItems.map((it, i) => i !== idx ? it.productId : '').filter(Boolean));
                   const filteredProducts = products.filter(p =>
-                    !bulkProductSearch || p.name.toLowerCase().includes(bulkProductSearch.toLowerCase())
+                    (!bulkProductSearch || p.name.toLowerCase().includes(bulkProductSearch.toLowerCase()))
+                    && !selectedIds.has(p.id)
+                    && (bulkForm.type === 'entrada' || Number(p.quantity) > 0 || p.id === item.productId)
                   );
                   const selectedProduct = products.find(p => p.id === item.productId);
                   const uom = selectedProduct?.unit_of_measure || 'UN';
