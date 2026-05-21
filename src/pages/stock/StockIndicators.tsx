@@ -1092,112 +1092,16 @@ function BHFloorView({ data }: { data: any }) {
         ))}
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Gasto por Andar</CardTitle>
-            <p className="text-[11px] text-muted-foreground">Valor consumido = saídas × preço unitário do item</p>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={rows} layout="vertical" margin={{ left: 10, right: 110 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} tickFormatter={v => `R$${(v / 1000).toFixed(1)}k`} />
-                  <YAxis dataKey="label" type="category" tick={{ fontSize: 10 }} width={110} />
-                  <Tooltip
-                    cursor={{ fill: 'hsl(var(--muted) / 0.3)' }}
-                    content={({ active, payload, label }: any) => {
-                      if (!active || !payload?.length) return null;
-                      const v = payload[0]?.value ?? 0;
-                      return (
-                        <div className="rounded-lg border bg-background px-3 py-2 shadow-md text-xs">
-                          <p className="font-medium mb-1">{label}</p>
-                          <p className="font-semibold">{formatBRL(v)}</p>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Bar dataKey="gasto" name="Gasto" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
-                    <LabelList
-                      content={({ x, y, width, height, index }: any) => {
-                        const r = rows[index];
-                        if (!r || r.gasto <= 0) return null;
-                        const tx = Number(x) + Number(width) + 6;
-                        const ty = Number(y) + Number(height) / 2;
-                        return (
-                          <text x={tx} y={ty + 4} className="fill-foreground" style={{ fontSize: 11, fontWeight: 600 }}>
-                            {formatBRL(r.gasto)}
-                          </text>
-                        );
-                      }}
-                    />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Consumo por Andar (unidades)</CardTitle>
-            <p className="text-[11px] text-muted-foreground">Quantidade total saída do estoque por andar</p>
-          </CardHeader>
-          <CardContent>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={rows} layout="vertical" margin={{ left: 10, right: 110 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
-                  <XAxis type="number" tick={{ fontSize: 11 }} />
-                  <YAxis dataKey="label" type="category" tick={{ fontSize: 10 }} width={110} />
-                  <Tooltip
-                    cursor={{ fill: 'hsl(var(--muted) / 0.3)' }}
-                    content={({ active, payload, label }: any) => {
-                      if (!active || !payload?.length) return null;
-                      const v = payload[0]?.value ?? 0;
-                      return (
-                        <div className="rounded-lg border bg-background px-3 py-2 shadow-md text-xs">
-                          <p className="font-medium mb-1">{label}</p>
-                          <p className="font-semibold">{v.toFixed(1)} un.</p>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Bar dataKey="consumo" name="Consumo" fill="hsl(150 60% 45%)" radius={[0, 4, 4, 0]}>
-                    <LabelList
-                      content={({ x, y, width, height, index }: any) => {
-                        const r = rows[index];
-                        if (!r || r.consumo <= 0) return null;
-                        const tx = Number(x) + Number(width) + 6;
-                        const ty = Number(y) + Number(height) / 2;
-                        return (
-                          <text x={tx} y={ty + 4} className="fill-foreground" style={{ fontSize: 11, fontWeight: 600 }}>
-                            {r.consumo.toFixed(1)} un.
-                          </text>
-                        );
-                      }}
-                    />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Comparison: Real vs Alocação esperada (por colaboradores) */}
+      {/* Chart: Gasto Real vs Alocação Esperada por Andar */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Gasto Real × Alocação Esperada por Andar</CardTitle>
+          <CardTitle className="text-sm">Gasto por Andar</CardTitle>
           <p className="text-[11px] text-muted-foreground">
-            Alocação esperada = participação do andar no total de colaboradores aplicada ao gasto total de BH.
-            Desvio positivo = andar consumiu acima da sua proporção; negativo = abaixo.
+            Gasto Real = saídas × preço unitário. Alocação Esperada = participação do andar no total de colaboradores aplicada ao gasto total de BH.
           </p>
         </CardHeader>
         <CardContent>
-          <div className="h-72">
+          <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={enriched} margin={{ top: 20, left: 10, right: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
@@ -1214,7 +1118,7 @@ function BHFloorView({ data }: { data: any }) {
                       <div className="rounded-lg border bg-background px-3 py-2 shadow-md text-xs space-y-1">
                         <p className="font-medium">{label}</p>
                         <p style={{ color: 'hsl(var(--primary))' }}>Gasto real: {formatBRL(real)}</p>
-                        <p style={{ color: 'hsl(var(--accent))' }}>Esperado: {formatBRL(esp)}</p>
+                        <p style={{ color: 'hsl(var(--accent))' }}>Alocação esperada: {formatBRL(esp)}</p>
                         <div className="pt-1 border-t border-border/40">
                           <p className={desv >= 0 ? 'text-destructive font-semibold' : 'text-emerald-500 font-semibold'}>
                             Desvio: {desv >= 0 ? '+' : ''}{formatBRL(desv)}
@@ -1225,8 +1129,8 @@ function BHFloorView({ data }: { data: any }) {
                   }}
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="gasto" name="Gasto real" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="gastoEsperado" name="Alocação esperada (% colab.)" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="gasto" name="Gasto Real" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="gastoEsperado" name="Alocação Esperada" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -1245,45 +1149,25 @@ function BHFloorView({ data }: { data: any }) {
                 <TableRow>
                   <TableHead className="text-xs">Andar</TableHead>
                   <TableHead className="text-xs text-right">Colab.</TableHead>
-                  <TableHead className="text-xs text-right">Gasto Real</TableHead>
-                  <TableHead className="text-xs text-right">% Real</TableHead>
-                  <TableHead className="text-xs text-right">% Esperada</TableHead>
-                  <TableHead className="text-xs text-right">Alocação Esperada</TableHead>
-                  <TableHead className="text-xs text-right">Desvio</TableHead>
+                  <TableHead className="text-xs text-right">Gasto</TableHead>
                   <TableHead className="text-xs text-right">Por Colab.</TableHead>
                   <TableHead className="text-xs text-right">Consumo (un.)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {enriched.map((r: any) => {
-                  const desvioUp = r.desvioValor >= 0;
-                  return (
-                    <TableRow key={r.floor}>
-                      <TableCell className="text-xs font-medium">{r.label}</TableCell>
-                      <TableCell className="text-xs text-right">{r.collabs}</TableCell>
-                      <TableCell className="text-xs text-right font-semibold">{formatBRL(r.gasto)}</TableCell>
-                      <TableCell className="text-xs text-right">{r.pctReal.toFixed(1)}%</TableCell>
-                      <TableCell className="text-xs text-right text-muted-foreground">{r.pctEsperado.toFixed(1)}%</TableCell>
-                      <TableCell className="text-xs text-right text-muted-foreground">{formatBRL(r.gastoEsperado)}</TableCell>
-                      <TableCell className={cn('text-xs text-right font-medium', desvioUp ? 'text-destructive' : 'text-emerald-500')}>
-                        {desvioUp ? '+' : ''}{formatBRL(r.desvioValor)}
-                        <span className="block text-[10px] opacity-75">
-                          {desvioUp ? '+' : ''}{r.desvioPct.toFixed(1)} p.p.
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-xs text-right">{r.collabs > 0 ? formatBRL(r.gastoPerCollab) : '—'}</TableCell>
-                      <TableCell className="text-xs text-right">{r.consumo.toFixed(1)}</TableCell>
-                    </TableRow>
-                  );
-                })}
+                {rows.map((r: any) => (
+                  <TableRow key={r.floor}>
+                    <TableCell className="text-xs font-medium">{r.label}</TableCell>
+                    <TableCell className="text-xs text-right">{r.collabs}</TableCell>
+                    <TableCell className="text-xs text-right font-semibold">{formatBRL(r.gasto)}</TableCell>
+                    <TableCell className="text-xs text-right">{r.collabs > 0 ? formatBRL(r.gastoPerCollab) : '—'}</TableCell>
+                    <TableCell className="text-xs text-right">{r.consumo.toFixed(1)}</TableCell>
+                  </TableRow>
+                ))}
                 <TableRow className="bg-muted/30 font-semibold">
                   <TableCell className="text-xs">Total BH</TableCell>
                   <TableCell className="text-xs text-right">{totalCollabs}</TableCell>
                   <TableCell className="text-xs text-right">{formatBRL(totalGastoBH)}</TableCell>
-                  <TableCell className="text-xs text-right">100%</TableCell>
-                  <TableCell className="text-xs text-right">100%</TableCell>
-                  <TableCell className="text-xs text-right">{formatBRL(totalGastoBH)}</TableCell>
-                  <TableCell className="text-xs text-right">—</TableCell>
                   <TableCell className="text-xs text-right">{totalCollabs > 0 ? formatBRL(totalGastoBH / totalCollabs) : '—'}</TableCell>
                   <TableCell className="text-xs text-right">{totalConsumoBH.toFixed(1)}</TableCell>
                 </TableRow>
