@@ -182,14 +182,14 @@ export default function StockMovements() {
 
     addMovement.mutate({
       product_id: productId, product_name: productName, type: form.type,
-      quantity: qty, date: new Date().toISOString().split('T')[0], user: 'Admin',
+      quantity: qty, date: form.date || todayStr, user: 'Admin',
       responsible: form.type === 'saida' ? form.responsible : null,
       notes: finalNotes || null, unit: selectedBranch,
       floor: selectedBranch === 'BH-Matriz' ? (form.floor || null) : null,
       unit_of_measure: 'UN',
     }, {
       onSuccess: () => {
-        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', floor: '', sala: '', newProductName: '', newProductCategory: '', newProductPrice: '' });
+        setForm({ productId: '', type: 'entrada', quantity: '', responsible: '', notes: '', floor: '', sala: '', newProductName: '', newProductCategory: '', newProductPrice: '', date: todayStr });
         setIsNewProduct(false);
         setDialogOpen(false);
       }
