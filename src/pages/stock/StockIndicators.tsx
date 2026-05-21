@@ -1115,15 +1115,16 @@ function BHFloorView({ data }: { data: any }) {
         </CardContent>
       </Card>
 
-      {/* KPIs per floor */}
+      {/* KPIs per floor — Alocação proporcional do total de NFs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {rows.map((r: any) => (
+        {enriched.map((r: any) => (
           <Card key={r.floor} className="hover:shadow-md transition-shadow">
             <CardContent className="p-4 space-y-2">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{r.label}</p>
-                  <p className="text-lg font-bold">{formatBRL(r.gasto)}</p>
+                  <p className="text-lg font-bold">{formatBRL(r.gastoEsperado)}</p>
+                  <p className="text-[11px] text-muted-foreground">Alocação esperada</p>
                 </div>
                 <div className="rounded-lg p-2 bg-primary/10 text-primary">
                   <Building2 className="h-4 w-4" />
@@ -1131,7 +1132,7 @@ function BHFloorView({ data }: { data: any }) {
               </div>
               <div className="flex items-center justify-between text-[11px] text-muted-foreground border-t border-border/40 pt-2">
                 <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {r.collabs} colab.</span>
-                <span>{r.collabs > 0 ? `${formatBRL(r.gastoPerCollab)}/colab.` : '—'}</span>
+                <span>{r.pctEsperado.toFixed(1)}%</span>
               </div>
             </CardContent>
           </Card>
