@@ -168,7 +168,7 @@ export default function NfUploadPage() {
     // so merges/edits never leave orphan rows behind.
 
     approveNf.mutate(
-      { ...nf, nf_items: editedItems },
+      { nf: { ...nf, nf_items: editedItems }, entryDate },
       {
         onSuccess: () => {
           setPreviewNf(null);
