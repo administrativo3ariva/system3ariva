@@ -787,56 +787,26 @@ export default function StockIndicators() {
         {/* 3. Gasto por categoria (donut) */}
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Distribuição por Categoria</CardTitle></CardHeader>
-          <CardContent>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <RPieChart>
-                  <Pie
-                    data={catData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="35%"
-                    cy="50%"
-                    innerRadius={65}
-                    outerRadius={110}
-                    paddingAngle={2}
-                    stroke="hsl(var(--background))"
-                    strokeWidth={2}
-                  >
-                    {catData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip
-                    content={({ active, payload }: any) => {
-                      if (!active || !payload?.length) return null;
-                      const p = payload[0];
-                      return (
-                        <div className="rounded-lg border bg-background px-3 py-2 shadow-md text-xs">
-                          <p className="font-medium mb-1">{p.name}</p>
-                          <p style={{ color: p.payload.fill }}>
-                            {formatBRL(p.value)} <span className="text-muted-foreground">({p.payload.pct.toFixed(1)}%)</span>
-                          </p>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Legend
-                    layout="vertical"
-                    align="right"
-                    verticalAlign="middle"
-                    iconType="circle"
-                    wrapperStyle={{ fontSize: 11, paddingLeft: 12 }}
-                    formatter={(value: string, _entry: any, idx: number) => {
-                      const item = catData[idx];
-                      return (
-                        <span className="text-foreground">
-                          {value} <span className="text-muted-foreground">· {item ? item.pct.toFixed(1) : '0.0'}%</span>
-                        </span>
-                      );
-                    }}
-                  />
-                </RPieChart>
-              </ResponsiveContainer>
-            </div>
+          <CardContent className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <RPieChart>
+                <Pie
+                  data={catData}
+                  cx="50%"
+                  cy="45%"
+                  innerRadius={45}
+                  outerRadius={80}
+                  dataKey="value"
+                  nameKey="name"
+                  paddingAngle={2}
+                  label={({ name, percent }: any) => `${String(name).split(' ')[0]} ${(percent * 100).toFixed(0)}%`}
+                  style={{ fontSize: 9 }}
+                >
+                  {catData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                </Pie>
+                <Tooltip formatter={(v: number) => formatBRL(v)} />
+              </RPieChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
