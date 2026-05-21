@@ -428,6 +428,27 @@ export default function StockIndicators() {
     // Gasto = SAÍDA quantity × unit_price (consumo financeiro)
     const bhMoves = filtered.filter(m => m.unit === 'BH-Matriz' && m.type === 'saida');
 
+    const selectedProduct = selItem !== '__all__' ? productMap.get(selItem) : undefined;
+    const bhNfTotal = bhNfUploads.reduce((sum, nf) => {
+      const nfDate = parseISO(nf.issue_date || nf.upload_date);
+      if (!isWithinInterval(nfDate, { start: range.from, end: range.to })) return sum;
+
+      const items = nf.nf_items || [];
+      const itemsTotal = items.reduce((itemSum, item) => itemSum + Number(item.total_price || 0), 0);
+      const baseTotal = Number(nf.total_value || 0) || itemsTotal;
+
+      if (selCategories.length === 0 && selItem === '__all__') return sum + baseTotal;
+
+      const matchingItemsTotal = items.reduce((itemSum, item) => {
+        const matchesCategory = selCategories.length === 0 || (item.category ? selCategories.includes(item.category) : false);
+        const matchesItem = !selectedProduct || item.name.trim().toLowerCase() === selectedProduct.name.trim().toLowerCase();
+        return matchesCategory && matchesItem ? itemSum + Number(item.total_price || 0) : itemSum;
+      }, 0);
+
+      if (itemsTotal <= 0) return sum;
+      return sum + (baseTotal * matchingItemsTotal / itemsTotal);
+    }, 0);
+
     type FloorAgg = { gasto: number; consumo: number; itens: Map<string, { name: string; qty: number; val: number }> };
     const agg: Record<string, FloorAgg> = {};
     FLOOR_KEYS.forEach(f => {
@@ -476,23 +497,26 @@ export default function StockIndicators() {
     return {
       collabCounts,
       totalCollabs,
+        nfTotal: bhNfTotal,
       unalloc: { gasto: unallocGasto, consumo: unallocConsumo },
       rows: FLOOR_KEYS.map(f => {
         const a = agg[f];
         const collabs = collabCounts[f];
+          const share = totalCollabs > 0 ? collabs / totalCollabs : 0;
         const topItens = Array.from(a.itens.values()).sort((x, y) => y.val - x.val).slice(0, 5);
         return {
           floor: f,
           label: FLOOR_DISPLAY[f],
           collabs,
           gasto: a.gasto,
+            gastoEsperado: bhNfTotal * share,
           consumo: a.consumo,
           gastoPerCollab: collabs > 0 ? a.gasto / collabs : 0,
           topItens,
         };
       }),
     };
-  }, [allCollabs, filtered, productMap]);
+  }, [allCollabs, filtered, productMap, bhNfUploads, range, selCategories, selItem]);
 
 
   if (loading) {
