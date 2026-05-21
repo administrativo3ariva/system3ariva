@@ -105,6 +105,7 @@ export default function NfUploadPage() {
       );
       setFinancialLink('');
       setSelectedIndices(new Set());
+      setEntryDate(previewNf.issue_date || new Date().toISOString().split('T')[0]);
     }
   }, [previewNf]);
 
