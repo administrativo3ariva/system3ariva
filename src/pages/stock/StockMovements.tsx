@@ -198,7 +198,7 @@ export default function StockMovements() {
 
   const openEdit = (m: DbMovement) => {
     setEditMovement(m);
-    setEditForm({ type: m.type, quantity: String(m.quantity), responsible: m.responsible || '', notes: m.notes || '', floor: m.floor || '', sala: '' });
+    setEditForm({ type: m.type, quantity: String(m.quantity), responsible: m.responsible || '', notes: m.notes || '', floor: m.floor || '', sala: '', date: m.date || todayStr });
   };
 
   const handleEdit = () => {
@@ -218,6 +218,7 @@ export default function StockMovements() {
       responsible: editForm.type === 'saida' ? editForm.responsible : null,
       notes: finalNotes || null,
       floor: selectedBranch === 'BH-Matriz' ? (editForm.floor || null) : null,
+      date: editForm.date || todayStr,
     }, { onSuccess: () => setEditMovement(null) });
   };
 
