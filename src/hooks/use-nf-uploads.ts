@@ -197,6 +197,7 @@ export function useApproveNf() {
           product_name: productName,
           type: 'entrada',
           quantity: item.quantity,
+          date: moveDate,
           unit: targetUnit,
           responsible: 'Sistema',
           notes: `NF: ${nf.file_name} — ${nf.supplier || 'Fornecedor não identificado'}`,
