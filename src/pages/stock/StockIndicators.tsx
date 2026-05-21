@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   DollarSign, TrendingUp, TrendingDown, Minus, BarChart3, PieChart, Package,
   ArrowUpDown, AlertTriangle, Lightbulb, Download, Filter, CalendarDays, X,
@@ -6,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Checkbox } from '@/components/ui/checkbox';
-import { format, parseISO, subMonths, startOfMonth, endOfMonth, startOfYear } from 'date-fns';
+import { format, parseISO, subMonths, startOfMonth, endOfMonth, startOfYear, isWithinInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   BarChart, Bar, LineChart, Line, PieChart as RPieChart, Pie, Cell,
@@ -34,6 +35,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { supabase } from '@/integrations/supabase/client';
 
 /* ─── colors ─── */
 const COLORS = [
@@ -41,6 +43,14 @@ const COLORS = [
   'hsl(150 60% 45%)', 'hsl(35 90% 55%)', 'hsl(280 60% 55%)',
   'hsl(0 70% 55%)', 'hsl(190 70% 45%)', 'hsl(55 80% 50%)', 'hsl(320 60% 50%)',
 ];
+
+type BhNfUploadForIndicators = {
+  id: string;
+  total_value: number | null;
+  upload_date: string;
+  issue_date: string | null;
+  nf_items?: Array<{ name: string; category: string | null; total_price: number | null }> | null;
+};
 
 /* ─── Variation badge ─── */
 function VarBadge({ value }: { value: number | null }) {
