@@ -787,26 +787,36 @@ export default function StockIndicators() {
         {/* 3. Gasto por categoria (donut) */}
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Distribuição por Categoria</CardTitle></CardHeader>
-          <CardContent className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <RPieChart>
-                <Pie
-                  data={catData}
-                  cx="50%"
-                  cy="45%"
-                  innerRadius={45}
-                  outerRadius={80}
-                  dataKey="value"
-                  nameKey="name"
-                  paddingAngle={2}
-                  label={({ name, percent }: any) => `${String(name).split(' ')[0]} ${(percent * 100).toFixed(0)}%`}
-                  style={{ fontSize: 9 }}
-                >
-                  {catData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip formatter={(v: number) => formatBRL(v)} />
-              </RPieChart>
-            </ResponsiveContainer>
+          <CardContent className="h-72 flex flex-col">
+            <div className="min-h-0 flex-1">
+              <ResponsiveContainer width="100%" height="100%">
+                <RPieChart margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+                  <Pie
+                    data={catData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="46%"
+                    outerRadius="74%"
+                    dataKey="value"
+                    nameKey="name"
+                    paddingAngle={2}
+                    labelLine={false}
+                  >
+                    {catData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip prefix="R$ " />} />
+                </RPieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-2 max-h-16 space-y-1 overflow-y-auto pr-1 text-[11px]">
+              {catData.map((item, i) => (
+                <div key={item.name} className="flex items-start gap-2 text-foreground">
+                  <span className="mt-1 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                  <span className="min-w-0 flex-1 break-words leading-tight">{item.name}</span>
+                  <span className="shrink-0 font-medium tabular-nums">{item.pct.toFixed(0)}%</span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
