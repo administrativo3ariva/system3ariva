@@ -497,19 +497,19 @@ export default function StockIndicators() {
     return {
       collabCounts,
       totalCollabs,
-        nfTotal: bhNfTotal,
+      nfTotal: bhNfTotal,
       unalloc: { gasto: unallocGasto, consumo: unallocConsumo },
       rows: FLOOR_KEYS.map(f => {
         const a = agg[f];
         const collabs = collabCounts[f];
-          const share = totalCollabs > 0 ? collabs / totalCollabs : 0;
+        const share = totalCollabs > 0 ? collabs / totalCollabs : 0;
         const topItens = Array.from(a.itens.values()).sort((x, y) => y.val - x.val).slice(0, 5);
         return {
           floor: f,
           label: FLOOR_DISPLAY[f],
           collabs,
           gasto: a.gasto,
-            gastoEsperado: bhNfTotal * share,
+          gastoEsperado: bhNfTotal * share,
           consumo: a.consumo,
           gastoPerCollab: collabs > 0 ? a.gasto / collabs : 0,
           topItens,
