@@ -107,6 +107,18 @@ export default function StockIndicators() {
   const { data: allMovements = [], isLoading: lm } = useAllMovements();
   const { data: allProducts = [], isLoading: lp } = useAllProducts();
   const { data: allCollabs = [], isLoading: lc } = useAllCollaborators();
+  const { data: bhNfUploads = [], isLoading: ln } = useQuery({
+    queryKey: ['nf_uploads-indicators-bh'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('nf_uploads')
+        .select('id, total_value, upload_date, issue_date, nf_items(name, category, total_price)')
+        .eq('unit', 'BH-Matriz')
+        .order('upload_date', { ascending: false });
+      if (error) throw error;
+      return data as BhNfUploadForIndicators[];
+    },
+  });
   const categories = useCategories();
 
   /* ─── Filters state ─── */
@@ -118,7 +130,7 @@ export default function StockIndicators() {
   const [selItem, setSelItem] = useState<string>('__all__');
   const [viewMode, setViewMode] = useState<'value' | 'qty' | 'perCapita'>('value');
 
-  const loading = lm || lp || lc;
+  const loading = lm || lp || lc || ln;
 
   /* ─── Derived ─── */
   const productMap = useMemo(() => new Map(allProducts.map(p => [p.id, p])), [allProducts]);
