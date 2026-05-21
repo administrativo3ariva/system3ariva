@@ -1115,15 +1115,16 @@ function BHFloorView({ data }: { data: any }) {
         </CardContent>
       </Card>
 
-      {/* KPIs per floor */}
+      {/* KPIs per floor — Alocação proporcional do total de NFs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {rows.map((r: any) => (
+        {enriched.map((r: any) => (
           <Card key={r.floor} className="hover:shadow-md transition-shadow">
             <CardContent className="p-4 space-y-2">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-muted-foreground">{r.label}</p>
-                  <p className="text-lg font-bold">{formatBRL(r.gasto)}</p>
+                  <p className="text-lg font-bold">{formatBRL(r.gastoEsperado)}</p>
+                  <p className="text-[11px] text-muted-foreground">Alocação esperada</p>
                 </div>
                 <div className="rounded-lg p-2 bg-primary/10 text-primary">
                   <Building2 className="h-4 w-4" />
@@ -1131,7 +1132,7 @@ function BHFloorView({ data }: { data: any }) {
               </div>
               <div className="flex items-center justify-between text-[11px] text-muted-foreground border-t border-border/40 pt-2">
                 <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {r.collabs} colab.</span>
-                <span>{r.collabs > 0 ? `${formatBRL(r.gastoPerCollab)}/colab.` : '—'}</span>
+                <span>{r.pctEsperado.toFixed(1)}%</span>
               </div>
             </CardContent>
           </Card>
@@ -1159,17 +1160,11 @@ function BHFloorView({ data }: { data: any }) {
                     if (!active || !payload?.length) return null;
                     const real = payload.find((p: any) => p.dataKey === 'gasto')?.value ?? 0;
                     const esp = payload.find((p: any) => p.dataKey === 'gastoEsperado')?.value ?? 0;
-                    const desv = real - esp;
                     return (
                       <div className="rounded-lg border bg-background px-3 py-2 shadow-md text-xs space-y-1">
                         <p className="font-medium">{label}</p>
                         <p style={{ color: 'hsl(var(--primary))' }}>Gasto real: {formatBRL(real)}</p>
                         <p style={{ color: 'hsl(var(--accent))' }}>Alocação esperada: {formatBRL(esp)}</p>
-                        <div className="pt-1 border-t border-border/40">
-                          <p className={desv >= 0 ? 'text-destructive font-semibold' : 'text-emerald-500 font-semibold'}>
-                            Desvio: {desv >= 0 ? '+' : ''}{formatBRL(desv)}
-                          </p>
-                        </div>
                       </div>
                     );
                   }}
