@@ -276,10 +276,10 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border p-4">
         {!collapsed && (
           <div className="flex items-center justify-center">
-            <img src={logo} alt="3A Riva Investimentos" className="h-10 object-contain" />
+            <img src={logo} alt="3A RIVA Investimentos" className="h-10 object-contain" />
           </div>
         )}
-        {collapsed && <img src={logo} alt="3A Riva" className="h-6 object-contain mx-auto" />}
+        {collapsed && <img src={logo} alt="3A RIVA" className="h-6 object-contain mx-auto" />}
       </SidebarHeader>
 
       <SidebarContent>
@@ -350,7 +350,7 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border p-3">
         {!collapsed && (
           <p className="text-[10px] text-sidebar-foreground/40 text-center">
-            © 2026 3A Riva Investimentos
+            © 2026 3A RIVA Investimentos
           </p>
         )}
       </SidebarFooter>
