@@ -442,7 +442,7 @@ serve(async (req) => {
 
     try {
       if (fileType === "application/pdf" && !fileBytes && fileUrl) {
-        fileBytes = await fetchFileBytes(fileUrl);
+        fileBytes = await fetchFileBytes(fileUrl, allowedFileHosts);
       }
 
       const extracted = fileType === "application/pdf"
