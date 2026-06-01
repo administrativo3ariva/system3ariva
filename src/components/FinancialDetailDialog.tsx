@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { FileText, MessageSquare, CreditCard, QrCode, Landmark, FileBarChart, ExternalLink, Download, Split } from 'lucide-react';
 import { expandAllocations, type Allocation } from '@/lib/allocation-utils';
 import { cn } from '@/lib/utils';
+import { useSignedUrl, resolveStorageUrl } from '@/lib/storage-url';
 
 interface DetailField {
   label: string;
