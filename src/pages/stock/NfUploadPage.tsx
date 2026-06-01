@@ -19,6 +19,7 @@ import { BranchBadge } from '@/components/BranchBadge';
 import { PRODUCT_CATEGORIES } from '@/lib/mock-data';
 import { formatCityName } from '@/lib/city-format';
 import { branchToCostCenter, branchToCity, isCityMatchingBranch, detectCompanyFromText } from '@/lib/nf-mapping';
+import { resolveStorageUrl, useSignedUrl } from '@/lib/storage-url';
 import {
   AlertDialog,
   AlertDialogAction,
