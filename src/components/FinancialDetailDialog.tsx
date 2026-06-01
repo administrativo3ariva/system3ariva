@@ -223,60 +223,9 @@ export function FinancialDetailDialog({
           {/* Right: Attachments preview (Boleto + Comprovante) */}
           {attachments.length > 0 && (
             <div className="w-[220px] shrink-0 space-y-3">
-              {attachments.map((att) => {
-                const attIsPdf = isPdf(att.url);
-                const attIsImage = isImage(att.url);
-                return (
-                  <div key={att.url} className="rounded-lg border overflow-hidden flex flex-col">
-                    <div className="px-3 py-1.5 border-b bg-muted/30 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      {att.label}
-                    </div>
-                    {attIsImage ? (
-                      <a href={att.url} target="_blank" rel="noopener noreferrer">
-                        <img
-                          src={att.url}
-                          alt={att.label}
-                          className="w-full object-contain cursor-pointer"
-                        />
-                      </a>
-                    ) : (
-                      <a
-                        href={att.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 min-h-[160px] flex flex-col items-center justify-center gap-2 bg-muted/20 p-4 cursor-pointer hover:bg-muted/40 transition-colors no-underline"
-                      >
-                        <div className="rounded-full bg-primary/10 p-3">
-                          <FileText className="h-6 w-6 text-primary" />
-                        </div>
-                        <div className="text-center">
-                          <p className="text-xs font-medium text-foreground">
-                            {attIsPdf ? 'Documento PDF' : 'Arquivo'}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">Clique para visualizar</p>
-                        </div>
-                      </a>
-                    )}
-                    <div className="flex border-t">
-                      <a
-                        href={att.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 flex items-center justify-center gap-1.5 text-xs h-8 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors no-underline"
-                      >
-                        Abrir <ExternalLink className="h-3 w-3" />
-                      </a>
-                      <button
-                        type="button"
-                        onClick={() => downloadWithOriginalName(att.url, att.label)}
-                        className="flex-1 flex items-center justify-center gap-1.5 text-xs h-8 text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors border-l"
-                      >
-                        Baixar <Download className="h-3 w-3" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+              {attachments.map((att) => (
+                <AttachmentCard key={att.url} url={att.url} label={att.label} />
+              ))}
             </div>
           )}
         </div>
