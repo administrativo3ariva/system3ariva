@@ -29,20 +29,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const loadUserData = (uid: string) => {
-    supabase
+  const loadUserData = async (uid: string) => {
+    const { data: prof } = await supabase
       .from('profiles')
       .select('*')
       .eq('user_id', uid)
-      .maybeSingle()
-      .then(({ data }) => setProfile(data as Profile | null));
-    supabase
+      .maybeSingle();
+
+    // Enforce approval gate for ALL auth methods (OAuth + email/password)
+    if (prof && prof.status !== 'ativo') {
+      const { toast } = await import('sonner');
+      if (prof.status === 'pendente') {
+        toast.warning(
+          'Seu cadastro foi recebido, mas precisa ser aprovado por um administrador.',
+          { duration: 8000 }
+        );
+      } else {
+        toast.error('Sua conta está inativa. Contate o administrador.');
+      }
+      await supabase.auth.signOut();
+      setProfile(null);
+      setIsAdmin(false);
+      return;
+    }
+
+    setProfile(prof as Profile | null);
+    const { data: roleRow } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', uid)
       .eq('role', 'admin')
-      .maybeSingle()
-      .then(({ data }) => setIsAdmin(!!data));
+      .maybeSingle();
+    setIsAdmin(!!roleRow);
   };
 
   useEffect(() => {
