@@ -375,7 +375,7 @@ export default function NfUploadPage() {
             <div className="space-y-4">
               {previewNf.file_url && previewNf.file_url.match(/\.(jpg|jpeg|png|webp|gif)$/i) && (
                 <div className="border rounded-lg overflow-hidden max-h-48">
-                  <img src={previewNf.file_url} alt="NF" className="w-full object-contain max-h-48" />
+                  <NfPreviewImage url={previewNf.file_url} />
                 </div>
               )}
 
