@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, BarChart3, ArrowLeftRight, FileUp, ClipboardList, PlusCircle, Users, LayoutDashboard, MapPin, ChevronDown, ChevronRight, Building2, Wrench, CalendarDays, Kanban, TrendingUp, CreditCard, FileText, DollarSign, Activity, PieChart, Target, SlidersHorizontal, Receipt, LogOut } from 'lucide-react';
+import { Package, BarChart3, ArrowLeftRight, FileUp, ClipboardList, PlusCircle, Users, LayoutDashboard, MapPin, ChevronDown, ChevronRight, Building2, Wrench, CalendarDays, Kanban, TrendingUp, CreditCard, FileText, DollarSign, Activity, PieChart, Target, SlidersHorizontal, Receipt, LogOut, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -348,6 +348,8 @@ export function AppSidebar() {
         {activeModule === 'inventory' && <SimpleMenu items={inventoryItems} label="Inventário Patrimonial" collapsed={collapsed} />}
         {activeModule === 'facilities' && <SimpleMenu items={facilitiesItems} label="Gestão de Facilities" collapsed={collapsed} />}
         {activeModule === 'financial' && <FinancialMenu collapsed={collapsed} />}
+
+        <AdminMenu collapsed={collapsed} />
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-3 space-y-2">
@@ -359,6 +361,28 @@ export function AppSidebar() {
         )}
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+function AdminMenu({ collapsed }: { collapsed: boolean }) {
+  const { isAdmin } = useAuth();
+  if (!isAdmin) return null;
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel className="text-sidebar-foreground/50">Administração</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <NavLink to="/admin" end className="hover:bg-sidebar-accent/50" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                {!collapsed && <span>Painel Admin</span>}
+              </NavLink>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
   );
 }
 
