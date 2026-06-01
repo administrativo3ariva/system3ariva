@@ -888,3 +888,9 @@ export default function NfUploadPage() {
     </div>
   );
 }
+
+function NfPreviewImage({ url }: { url: string }) {
+  const signed = useSignedUrl(url);
+  if (!signed) return null;
+  return <img src={signed} alt="NF" className="w-full object-contain max-h-48" />;
+}
