@@ -19,6 +19,7 @@ import { BranchBadge } from '@/components/BranchBadge';
 import { PRODUCT_CATEGORIES } from '@/lib/mock-data';
 import { formatCityName } from '@/lib/city-format';
 import { branchToCostCenter, branchToCity, isCityMatchingBranch, detectCompanyFromText } from '@/lib/nf-mapping';
+import { resolveStorageUrl, useSignedUrl } from '@/lib/storage-url';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -308,8 +309,10 @@ export default function NfUploadPage() {
                         type="button"
                         onClick={async (e) => {
                           e.stopPropagation();
+                          const signed = await resolveStorageUrl(nf.file_url);
+                          if (!signed) return;
                           try {
-                            const res = await fetch(nf.file_url!);
+                            const res = await fetch(signed);
                             const blob = await res.blob();
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
@@ -322,7 +325,7 @@ export default function NfUploadPage() {
                             document.body.removeChild(a);
                             setTimeout(() => URL.revokeObjectURL(url), 1000);
                           } catch {
-                            window.open(nf.file_url!, '_blank', 'noopener,noreferrer');
+                            window.open(signed, '_blank', 'noopener,noreferrer');
                           }
                         }}
                         title={`Abrir ${nf.file_name}`}
@@ -372,7 +375,7 @@ export default function NfUploadPage() {
             <div className="space-y-4">
               {previewNf.file_url && previewNf.file_url.match(/\.(jpg|jpeg|png|webp|gif)$/i) && (
                 <div className="border rounded-lg overflow-hidden max-h-48">
-                  <img src={previewNf.file_url} alt="NF" className="w-full object-contain max-h-48" />
+                  <NfPreviewImage url={previewNf.file_url} />
                 </div>
               )}
 
@@ -884,4 +887,10 @@ export default function NfUploadPage() {
       </AlertDialog>
     </div>
   );
+}
+
+function NfPreviewImage({ url }: { url: string }) {
+  const signed = useSignedUrl(url);
+  if (!signed) return null;
+  return <img src={signed} alt="NF" className="w-full object-contain max-h-48" />;
 }

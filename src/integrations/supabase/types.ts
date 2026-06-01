@@ -846,6 +846,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_ativo: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
