@@ -307,12 +307,31 @@ async function extractFromImage(fileUrl: string) {
   ]);
 }
 
-async function fetchFileBytes(fileUrl: string) {
-  const response = await fetch(fileUrl);
+function getAllowedFileHosts(supabaseUrl: string): Set<string> {
+  try {
+    return new Set([new URL(supabaseUrl).hostname]);
+  } catch {
+    return new Set();
+  }
+}
+
+async function fetchFileBytes(fileUrl: string, allowedHosts: Set<string>) {
+  let parsed: URL;
+  try {
+    parsed = new URL(fileUrl);
+  } catch {
+    throw new Error("URL de arquivo inválida");
+  }
+  if (parsed.protocol !== "https:") {
+    throw new Error("Apenas URLs HTTPS são permitidas");
+  }
+  if (!allowedHosts.has(parsed.hostname)) {
+    throw new Error("Host de URL não permitido");
+  }
+  const response = await fetch(parsed.toString());
   if (!response.ok) {
     throw new Error(`Falha ao baixar arquivo enviado [${response.status}]`);
   }
-
   return new Uint8Array(await response.arrayBuffer());
 }
 
@@ -323,15 +342,36 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
 
-  if (!supabaseUrl || !serviceRoleKey) {
+  if (!supabaseUrl || !serviceRoleKey || !anonKey) {
     return new Response(JSON.stringify({ error: "Backend storage is not configured." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
+  // Require authenticated caller (JWT validation)
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+  const supabaseAuthClient = createClient(supabaseUrl, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data: { user }, error: authError } = await supabaseAuthClient.auth.getUser();
+  if (authError || !user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+  const allowedFileHosts = getAllowedFileHosts(supabaseUrl);
 
   try {
     const body = await req.json();
@@ -340,6 +380,24 @@ serve(async (req) => {
     const providedFileUrl = body?.fileUrl ? String(body.fileUrl) : null;
     const unit = String(body?.unit || "BH-Matriz");
     const fileDataBase64 = body?.fileDataBase64 ? String(body.fileDataBase64) : null;
+
+    // Validate provided fileUrl up-front to prevent SSRF
+    if (providedFileUrl) {
+      try {
+        const p = new URL(providedFileUrl);
+        if (p.protocol !== "https:" || !allowedFileHosts.has(p.hostname)) {
+          return new Response(JSON.stringify({ error: "fileUrl não permitido" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } catch {
+        return new Response(JSON.stringify({ error: "fileUrl inválido" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     let fileBytes = fileDataBase64 ? decodeBase64(fileDataBase64) : null;
     let fileUrl = providedFileUrl;
