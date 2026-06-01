@@ -8,12 +8,14 @@ interface Profile {
   full_name: string | null;
   email: string | null;
   avatar_url: string | null;
+  status: 'pendente' | 'ativo' | 'inativo';
 }
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  isAdmin: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -24,37 +26,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const loadUserData = (uid: string) => {
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', uid)
+      .maybeSingle()
+      .then(({ data }) => setProfile(data as Profile | null));
+    supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', uid)
+      .eq('role', 'admin')
+      .maybeSingle()
+      .then(({ data }) => setIsAdmin(!!data));
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
       if (newSession?.user) {
-        setTimeout(() => {
-          supabase
-            .from('profiles')
-            .select('*')
-            .eq('user_id', newSession.user.id)
-            .maybeSingle()
-            .then(({ data }) => setProfile(data as Profile | null));
-        }, 0);
+        setTimeout(() => loadUserData(newSession.user.id), 0);
       } else {
         setProfile(null);
+        setIsAdmin(false);
       }
     });
 
     supabase.auth.getSession().then(({ data: { session: existing } }) => {
       setSession(existing);
       setUser(existing?.user ?? null);
-      if (existing?.user) {
-        supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', existing.user.id)
-          .maybeSingle()
-          .then(({ data }) => setProfile(data as Profile | null));
-      }
+      if (existing?.user) loadUserData(existing.user.id);
       setLoading(false);
     });
 
@@ -66,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, profile, isAdmin, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

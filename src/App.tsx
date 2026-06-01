@@ -6,6 +6,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/contexts/AppContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AdminRoute } from "@/components/AdminRoute";
+import AdminPanel from "@/pages/admin/AdminPanel";
 import { AppLayout } from "@/components/AppLayout";
 import Login from "@/pages/auth/Login";
 import Register from "@/pages/auth/Register";
@@ -58,6 +60,8 @@ const App = () => (
               {/* Protected routes */}
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
+
 
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                 <Route path="/stock/dashboard" element={<StockDashboard />} />

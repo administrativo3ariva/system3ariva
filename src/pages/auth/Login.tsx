@@ -52,14 +52,39 @@ export default function Login() {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      setLoading(false);
       if (error.message.includes('Invalid login')) toast.error('E-mail ou senha incorretos');
       else if (error.message.includes('Email not confirmed')) toast.error('Confirme seu e-mail antes de entrar');
       else toast.error(error.message);
       return;
     }
+
+    // Check approval status
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('status')
+      .eq('user_id', data.user.id)
+      .maybeSingle();
+
+    if (prof?.status === 'pendente') {
+      await supabase.auth.signOut();
+      setLoading(false);
+      toast.warning(
+        'Seu cadastro foi recebido com sucesso, mas precisa ser aprovado por um administrador. Você receberá um e-mail quando for liberado.',
+        { duration: 8000 }
+      );
+      return;
+    }
+    if (prof?.status === 'inativo') {
+      await supabase.auth.signOut();
+      setLoading(false);
+      toast.error('Sua conta está inativa. Contate o administrador.');
+      return;
+    }
+
+    setLoading(false);
     toast.success('Bem-vindo de volta!');
     navigate(from, { replace: true });
   };
