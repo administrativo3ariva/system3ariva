@@ -88,7 +88,7 @@ export default function Register() {
           <Label htmlFor="email">E-mail</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input id="email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); if (errors.email) validate(); }} onBlur={validate} className="pl-9" placeholder="voce@empresa.com" autoComplete="email" />
+            <Input id="email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); if (errors.email) validate(); }} onBlur={validate} className="pl-9" placeholder="usuário@3ariva.com.br" autoComplete="email" />
           </div>
           {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
         </div>
