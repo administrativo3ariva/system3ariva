@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { Package, BarChart3, ArrowLeftRight, FileUp, ClipboardList, PlusCircle, Users, LayoutDashboard, MapPin, ChevronDown, ChevronRight, Building2, Wrench, CalendarDays, Kanban, TrendingUp, CreditCard, FileText, DollarSign, Activity, PieChart, Target, SlidersHorizontal, Receipt } from 'lucide-react';
+import { Package, BarChart3, ArrowLeftRight, FileUp, ClipboardList, PlusCircle, Users, LayoutDashboard, MapPin, ChevronDown, ChevronRight, Building2, Wrench, CalendarDays, Kanban, TrendingUp, CreditCard, FileText, DollarSign, Activity, PieChart, Target, SlidersHorizontal, Receipt, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 import logo from '@/assets/Logo.png';
 import { useLocation } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
@@ -347,7 +350,8 @@ export function AppSidebar() {
         {activeModule === 'financial' && <FinancialMenu collapsed={collapsed} />}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-3">
+      <SidebarFooter className="border-t border-sidebar-border p-3 space-y-2">
+        <UserFooter collapsed={collapsed} />
         {!collapsed && (
           <p className="text-[10px] text-sidebar-foreground/40 text-center">
             © 2026 3A RIVA Investimentos
@@ -355,5 +359,39 @@ export function AppSidebar() {
         )}
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+function UserFooter({ collapsed }: { collapsed: boolean }) {
+  const { user, profile, signOut } = useAuth();
+  const navigate = useNavigate();
+  const name = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário';
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
+  if (collapsed) {
+    return (
+      <Button variant="ghost" size="icon" className="w-full h-8" onClick={handleLogout} title="Sair">
+        <LogOut className="h-4 w-4" />
+      </Button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 px-1">
+      <div className="h-7 w-7 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-[11px] font-semibold text-sidebar-primary shrink-0">
+        {name.charAt(0).toUpperCase()}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium text-sidebar-foreground truncate">{name}</p>
+        <p className="text-[10px] text-sidebar-foreground/50 truncate">{user?.email}</p>
+      </div>
+      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={handleLogout} title="Sair">
+        <LogOut className="h-3.5 w-3.5" />
+      </Button>
+    </div>
   );
 }

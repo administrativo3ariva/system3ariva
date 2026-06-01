@@ -4,7 +4,14 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppProvider } from "@/contexts/AppContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
+import Login from "@/pages/auth/Login";
+import Register from "@/pages/auth/Register";
+import ForgotPassword from "@/pages/auth/ForgotPassword";
+import ResetPassword from "@/pages/auth/ResetPassword";
+import Dashboard from "@/pages/auth/Dashboard";
 import StockDashboard from "@/pages/stock/StockDashboard";
 import StockProducts from "@/pages/stock/StockProducts";
 import StockMovements from "@/pages/stock/StockMovements";
@@ -36,42 +43,53 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AppProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Navigate to="/stock/dashboard" replace />} />
-            <Route element={<AppLayout />}>
-              <Route path="/stock/dashboard" element={<StockDashboard />} />
-              <Route path="/stock/products" element={<StockProducts />} />
-              <Route path="/stock/movements" element={<StockMovements />} />
-              <Route path="/stock/nf-upload" element={<NfUploadPage />} />
-              <Route path="/stock/collaborators" element={<CollaboratorsPage />} />
-              <Route path="/stock/indicators" element={<StockIndicators />} />
-              <Route path="/inventory/dashboard" element={<InventoryDashboard />} />
-              <Route path="/inventory/list" element={<InventoryList />} />
-              <Route path="/inventory/register" element={<InventoryRegister />} />
-              <Route path="/inventory/branches" element={<InventoryBranches />} />
-              <Route path="/facilities/dashboard" element={<FacilitiesDashboard />} />
-              <Route path="/facilities/calendar" element={<FacilitiesCalendar />} />
-              <Route path="/facilities/kanban" element={<FacilitiesKanban />} />
-              <Route path="/facilities/performance" element={<FacilitiesPerformance />} />
-              <Route path="/financial/dashboard" element={<FinancialDashboard />} />
-              <Route path="/financial/expenses/new" element={<ExpenseForm />} />
-              <Route path="/financial/expenses" element={<ExpensesList />} />
-              <Route path="/financial/requests/new" element={<PaymentRequestForm />} />
-              <Route path="/financial/requests" element={<PaymentRequestsList />} />
-              <Route path="/financial/operational/overview" element={<OperationalOverview />} />
-              <Route path="/financial/operational/budget" element={<OperationalBudget />} />
-              <Route path="/financial/operational/adjust" element={<OperationalBudgetEdit />} />
-              <Route path="/financial/operational/expenses" element={<OperationalExpenses />} />
-              <Route path="/financial/reports" element={<FinancialReports />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AppProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AppProvider>
+            <Toaster />
+            <Sonner />
+            <Routes>
+              {/* Public auth routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+
+              {/* Protected routes */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+
+              <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                <Route path="/stock/dashboard" element={<StockDashboard />} />
+                <Route path="/stock/products" element={<StockProducts />} />
+                <Route path="/stock/movements" element={<StockMovements />} />
+                <Route path="/stock/nf-upload" element={<NfUploadPage />} />
+                <Route path="/stock/collaborators" element={<CollaboratorsPage />} />
+                <Route path="/stock/indicators" element={<StockIndicators />} />
+                <Route path="/inventory/dashboard" element={<InventoryDashboard />} />
+                <Route path="/inventory/list" element={<InventoryList />} />
+                <Route path="/inventory/register" element={<InventoryRegister />} />
+                <Route path="/inventory/branches" element={<InventoryBranches />} />
+                <Route path="/facilities/dashboard" element={<FacilitiesDashboard />} />
+                <Route path="/facilities/calendar" element={<FacilitiesCalendar />} />
+                <Route path="/facilities/kanban" element={<FacilitiesKanban />} />
+                <Route path="/facilities/performance" element={<FacilitiesPerformance />} />
+                <Route path="/financial/dashboard" element={<FinancialDashboard />} />
+                <Route path="/financial/expenses/new" element={<ExpenseForm />} />
+                <Route path="/financial/expenses" element={<ExpensesList />} />
+                <Route path="/financial/requests/new" element={<PaymentRequestForm />} />
+                <Route path="/financial/requests" element={<PaymentRequestsList />} />
+                <Route path="/financial/operational/overview" element={<OperationalOverview />} />
+                <Route path="/financial/operational/budget" element={<OperationalBudget />} />
+                <Route path="/financial/operational/adjust" element={<OperationalBudgetEdit />} />
+                <Route path="/financial/operational/expenses" element={<OperationalExpenses />} />
+                <Route path="/financial/reports" element={<FinancialReports />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AppProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
