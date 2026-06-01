@@ -99,7 +99,7 @@ export default function Login() {
             <Input
               id="email"
               type="email"
-              placeholder="voce@empresa.com"
+              placeholder="usuário@3ariva.com.br"
               value={email}
               onChange={(e) => { setEmail(e.target.value); if (errors.email) validate(); }}
               onBlur={validate}

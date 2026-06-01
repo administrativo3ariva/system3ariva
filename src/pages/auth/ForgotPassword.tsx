@@ -54,7 +54,7 @@ export default function ForgotPassword() {
           <Label htmlFor="email">E-mail</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-9" placeholder="voce@empresa.com" />
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-9" placeholder="usuário@3ariva.com.br" />
           </div>
           {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
