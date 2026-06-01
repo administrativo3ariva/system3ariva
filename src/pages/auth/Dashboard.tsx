@@ -28,7 +28,7 @@ export default function Dashboard() {
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={logo} alt="3A RIVA Investimentos" className="h-8 w-auto" />
-            <span className="font-display font-semibold text-foreground hidden sm:inline">3A RIVA</span>
+            <span className="font-display font-semibold text-foreground hidden sm:inline">​</span>
           </div>
           <Button variant="outline" size="sm" onClick={handleLogout}>
             <LogOut className="h-4 w-4" /> Sair
