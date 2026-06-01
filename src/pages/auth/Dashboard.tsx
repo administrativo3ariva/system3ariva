@@ -3,7 +3,7 @@ import { LogOut, LayoutDashboard, Package, DollarSign, Building2, Wrench } from 
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import logo from '@/assets/Logo.png';
+import logo from '@/assets/Logo_Branca.png.asset.json';
 
 const modules = [
   { label: 'Estoque', icon: Package, path: '/stock/dashboard' },
@@ -27,7 +27,7 @@ export default function Dashboard() {
       <header className="border-b border-border bg-card">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="3A RIVA Investimentos" className="h-8 w-auto" />
+            <img src={logo.url} alt="Administrativo 3A RIVA Investimentos" className="h-10 w-auto object-contain" />
             <span className="font-display font-semibold text-foreground hidden sm:inline">​</span>
           </div>
           <Button variant="outline" size="sm" onClick={handleLogout}>
