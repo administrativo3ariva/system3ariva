@@ -309,8 +309,10 @@ export default function NfUploadPage() {
                         type="button"
                         onClick={async (e) => {
                           e.stopPropagation();
+                          const signed = await resolveStorageUrl(nf.file_url);
+                          if (!signed) return;
                           try {
-                            const res = await fetch(nf.file_url!);
+                            const res = await fetch(signed);
                             const blob = await res.blob();
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
@@ -323,7 +325,7 @@ export default function NfUploadPage() {
                             document.body.removeChild(a);
                             setTimeout(() => URL.revokeObjectURL(url), 1000);
                           } catch {
-                            window.open(nf.file_url!, '_blank', 'noopener,noreferrer');
+                            window.open(signed, '_blank', 'noopener,noreferrer');
                           }
                         }}
                         title={`Abrir ${nf.file_name}`}
