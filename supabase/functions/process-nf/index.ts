@@ -371,6 +371,19 @@ serve(async (req) => {
   }
 
   const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+
+  // Enforce approval gate: only 'ativo' users may process NFs
+  const { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("status")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (profile?.status !== "ativo") {
+    return new Response(JSON.stringify({ error: "Forbidden: account not approved" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
   const allowedFileHosts = getAllowedFileHosts(supabaseUrl);
 
   try {
