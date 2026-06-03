@@ -1,3 +1,18 @@
+# Sumário
+
+- [Secrets & Environment Variables](#secrets-environment-variables)
+- [Authentication & Authorization](#authentication-authorization)
+- [Supabase Edge Functions](#supabase-edge-functions)
+- [Data Access & Input Validation](#data-access-input-validation)
+- [Módulo Financeiro](#modulo-financeiro)
+- [Deployment Security](#deployment-security)
+- [Database Security Supabase](#database-security-supabase)
+- [AI Integration + Rate Limiting nos Fluxos de NF](#ai-integration-rate-limiting-nf)
+
+---
+
+<a id="secrets-environment-variables"></a>
+
 # Auditoria de Segurança - Secrets & Environment Variables
 
 Escopo: verificação limitada a `.env`/`.gitignore`, variáveis `VITE_`, chaves Supabase e risco de exposição no bundle.
@@ -119,6 +134,8 @@ Ação recomendada: antes de publicar, regerar o build com o ambiente correto e 
 4. Instalar e rodar `gitleaks detect` para verificar histórico e arquivos versionados em busca de secrets.
 
 ---
+
+<a id="authentication-authorization"></a>
 
 # Auditoria de Segurança - Authentication & Authorization
 
@@ -403,6 +420,8 @@ Observação: o código visual pode permanecer assim. A correção real deve fic
 4. Manter `isAdmin` apenas como controle visual; a autorização real deve continuar em RLS/Edge Functions.
 
 ---
+
+<a id="supabase-edge-functions"></a>
 
 # Auditoria de Segurança - Supabase Edge Functions
 
@@ -839,6 +858,8 @@ Observação: o padrão atual já cria o client admin depois de `getUser()` nas 
 
 ---
 
+<a id="data-access-input-validation"></a>
+
 # Auditoria de Segurança - Data Access & Input Validation
 
 Escopo: verificação limitada a hooks Supabase, `insert`/`update`/`delete`, mass assignment, validação Zod ausente e permissões por módulo.
@@ -1225,6 +1246,8 @@ const { data, error } = await supabase
 
 ---
 
+<a id="modulo-financeiro"></a>
+
 # Auditoria de Segurança - Módulo Financeiro
 
 Escopo solicitado: apenas módulo financeiro, com foco em `payment_requests`, `expenses`, upload de comprovantes/boletos, vínculo com NF, alteração de status e integridade dos valores.
@@ -1602,6 +1625,8 @@ Para detalhes bancários, carregue por endpoint/RPC separado com permissão `fin
 
 ---
 
+<a id="deployment-security"></a>
+
 # Auditoria de Segurança - Deployment Security
 
 Escopo solicitado: apenas Deployment Security, com foco em CORS, headers, source maps, Vite build, exposição de `.git`, ambientes Supabase e variáveis de produção/preview.
@@ -1953,6 +1978,8 @@ location ~ /\.git {
 6. Garantir que deploy sirva apenas `dist/` e bloqueie `/.git/*`; manter `build.sourcemap=false` explicitamente.
 
 ---
+
+<a id="database-security-supabase"></a>
 
 # Auditoria de Segurança - Database Security Supabase
 
@@ -2327,6 +2354,8 @@ order by tablename;
 6. Confirmar no Supabase live que nenhuma policy final ainda usa `USING(true)`/`WITH CHECK(true)` em tabelas sensíveis.
 
 ---
+
+<a id="ai-integration-rate-limiting-nf"></a>
 
 # Auditoria de Segurança - AI Integration + Rate Limiting nos Fluxos de NF
 
