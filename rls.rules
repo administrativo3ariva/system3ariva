@@ -1,0 +1,461 @@
+-- =========================================================
+-- EXTENSÕES
+-- =========================================================
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- =========================================================
+-- ENUM DE ROLES
+-- =========================================================
+CREATE TYPE public.app_role AS ENUM ('admin', 'moderator', 'user');
+
+-- =========================================================
+-- FUNÇÕES UTILITÁRIAS
+-- =========================================================
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path TO 'public'
+AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.has_role(_user_id uuid, _role public.app_role)
+RETURNS boolean
+LANGUAGE sql
+STABLE SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles
+    WHERE user_id = _user_id AND role = _role
+  )
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_ativo()
+RETURNS boolean
+LANGUAGE sql
+STABLE SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE user_id = auth.uid() AND status = 'ativo'
+  )
+$$;
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  is_admin_email boolean := NEW.email = 'administrativo@3ariva.com.br';
+BEGIN
+  INSERT INTO public.profiles (user_id, full_name, email, status)
+  VALUES (
+    NEW.id,
+    COALESCE(NEW.raw_user_meta_data ->> 'full_name', NEW.raw_user_meta_data ->> 'name', ''),
+    NEW.email,
+    CASE WHEN is_admin_email THEN 'ativo' ELSE 'pendente' END
+  );
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (NEW.id, CASE WHEN is_admin_email THEN 'admin'::public.app_role ELSE 'user'::public.app_role END);
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.update_product_quantity()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    IF OLD.type = 'entrada' THEN
+      UPDATE public.products SET quantity = GREATEST(0, quantity - OLD.quantity), total_price = GREATEST(0, quantity - OLD.quantity) * unit_price WHERE id = OLD.product_id;
+    ELSIF OLD.type = 'saida' THEN
+      UPDATE public.products SET quantity = quantity + OLD.quantity, total_price = (quantity + OLD.quantity) * unit_price WHERE id = OLD.product_id;
+    END IF;
+    RETURN OLD;
+  END IF;
+
+  IF TG_OP = 'UPDATE' THEN
+    IF OLD.type = 'entrada' THEN
+      UPDATE public.products SET quantity = GREATEST(0, quantity - OLD.quantity), total_price = GREATEST(0, quantity - OLD.quantity) * unit_price WHERE id = OLD.product_id;
+    ELSIF OLD.type = 'saida' THEN
+      UPDATE public.products SET quantity = quantity + OLD.quantity, total_price = (quantity + OLD.quantity) * unit_price WHERE id = OLD.product_id;
+    END IF;
+  END IF;
+
+  IF NEW.type = 'entrada' THEN
+    UPDATE public.products SET quantity = quantity + NEW.quantity, total_price = (quantity + NEW.quantity) * unit_price WHERE id = NEW.product_id;
+  ELSIF NEW.type = 'saida' THEN
+    UPDATE public.products SET quantity = GREATEST(0, quantity - NEW.quantity), total_price = GREATEST(0, quantity - NEW.quantity) * unit_price WHERE id = NEW.product_id;
+  ELSIF NEW.type = 'ajuste' THEN
+    UPDATE public.products SET quantity = NEW.quantity, total_price = NEW.quantity * unit_price WHERE id = NEW.product_id;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- =========================================================
+-- TRIGGER AUTH → handle_new_user (executar como superuser)
+-- =========================================================
+-- CREATE TRIGGER on_auth_user_created
+-- AFTER INSERT ON auth.users
+-- FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- =========================================================
+-- TABELAS
+-- =========================================================
+
+-- PROFILES
+CREATE TABLE public.profiles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  full_name text,
+  email text,
+  avatar_url text,
+  status text NOT NULL DEFAULT 'pendente',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can delete profiles" ON public.profiles
+  FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can update all profiles" ON public.profiles
+  FOR UPDATE TO authenticated
+  USING (public.has_role(auth.uid(), 'admin'))
+  WITH CHECK (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can view all profiles" ON public.profiles
+  FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Ativo can read profiles" ON public.profiles
+  FOR SELECT TO authenticated USING (public.is_ativo() OR auth.uid() = user_id);
+CREATE POLICY "Users can insert own profile" ON public.profiles
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own profile" ON public.profiles
+  FOR UPDATE TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (
+    auth.uid() = user_id
+    AND status = (SELECT p.status FROM public.profiles p WHERE p.user_id = auth.uid())
+  );
+
+-- USER_ROLES
+CREATE TABLE public.user_roles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  role public.app_role NOT NULL DEFAULT 'user',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, role)
+);
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can delete roles" ON public.user_roles
+  FOR DELETE TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can insert roles" ON public.user_roles
+  FOR INSERT TO authenticated WITH CHECK (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can view all roles" ON public.user_roles
+  FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Users can view own roles" ON public.user_roles
+  FOR SELECT TO authenticated USING (auth.uid() = user_id);
+
+-- =========================================================
+-- TABELAS COM POLÍTICA "is_ativo()" PADRÃO
+-- =========================================================
+
+-- ASSETS
+CREATE TABLE public.assets (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  code text NOT NULL,
+  name text NOT NULL,
+  description text,
+  image_url text,
+  acquisition_date date,
+  branch text NOT NULL,
+  total_price numeric NOT NULL DEFAULT 0,
+  unit_price numeric NOT NULL DEFAULT 0,
+  quantity integer NOT NULL DEFAULT 1,
+  category text NOT NULL,
+  condition text NOT NULL DEFAULT 'bom',
+  inventoried boolean NOT NULL DEFAULT false,
+  floor text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- COLLABORATORS
+CREATE TABLE public.collaborators (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  department text NOT NULL,
+  unit text NOT NULL DEFAULT 'BH-Matriz',
+  floor text,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- EXPENSES
+CREATE TABLE public.expenses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  description text NOT NULL,
+  amount numeric NOT NULL DEFAULT 0,
+  expense_date date NOT NULL DEFAULT CURRENT_DATE,
+  company text NOT NULL,
+  cost_center text NOT NULL,
+  category text NOT NULL,
+  card_name text,
+  supplier text,
+  supplier_id uuid,
+  allocations jsonb,
+  is_installment boolean NOT NULL DEFAULT false,
+  installment_current integer,
+  installment_count integer,
+  receipt_url text,
+  notes text,
+  status text NOT NULL DEFAULT 'pendente',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- MAINTENANCE_TASKS
+CREATE TABLE public.maintenance_tasks (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  description text,
+  category text NOT NULL,
+  maintenance_type text NOT NULL DEFAULT 'preventiva',
+  status text NOT NULL DEFAULT 'todo',
+  priority text NOT NULL DEFAULT 'media',
+  branch text NOT NULL DEFAULT 'BH-Matriz',
+  floor text,
+  due_date date,
+  completed_date date,
+  recurrence_months integer,
+  supplier text,
+  estimated_cost numeric DEFAULT 0,
+  actual_cost numeric,
+  notes text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- NF_UPLOADS
+CREATE TABLE public.nf_uploads (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  file_name text NOT NULL,
+  file_url text,
+  upload_date date NOT NULL DEFAULT CURRENT_DATE,
+  issue_date date,
+  status text NOT NULL DEFAULT 'pendente',
+  unit text NOT NULL DEFAULT 'BH-Matriz',
+  supplier text,
+  supplier_cnpj text,
+  recipient_name text,
+  recipient_doc text,
+  recipient_doc_type text,
+  recipient_city text,
+  total_value numeric,
+  discount_value numeric DEFAULT 0,
+  freight_value numeric DEFAULT 0,
+  other_expenses numeric DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- NF_ITEMS
+CREATE TABLE public.nf_items (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  nf_upload_id uuid NOT NULL,
+  name text NOT NULL,
+  quantity numeric NOT NULL,
+  unit_price numeric NOT NULL DEFAULT 0,
+  total_price numeric NOT NULL DEFAULT 0,
+  unit_of_measure text DEFAULT 'UN',
+  category text,
+  financial_link_type text
+);
+
+-- OPERATIONAL_BUDGETS_MONTHLY
+CREATE TABLE public.operational_budgets_monthly (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  year integer NOT NULL,
+  month integer NOT NULL,
+  branch text NOT NULL,
+  macrobloco text NOT NULL,
+  category text NOT NULL,
+  amount numeric NOT NULL DEFAULT 0,
+  notes text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- OPERATIONAL_EXPENSES
+CREATE TABLE public.operational_expenses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  description text NOT NULL,
+  amount numeric NOT NULL DEFAULT 0,
+  expense_date date NOT NULL DEFAULT CURRENT_DATE,
+  branch text NOT NULL,
+  macrobloco text NOT NULL,
+  category text NOT NULL,
+  supplier text,
+  supplier_id uuid,
+  notes text,
+  receipt_url text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- PAYMENT_REQUESTS
+CREATE TABLE public.payment_requests (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  description text NOT NULL,
+  amount numeric NOT NULL DEFAULT 0,
+  request_date date NOT NULL DEFAULT CURRENT_DATE,
+  due_date date,
+  payment_date date,
+  company text NOT NULL,
+  cost_center text NOT NULL,
+  category text NOT NULL,
+  supplier text,
+  supplier_id uuid,
+  allocations jsonb,
+  payment_method text,
+  pix_key text,
+  bank_name text,
+  bank_agency text,
+  bank_account text,
+  bank_account_type text,
+  boleto_url text,
+  receipt_url text,
+  notes text,
+  status text NOT NULL DEFAULT 'pendente',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- PRODUCTS
+CREATE TABLE public.products (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  category text NOT NULL,
+  unit text NOT NULL DEFAULT 'BH-Matriz',
+  unit_of_measure text DEFAULT 'UN',
+  quantity numeric NOT NULL DEFAULT 0,
+  min_stock integer,
+  unit_price numeric NOT NULL DEFAULT 0,
+  total_price numeric NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- STOCK_MOVEMENTS
+CREATE TABLE public.stock_movements (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id uuid NOT NULL,
+  product_name text NOT NULL,
+  type text NOT NULL,
+  quantity numeric NOT NULL,
+  date date NOT NULL DEFAULT CURRENT_DATE,
+  "user" text NOT NULL DEFAULT 'Admin',
+  responsible text,
+  unit_of_measure text DEFAULT 'UN',
+  unit text NOT NULL DEFAULT 'BH-Matriz',
+  floor text,
+  notes text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- SUPPLIERS
+CREATE TABLE public.suppliers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  cnpj_cpf text,
+  contact_email text,
+  contact_phone text,
+  payment_method text,
+  pix_key text,
+  bank_name text,
+  bank_agency text,
+  bank_account text,
+  bank_account_type text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- RECURRING_EXPENSES
+CREATE TABLE public.recurring_expenses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  description text NOT NULL,
+  amount numeric NOT NULL DEFAULT 0,
+  due_day integer NOT NULL DEFAULT 5,
+  company text NOT NULL,
+  branch text NOT NULL,
+  macrobloco text NOT NULL DEFAULT 'Ocupação e Infraestrutura',
+  category text NOT NULL,
+  cost_center text NOT NULL,
+  supplier text,
+  supplier_id uuid,
+  payment_method text,
+  company_allocations jsonb,
+  active boolean NOT NULL DEFAULT true,
+  notes text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- RECURRING_EXPENSE_RUNS
+CREATE TABLE public.recurring_expense_runs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  recurring_expense_id uuid NOT NULL,
+  year integer NOT NULL,
+  month integer NOT NULL,
+  amount numeric NOT NULL DEFAULT 0,
+  due_date date,
+  paid_date date,
+  paid boolean NOT NULL DEFAULT false,
+  payment_request_id uuid,
+  generated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- =========================================================
+-- HABILITAR RLS + POLÍTICAS PADRÃO is_ativo()
+-- =========================================================
+DO $$
+DECLARE t text;
+BEGIN
+  FOR t IN SELECT unnest(ARRAY[
+    'assets','collaborators','expenses','maintenance_tasks',
+    'nf_uploads','nf_items','operational_budgets_monthly',
+    'operational_expenses','payment_requests','products',
+    'stock_movements','suppliers','recurring_expenses','recurring_expense_runs'
+  ]) LOOP
+    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;', t);
+    EXECUTE format($f$CREATE POLICY "Ativo can read %1$s" ON public.%1$I FOR SELECT TO authenticated USING (public.is_ativo());$f$, t);
+    EXECUTE format($f$CREATE POLICY "Ativo can insert %1$s" ON public.%1$I FOR INSERT TO authenticated WITH CHECK (public.is_ativo());$f$, t);
+    EXECUTE format($f$CREATE POLICY "Ativo can update %1$s" ON public.%1$I FOR UPDATE TO authenticated USING (public.is_ativo()) WITH CHECK (public.is_ativo());$f$, t);
+    EXECUTE format($f$CREATE POLICY "Ativo can delete %1$s" ON public.%1$I FOR DELETE TO authenticated USING (public.is_ativo());$f$, t);
+  END LOOP;
+END$$;
+
+-- =========================================================
+-- TRIGGER DE ESTOQUE
+-- =========================================================
+CREATE TRIGGER trg_stock_movements_update_product
+AFTER INSERT OR UPDATE OR DELETE ON public.stock_movements
+FOR EACH ROW EXECUTE FUNCTION public.update_product_quantity();
+
+-- =========================================================
+-- GRANTS (Data API / PostgREST)
+-- =========================================================
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+GRANT SELECT ON public.user_roles TO authenticated;

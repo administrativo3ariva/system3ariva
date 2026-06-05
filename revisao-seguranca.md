@@ -2731,3 +2731,75 @@ Use tabela em schema privado ou serviço externo de métricas. Não deixe o usu�
 5. Tratar texto/imagem de NF como input hostil contra prompt injection e reforçar instruções + validação pós-IA.
 6. Restringir `fileUrl` a path/bucket esperado ou remover `fileUrl` arbitrário do contrato da função.
 7. Retornar erros genéricos ao client e manter detalhes do AI Gateway apenas em logs internos.
+
+---
+
+# Auditoria Concisa - RLS Supabase e rls.rules
+
+Escopo: validação de `rls.rules`, migrations, policies finais, `USING(true)`, `WITH CHECK`, grants, `profiles`, `user_roles`, `SECURITY DEFINER`, `nf-files` e `asset-images`.
+
+## Veredito
+
+As regras estão melhores que `USING(true)`, mas ainda não estão prontas para produção com dados sensíveis. O padrão central `public.is_ativo()` reduz acesso anônimo amplo, porém concede CRUD global para qualquer usuário ativo em tabelas de negócio.
+
+## Principais Riscos
+
+1. **RLS ampla por `is_ativo()`**
+   - Evidência: `rls.rules:432-445` e migration `20260601141558`.
+   - Impacto: usuário ativo pode operar dados de vários módulos sem permissão específica.
+   - Correção: trocar por permissões por módulo/ação, como `can_access_module('financial', 'write')`.
+
+2. **Admin inativo ainda pode administrar**
+   - Evidência: `rls.rules:130-167` e migration `20260601135745`.
+   - Impacto: a role `admin` basta; `profiles.status = 'ativo'` não é exigido.
+   - Correção: combinar `has_role(...) AND is_ativo()`.
+
+3. **Storage `nf-files` amplo para usuários ativos**
+   - Evidência: migration `20260601142439`.
+   - Impacto: qualquer usuário ativo pode escrever, atualizar e deletar no bucket inteiro.
+   - Correção: restringir por módulo, dono e path com `storage.foldername(name)`.
+
+4. **`asset-images` com leitura pública inferida**
+   - Evidência: migration `20260324144655`; não foi encontrada migration removendo leitura pública.
+   - Impacto: imagens podem ficar públicas por URL.
+   - Correção: tornar o bucket privado ou documentar que a leitura pública é intencional.
+
+5. **`profiles` legível por qualquer usuário ativo**
+   - Evidência: `rls.rules:138-139`.
+   - Impacto: risco de enumeração de usuários, emails e status.
+   - Correção: permitir leitura apenas do próprio perfil ou por admin ativo.
+
+6. **`SECURITY DEFINER` em schema público**
+   - Evidência: `rls.rules:25-75`.
+   - Impacto: risco residual em helpers privilegiados expostos no schema `public`.
+   - Correção: mover helpers para schema privado, usar `search_path = ''` e grants mínimos.
+
+## Pontos Positivos
+
+- Tabelas principais têm RLS habilitado.
+- Migrations recentes removem parte do acesso anônimo.
+- `nf-files` foi tornado privado.
+- Update do próprio perfil preserva `status`.
+- `user_roles` tem RLS e não fica público.
+
+## Confirmação Recomendada no Supabase Live
+
+```sql
+select schemaname, tablename, policyname, roles, cmd, qual, with_check
+from pg_policies
+where schemaname in ('public', 'storage')
+order by schemaname, tablename, policyname;
+```
+
+```sql
+select schemaname, tablename, rowsecurity
+from pg_tables
+where schemaname = 'public'
+order by tablename;
+```
+
+```sql
+select id, name, public
+from storage.buckets
+where id in ('nf-files', 'asset-images');
+```

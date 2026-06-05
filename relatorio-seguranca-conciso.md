@@ -573,3 +573,27 @@ order by tablename;
 - O projeto já usa Zod em alguns formulários.
 - Não foi encontrado raw SQL inseguro com concatenação de input.
 - `dist` local não contém source maps.
+
+---
+
+## Atualização Concisa - RLS Supabase / rls.rules
+
+Veredito: `rls.rules` melhora o cenário ao usar `is_ativo()`, mas ainda é amplo demais para produção. Usuário ativo continua com CRUD global em tabelas de negócio.
+
+Prioridade:
+
+1. Trocar `is_ativo()` global por permissões por módulo/ação.
+2. Exigir `has_role('admin') AND is_ativo()` em `profiles` e `user_roles`.
+3. Restringir `nf-files` por path, dono e módulo, não só por usuário ativo.
+4. Tornar `asset-images` privado ou documentar leitura pública como decisão de produto.
+5. Reduzir leitura de `profiles` para próprio usuário ou admin ativo.
+6. Mover helpers `SECURITY DEFINER` para schema privado e usar grants mínimos.
+
+Evidências: `rls.rules:130-167`, `rls.rules:432-445`, migrations `20260601141558`, `20260601142439`, `20260601145336` e `20260324144655`.
+
+Checklist adicional:
+
+- [ ] Nenhuma policy final sensível depende só de `is_ativo()`.
+- [ ] Nenhum admin inativo consegue operar RLS administrativa.
+- [ ] Buckets usam `storage.foldername(name)` ou vínculo equivalente.
+- [ ] `asset-images` está privado se houver imagens sensíveis.
