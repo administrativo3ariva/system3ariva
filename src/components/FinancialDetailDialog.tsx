@@ -30,6 +30,8 @@ interface FinancialDetailDialogProps {
   primaryCategory?: string;
   /** Secondary allocations (rateio). When present, breakdown is shown. */
   allocations?: Allocation[] | null | unknown;
+  /** UUID of the user that created the record (column `created_by`). */
+  createdById?: string | null;
 }
 
 const statusLabels: Record<string, string> = {
