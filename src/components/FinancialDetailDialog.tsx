@@ -221,6 +221,8 @@ export function FinancialDetailDialog({
                 </div>
               ))}
             </div>
+
+            <CreatedByInfo userId={createdById} />
           </div>
 
           {/* Right: Attachments preview (Boleto + Comprovante) */}
