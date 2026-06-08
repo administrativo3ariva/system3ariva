@@ -109,7 +109,7 @@ function openUrl(url: string) {
 export function FinancialDetailDialog({
   open, onOpenChange, title, status, amount, paymentLabel,
   fields, receiptUrl, boletoUrl, notes, installmentInfo,
-  primaryCategory, allocations,
+  primaryCategory, allocations, createdById,
 }: FinancialDetailDialogProps) {
   const PaymentIcon = paymentLabel ? (paymentIcons[paymentLabel.toLowerCase()] || CreditCard) : CreditCard;
   const isCard = paymentLabel?.toLowerCase().startsWith('cartão');
