@@ -6,6 +6,7 @@ import { FileText, MessageSquare, CreditCard, QrCode, Landmark, FileBarChart, Ex
 import { expandAllocations, type Allocation } from '@/lib/allocation-utils';
 import { cn } from '@/lib/utils';
 import { useSignedUrl, resolveStorageUrl } from '@/lib/storage-url';
+import { CreatedByInfo } from '@/components/CreatedByInfo';
 
 interface DetailField {
   label: string;
