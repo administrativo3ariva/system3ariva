@@ -113,6 +113,7 @@ export type Database = {
           company: string
           cost_center: string
           created_at: string
+          created_by: string | null
           description: string
           expense_date: string
           id: string
@@ -134,6 +135,7 @@ export type Database = {
           company: string
           cost_center: string
           created_at?: string
+          created_by?: string | null
           description: string
           expense_date?: string
           id?: string
@@ -155,6 +157,7 @@ export type Database = {
           company?: string
           cost_center?: string
           created_at?: string
+          created_by?: string | null
           description?: string
           expense_date?: string
           id?: string
@@ -451,6 +454,7 @@ export type Database = {
           company: string
           cost_center: string
           created_at: string
+          created_by: string | null
           description: string
           due_date: string | null
           id: string
@@ -477,6 +481,7 @@ export type Database = {
           company: string
           cost_center: string
           created_at?: string
+          created_by?: string | null
           description: string
           due_date?: string | null
           id?: string
@@ -503,6 +508,7 @@ export type Database = {
           company?: string
           cost_center?: string
           created_at?: string
+          created_by?: string | null
           description?: string
           due_date?: string | null
           id?: string
@@ -712,6 +718,7 @@ export type Database = {
       stock_movements: {
         Row: {
           created_at: string
+          created_by: string | null
           date: string
           floor: string | null
           id: string
@@ -727,6 +734,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           date?: string
           floor?: string | null
           id?: string
@@ -742,6 +750,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           date?: string
           floor?: string | null
           id?: string

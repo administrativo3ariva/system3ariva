@@ -6,6 +6,7 @@ import { FileText, MessageSquare, CreditCard, QrCode, Landmark, FileBarChart, Ex
 import { expandAllocations, type Allocation } from '@/lib/allocation-utils';
 import { cn } from '@/lib/utils';
 import { useSignedUrl, resolveStorageUrl } from '@/lib/storage-url';
+import { CreatedByInfo } from '@/components/CreatedByInfo';
 
 interface DetailField {
   label: string;
@@ -29,6 +30,8 @@ interface FinancialDetailDialogProps {
   primaryCategory?: string;
   /** Secondary allocations (rateio). When present, breakdown is shown. */
   allocations?: Allocation[] | null | unknown;
+  /** UUID of the user that created the record (column `created_by`). */
+  createdById?: string | null;
 }
 
 const statusLabels: Record<string, string> = {
@@ -106,7 +109,7 @@ function openUrl(url: string) {
 export function FinancialDetailDialog({
   open, onOpenChange, title, status, amount, paymentLabel,
   fields, receiptUrl, boletoUrl, notes, installmentInfo,
-  primaryCategory, allocations,
+  primaryCategory, allocations, createdById,
 }: FinancialDetailDialogProps) {
   const PaymentIcon = paymentLabel ? (paymentIcons[paymentLabel.toLowerCase()] || CreditCard) : CreditCard;
   const isCard = paymentLabel?.toLowerCase().startsWith('cartão');
@@ -218,6 +221,8 @@ export function FinancialDetailDialog({
                 </div>
               ))}
             </div>
+
+            <CreatedByInfo userId={createdById} />
           </div>
 
           {/* Right: Attachments preview (Boleto + Comprovante) */}

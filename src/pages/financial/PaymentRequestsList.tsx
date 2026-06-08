@@ -266,6 +266,7 @@ export default function PaymentRequestsList() {
           notes={viewItem.notes}
           primaryCategory={viewItem.category}
           allocations={viewItem.allocations}
+          createdById={viewItem.created_by}
         />
       )}
     </div>
