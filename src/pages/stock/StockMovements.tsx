@@ -641,10 +641,11 @@ export default function StockMovements() {
                   </div>
                 )}
 
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Registrado por</p>
-                  <p className="text-sm font-medium">{viewMovement.user}</p>
-                </div>
+                <CreatedByInfo
+                  userId={(viewMovement as any).created_by}
+                  fallbackLabel={viewMovement.user}
+                />
+
 
                 {viewMovement.notes && (
                   <div>
