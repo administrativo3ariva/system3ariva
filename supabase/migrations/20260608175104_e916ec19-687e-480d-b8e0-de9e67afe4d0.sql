@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Anyone can read asset images" ON storage.objects;
+CREATE POLICY "Ativo can list asset images" ON storage.objects FOR SELECT USING (bucket_id = 'asset-images' AND public.is_ativo());
