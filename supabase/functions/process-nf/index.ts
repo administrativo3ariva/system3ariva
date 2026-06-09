@@ -458,10 +458,11 @@ serve(async (req) => {
       }
       // If the client lied about the type, trust the detected one.
       if (detected !== fileType) {
-        // Note for logs only — do not echo internals to client.
         console.warn(`process-nf: declared fileType=${fileType} but magic-bytes detected=${detected}`);
+        fileType = detected;
       }
     }
+
 
 
     if (!fileUrl && fileBytes) {
