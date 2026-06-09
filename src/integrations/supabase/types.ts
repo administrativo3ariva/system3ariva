@@ -855,6 +855,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_active_admin: { Args: never; Returns: boolean }
       is_ativo: { Args: never; Returns: boolean }
     }
     Enums: {
