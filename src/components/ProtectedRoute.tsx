@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -15,6 +15,12 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
+  // Defense-in-depth: even if AuthContext fails to sign out a non-ativo
+  // user, do not render protected content.
+  if (profile && profile.status !== 'ativo') {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
