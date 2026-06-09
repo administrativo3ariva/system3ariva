@@ -410,7 +410,7 @@ serve(async (req) => {
   try {
     const body = await req.json();
     const originalFileName = String(body?.fileName || "nota-fiscal");
-    const fileType = String(body?.fileType || guessFileType(originalFileName));
+    let fileType = String(body?.fileType || guessFileType(originalFileName));
     const providedFileUrl = body?.fileUrl ? String(body.fileUrl) : null;
     const unit = String(body?.unit || "BH-Matriz");
     const fileDataBase64 = body?.fileDataBase64 ? String(body.fileDataBase64) : null;
