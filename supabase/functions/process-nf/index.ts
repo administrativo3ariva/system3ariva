@@ -592,7 +592,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error processing NF:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Erro interno ao processar NF" }),
+      JSON.stringify({ error: "Erro interno ao processar a NF. Tente novamente." }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
