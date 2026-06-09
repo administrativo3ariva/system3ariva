@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Authenticated can view basic profile info" ON public.profiles;

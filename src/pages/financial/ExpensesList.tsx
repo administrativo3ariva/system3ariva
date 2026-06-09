@@ -230,6 +230,7 @@ export default function ExpensesList() {
           notes={viewItem.notes}
           primaryCategory={viewItem.category}
           allocations={viewItem.allocations}
+          createdById={viewItem.created_by}
         />
       )}
     </div>
