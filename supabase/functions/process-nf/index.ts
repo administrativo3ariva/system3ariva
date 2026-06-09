@@ -440,6 +440,30 @@ serve(async (req) => {
       throw new Error("Nenhum arquivo foi enviado para processamento.");
     }
 
+    // Enforce file-size and content-type sanity on uploaded bytes.
+    if (fileBytes) {
+      if (fileBytes.byteLength > MAX_FILE_BYTES) {
+        return new Response(
+          JSON.stringify({ error: `Arquivo excede o tamanho máximo de ${Math.round(MAX_FILE_BYTES / (1024 * 1024))} MB.` }),
+          { status: 413, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      const detected = detectFileMime(fileBytes);
+      const allowedTypes = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp"]);
+      if (!detected || !allowedTypes.has(detected)) {
+        return new Response(
+          JSON.stringify({ error: "Tipo de arquivo não suportado. Envie PDF, PNG, JPEG ou WEBP." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      // If the client lied about the type, trust the detected one.
+      if (detected !== fileType) {
+        // Note for logs only — do not echo internals to client.
+        console.warn(`process-nf: declared fileType=${fileType} but magic-bytes detected=${detected}`);
+      }
+    }
+
+
     if (!fileUrl && fileBytes) {
       // Place the file inside a unique subfolder so the URL preserves the
       // user's original (sanitized) filename as the last path segment.
