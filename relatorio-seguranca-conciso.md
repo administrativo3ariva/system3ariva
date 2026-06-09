@@ -2,6 +2,7 @@
 
 Fonte: resumo prático de `revisao-seguranca.md`  
 Data base da auditoria: 2026-06-03  
+Atualizado: 2026-06-09 (novas mudanças incorporadas do `origin/main`: colunas `created_by`, `CreatedByInfo`, `useProfileById`, migrations `20260608*`)  
 Escopo: secrets/env, autenticação/autorização, Supabase RLS e storage, Edge Functions, módulo financeiro, validação de dados, deployment e fluxo de NF com IA.
 
 ## Visão geral
@@ -624,6 +625,39 @@ O controle principal continua sendo a validação pós-IA com schema runtime rig
 - System prompt instrui a IA a ignorar comandos embutidos no documento.
 - Saída da IA é sempre validada com schema antes de persistir, independente do conteúdo da NF.
 
+### 20. Coluna `created_by` sem `WITH CHECK` permite falsificação de autoria
+
+**Onde aparece**
+
+- `supabase/migrations/20260608173819_684b087a-b1e6-4c46-9115-8a478aa1a238.sql`
+
+**Problema**
+
+As colunas `created_by uuid DEFAULT auth.uid()` foram adicionadas a `stock_movements`, `expenses` e `payment_requests`. O `DEFAULT` aplica-se apenas quando o campo é omitido; se o cliente incluir explicitamente um UUID diferente, o banco aceita. As políticas de INSERT existentes verificam apenas `is_ativo()`, sem `WITH CHECK (created_by = auth.uid())`. Um usuário ativo pode inserir qualquer UUID em `created_by` via API direta, atribuindo o lançamento a outro colaborador.
+
+**Impacto**
+
+Usuário ativo pode forjar autoria de movimentações de estoque, despesas ou solicitações de pagamento, comprometendo diretamente a trilha de auditoria que a funcionalidade `CreatedByInfo` visa fornecer.
+
+**Ação recomendada**
+
+Adicionar `WITH CHECK` nas políticas de INSERT das três tabelas:
+
+```sql
+-- Exemplo para stock_movements (repetir para expenses e payment_requests)
+DROP POLICY IF EXISTS "Ativo can insert stock_movements" ON public.stock_movements;
+CREATE POLICY "Ativo can insert stock_movements"
+  ON public.stock_movements FOR INSERT TO authenticated
+  WITH CHECK (
+    public.is_ativo()
+    AND (created_by IS NULL OR created_by = auth.uid())
+  );
+```
+
+**Critério de pronto**
+
+- Nenhuma das três tabelas aceita `created_by` diferente de `auth.uid()` em INSERT.
+
 ### 19. Funções `SECURITY DEFINER` no schema público
 
 **Onde aparece**
@@ -741,6 +775,7 @@ order by tablename;
 - [ ] Headers de segurança estão versionados no deploy.
 - [ ] Listagens não usam `select('*')` para dados sensíveis.
 - [ ] Funções `SECURITY DEFINER` ficam em schema privado com `search_path = ''`.
+- [ ] `created_by` não aceita valor diferente de `auth.uid()` nas tabelas de movimentação, despesas e solicitações.
 
 ## Pontos positivos já existentes
 
@@ -753,4 +788,5 @@ order by tablename;
 - O projeto já usa Zod em alguns formulários.
 - Não foi encontrado raw SQL inseguro com concatenação de input.
 - `dist` local não contém source maps.
+- Bucket `asset-images` foi tornado privado (leitura restrita a `is_ativo()`) na migration `20260608175104`, fechando exposição de leitura pública identificada na auditoria anterior.
 

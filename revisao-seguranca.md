@@ -8,6 +8,7 @@
 - [Deployment Security](#deployment-security)
 - [Database Security Supabase](#database-security-supabase)
 - [AI Integration + Rate Limiting nos Fluxos de NF](#ai-integration-rate-limiting-nf)
+- [Novas Mudanças — 08/06/2026](#novas-mudancas-08062026)
 
 ---
 
@@ -2343,6 +2344,103 @@ from pg_tables
 where schemaname = 'public'
 order by tablename;
 ```
+
+---
+
+<a id="novas-mudancas-08062026"></a>
+
+# Auditoria de Segurança - Novas Mudanças (08/06/2026)
+
+Escopo: mudanças incorporadas do `origin/main` em 09/06/2026 — colunas `created_by`, componente `CreatedByInfo`, hook `useProfileById`, ajustes em `FinancialDetailDialog`, `StockMovements`, `ExpensesList`, `PaymentRequestsList` e migrations `20260608173819`, `20260608174935`, `20260608175104`.
+
+## Critical
+
+Nenhum achado crítico.
+
+## High
+
+Nenhum achado alto.
+
+## Medium
+
+### 1. Colunas `created_by` sem `WITH CHECK` permitem falsificação de autoria
+
+**Arquivos e linhas**
+
+- `supabase/migrations/20260608173819_684b087a-b1e6-4c46-9115-8a478aa1a238.sql:3-10`
+
+**Vulnerabilidade**
+
+As colunas `created_by uuid DEFAULT auth.uid()` foram adicionadas a `stock_movements`, `expenses` e `payment_requests`. O `DEFAULT auth.uid()` aplica-se apenas quando o campo é omitido na inserção; se o cliente incluir explicitamente um UUID diferente, o banco aceita. As políticas de INSERT para essas tabelas usam apenas `WITH CHECK (public.is_ativo())` — sem verificar que `created_by = auth.uid()`. Um usuário ativo pode fazer uma inserção via API Supabase com `created_by` apontando para o UUID de outro colaborador.
+
+**Impacto concreto**
+
+Um usuário ativo pode registrar uma movimentação de estoque, despesa ou solicitação de pagamento e atribuí-la a outra pessoa. Isso compromete a trilha de auditoria que a funcionalidade `CreatedByInfo` visa fornecer e pode ser usado para incriminar outro colaborador em auditorias internas.
+
+Exemplo direto de exploração via API Supabase:
+
+```js
+supabase.from('stock_movements').insert({
+  product_id: '...',
+  product_name: 'Item X',
+  type: 'saida',
+  quantity: 100,
+  created_by: 'uuid-de-outro-usuario',  // autoria falsificada
+})
+```
+
+**Antes**
+
+```sql
+ALTER TABLE public.stock_movements
+  ADD COLUMN IF NOT EXISTS created_by uuid DEFAULT auth.uid();
+-- A política de INSERT existente verifica apenas: WITH CHECK (public.is_ativo())
+```
+
+**Depois**
+
+```sql
+-- Repetir para expenses e payment_requests
+DROP POLICY IF EXISTS "Ativo can insert stock_movements" ON public.stock_movements;
+CREATE POLICY "Ativo can insert stock_movements"
+  ON public.stock_movements FOR INSERT TO authenticated
+  WITH CHECK (
+    public.is_ativo()
+    AND (created_by IS NULL OR created_by = auth.uid())
+  );
+```
+
+## Correção de Segurança Identificada
+
+### Bucket `asset-images` agora restrito a usuários ativos
+
+**Arquivo:** `supabase/migrations/20260608175104_e916ec19-687e-480d-b8e0-de9e67afe4d0.sql`
+
+A policy `"Anyone can read asset images"` (leitura pública sem autenticação) foi removida e substituída por `"Ativo can list asset images"`, que exige `public.is_ativo()`. Isso fecha a exposição identificada no achado Medium 5 da seção "Database Security Supabase" (`asset-images` com leitura pública inferida pelas migrations).
+
+## Sem Impacto Líquido
+
+### Policy de `profiles` criada e imediatamente removida
+
+A migration `20260608173819` criou a policy `"Authenticated can view basic profile info"` com `USING (true)`, que teria permitido que usuários inativos/pendentes também lessem perfis. A migration `20260608174935` a removeu na mesma sequência. O estado final das policies de `profiles` é idêntico ao anterior — a policy `"Ativo can read profiles"` (com `USING (public.is_ativo() OR auth.uid() = user_id)`) permanece como única regra de leitura, sem regressão.
+
+## Pontos Positivos Observados
+
+- `CreatedByInfo` e `useProfileById` são React/TypeScript puro sem `dangerouslySetInnerHTML`; não introduzem XSS.
+- `useProfileById` usa query parametrizada via Supabase client com `.eq('user_id', userId)`; não há SQL injection.
+- A leitura de `profiles` no novo hook depende exclusivamente das políticas RLS existentes; nenhuma nova superfície de bypass foi introduzida.
+- A migration `20260608175104` fecha um achado de leitura pública pré-existente no bucket `asset-images`.
+
+## Verificações Executadas
+
+- Revisados `src/components/CreatedByInfo.tsx`, `src/hooks/use-profile-by-id.ts`, `src/components/FinancialDetailDialog.tsx` e `src/pages/stock/StockMovements.tsx`.
+- Revisadas migrations `20260608173819`, `20260608174935` e `20260608175104`.
+- Verificadas políticas de INSERT existentes para `stock_movements`, `expenses` e `payment_requests` (via migrations anteriores).
+- Confirmado sequência de criação e remoção da policy de `profiles`.
+
+## Resumo Priorizado
+
+1. Adicionar `WITH CHECK (created_by IS NULL OR created_by = auth.uid())` nas políticas de INSERT de `stock_movements`, `expenses` e `payment_requests` — as três tabelas que receberam a coluna `created_by` na migration `20260608173819`.
 
 ## Resumo Priorizado
 
