@@ -10,6 +10,25 @@ Este documento e a fonte de verdade inicial para reconstruir o sistema administr
 - stack aprovada para a nova construcao;
 - conhecimento extraido do codigo atual.
 
+## Status Da Matriz
+
+Versao atual: `0.2 - consolidacao por agentes`.
+
+Esta matriz comecou como rascunho tecnico inicial e foi enriquecida por varreduras especializadas no codigo antigo:
+
+- Auth/Admin/Seguranca;
+- Estoque e NF/OCR;
+- Financeiro e Orcamento Operacional;
+- Inventario Patrimonial e Facilities;
+- Banco, entidades e contratos de dados.
+
+A matriz ainda deve receber:
+
+- prints finais das telas;
+- validacao do documento de requisitos por modulo;
+- confirmacao das permissoes reais da area de negocio;
+- refinamento final do futuro `schema.prisma`.
+
 ## Stack Alvo
 
 - Frontend e backend: Next.js + TypeScript
@@ -47,6 +66,154 @@ Este documento e a fonte de verdade inicial para reconstruir o sistema administr
 | Dashboards e Relatorios | Indicadores consolidados e visoes executivas | dashboards de cada modulo | P2 |
 | Auditoria e Governanca | Rastreabilidade de acoes sensiveis | nao tratado de forma centralizada no sistema atual | P0 |
 
+## Achados Dos Agentes Por Modulo
+
+### Auth/Admin/Seguranca
+
+Fluxos identificados:
+
+- login com e-mail/senha e Google OAuth;
+- cadastro de usuario com aprovacao posterior;
+- recuperacao e redefinicao de senha;
+- dashboard pos-login;
+- painel admin para aprovar e remover usuarios.
+
+Regras confirmadas:
+
+- usuario novo deve nascer `pending`;
+- usuario `pending` ou `inactive` nao acessa rotas nem APIs operacionais;
+- admin pode aprovar/inativar/remover usuarios, mas nao deve excluir a propria conta;
+- menu e rota protegida sao apenas UX; seguranca real deve estar no backend.
+
+Decisao para o novo sistema:
+
+- Firebase Auth identifica o usuario;
+- PostgreSQL guarda perfil, status, roles e permissoes;
+- backend Next.js valida token, status e permissao antes de qualquer acao Prisma.
+
+### Estoque E NF/OCR
+
+Fluxos identificados:
+
+- CRUD de produtos por filial;
+- movimentacoes de entrada, saida e ajuste;
+- saida com responsavel;
+- upload de NF;
+- processamento IA/OCR;
+- revisao manual de itens;
+- aprovacao da NF com geracao de entrada em estoque;
+- redirecionamento para financeiro.
+
+Regras confirmadas:
+
+- NF nasce pendente;
+- itens precisam ser revisados antes da aprovacao;
+- todos os itens precisam de categoria antes de aprovar;
+- cidade divergente da filial exige confirmacao;
+- produto abaixo do estoque minimo gera alerta;
+- frete fiscal e taxas operacionais devem ser tratados separadamente.
+
+Decisoes para o novo sistema:
+
+- aprovacao de NF deve ser uma transacao backend;
+- `StockMovement` deve se vincular explicitamente a NF/item quando origem for NF;
+- responsavel de saida deve ser `collaborator_id`, nao texto livre;
+- produto com historico deve ser inativado, nao excluido fisicamente;
+- saldo precisa ser reconciliavel pelos movimentos;
+- OCR/IA deve ter limite de tamanho, tipo, rate limit e schema runtime.
+
+### Financeiro E Orcamento Operacional
+
+Fluxos identificados:
+
+- despesas de cartao corporativo;
+- solicitacoes de pagamento;
+- fornecedores e dados de pagamento;
+- anexos financeiros;
+- dashboard financeiro;
+- relatorios com exportacao XLSX;
+- orcamento mensal por filial, macrobloco e categoria;
+- despesas recorrentes;
+- consumo orcamentario consolidando despesas e solicitacoes.
+
+Regras confirmadas:
+
+- despesa de cartao conta como realizado, exceto rejeitada/cancelada;
+- solicitacao paga conta como realizado;
+- solicitacao pendente/aprovada conta como comprometido;
+- `request_date` e a data oficial da solicitacao;
+- `Compras TI` nao consome orcamento operacional;
+- orcamento tem unicidade por ano, mes, filial, macrobloco e categoria;
+- rateio nao pode ultrapassar o total.
+
+Decisoes para o novo sistema:
+
+- regra de consumo orcamentario deve viver em uma camada unica no backend;
+- status financeiro nao pode ser alterado diretamente pelo client;
+- marcar como pago exige permissao especifica;
+- anexos financeiros devem usar Storage privado;
+- rateios devem ser normalizados ou rigidamente validados;
+- recorrencias devem ser geradas de forma idempotente no backend;
+- exclusoes financeiras devem ser soft delete com auditoria.
+
+### Inventario Patrimonial
+
+Fluxos identificados:
+
+- dashboard patrimonial;
+- cadastro de bem;
+- listagem em tabela/grid;
+- edicao em painel;
+- acompanhamento por filial;
+- marcacao de item inventariado;
+- imagem/anexo do bem.
+
+Regras confirmadas:
+
+- codigo patrimonial atual e gerado no frontend;
+- `total_price = quantity * unit_price`;
+- item nasce como nao inventariado;
+- condicao padrao atual e `Bom`;
+- imagem atual aceita upload ou URL manual.
+
+Decisoes para o novo sistema:
+
+- codigo patrimonial deve ser gerado no servidor com unicidade por filial;
+- total deve ser calculado/validado no backend;
+- imagem deve ficar em Storage privado;
+- conferencia deve registrar usuario e data;
+- exclusao deve virar baixa/inativacao com motivo;
+- patrimonio deve poder se relacionar com fornecedor, NF, responsavel, anexos e historico.
+
+### Facilities
+
+Fluxos identificados:
+
+- dashboard de manutencoes;
+- calendario;
+- kanban operacional;
+- criacao/edicao/exclusao de manutencao;
+- avancar/reabrir status;
+- recorrencia automatica;
+- desempenho por prazo, categoria, filial e tipo.
+
+Regras confirmadas:
+
+- status: `todo`, `approval`, `in_progress`, `done`;
+- prioridade: `baixa`, `media`, `alta`, `urgente`;
+- tipo: `preventiva` ou `corretiva`;
+- algumas categorias possuem recorrencia padrao;
+- ao finalizar tarefa recorrente, sistema cria proxima ocorrencia.
+
+Decisoes para o novo sistema:
+
+- mudanca de status deve ser validada no backend;
+- recorrencia deve ser idempotente e server-side;
+- custos precisam validar valor nao negativo;
+- exclusao deve preservar historico;
+- tarefa pode se vincular a patrimonio, fornecedor, solicitante, responsavel e anexos;
+- filtros por filial devem respeitar permissao no backend.
+
 ## Entidades Principais
 
 | Entidade | Descricao | Modulos relacionados |
@@ -72,6 +239,86 @@ Este documento e a fonte de verdade inicial para reconstruir o sistema administr
 | Asset | Bem patrimonial | Patrimonio |
 | FacilityTask | Tarefa ou manutencao de facilities | Facilities |
 | AuditLog | Registro de acao sensivel | Todos |
+
+## Entidades Recomendadas Pelos Agentes
+
+### Auth/Admin
+
+- `User`
+- `UserProfile`
+- `Role`
+- `Permission`
+- `UserRole`
+- `UserPermission`
+- `UserBranchPermission`
+- `AuditLog`
+
+### Estoque E NF
+
+- `Product`
+- `ProductCategory`
+- `StockMovement`
+- `StockMovementItem`
+- `Invoice`
+- `InvoiceItem`
+- `InvoiceApproval`
+- `Supplier`
+- `Collaborator`
+- `FinancialDraft` ou `FinancialLink`
+
+### Financeiro E Orcamento
+
+- `Expense`
+- `PaymentRequest`
+- `PaymentStatusHistory`
+- `Supplier`
+- `FinancialAttachment`
+- `ExpenseAllocation`
+- `OperationalBudget`
+- `RecurringExpense`
+- `RecurringExpenseRun`
+- `BudgetConsumptionView` ou servico de calculo backend
+
+### Inventario
+
+- `Asset`
+- `AssetAttachment`
+- `AssetInventoryCheck`
+- `AssetStatusHistory`
+- `AssetMovement`
+
+### Facilities
+
+- `MaintenanceTask`
+- `MaintenanceTaskHistory`
+- `MaintenanceTaskAttachment`
+- `MaintenanceRecurrenceRule`
+- `MaintenanceCategory`
+
+## Observacoes Sobre O Modelo Antigo
+
+O modelo atual possui algumas relacoes formais, mas muitos vinculos importantes estao em texto livre, URL solta ou fluxo de tela.
+
+Relacoes formais identificadas:
+
+- `expenses.supplier_id -> suppliers.id`
+- `payment_requests.supplier_id -> suppliers.id`
+- `recurring_expense_runs.recurring_expense_id -> recurring_expenses.id`
+- `stock_movements.product_id -> products.id`
+- `nf_items.nf_upload_id -> nf_uploads.id`
+
+Lacunas que o novo `schema.prisma` deve corrigir:
+
+- NF aprovada precisa se vincular formalmente a produtos, movimentos de estoque e eventual financeiro.
+- Movimentacao de estoque deve registrar origem, usuario, filial, responsavel e motivo de forma estruturada.
+- Saida de estoque deve referenciar colaborador por ID, nao por nome em texto.
+- Fornecedor deve ser uma entidade compartilhada entre NF, financeiro, patrimonio e facilities.
+- Anexos devem usar entidade `FileObject`, nao URLs soltas em cada tabela.
+- Filiais, categorias, macroblocos e centros de custo devem ser catalogos controlados.
+- Rateios financeiros devem ser normalizados ou ter validacao forte de soma/consistencia.
+- Recorrencias precisam de chave/idempotencia para evitar duplicidade.
+- Patrimonio precisa de historico de status, conferencia, baixa e movimentacao.
+- Facilities precisa de historico de status e vinculos com patrimonio, fornecedor, responsavel e anexos.
 
 ## Relacionamentos-Chave
 
@@ -242,4 +489,3 @@ Este documento e a fonte de verdade inicial para reconstruir o sistema administr
 - Decisao sobre IA/OCR provider.
 - Decisao sobre politica de retencao de arquivos.
 - Definicao de quais relatorios precisam exportacao.
-
