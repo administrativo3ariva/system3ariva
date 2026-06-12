@@ -12,7 +12,7 @@ Este documento e a fonte de verdade inicial para reconstruir o sistema administr
 
 ## Status Da Matriz
 
-Versao atual: `0.2 - consolidacao por agentes`.
+Versao atual: `0.3 - matriz tecnica com security by design`.
 
 Esta matriz comecou como rascunho tecnico inicial e foi enriquecida por varreduras especializadas no codigo antigo:
 
@@ -28,6 +28,48 @@ A matriz ainda deve receber:
 - validacao do documento de requisitos por modulo;
 - confirmacao das permissoes reais da area de negocio;
 - refinamento final do futuro `schema.prisma`.
+
+## Objetivo De Seguranca Do Novo Sistema
+
+O novo sistema deve nascer seguro por desenho, nao apenas corrigir falhas do sistema antigo. A seguranca deve ser tratada como requisito arquitetural desde a fundacao.
+
+Objetivos obrigatorios:
+
+- impedir acesso publico a qualquer recurso operacional;
+- autenticar identidade com Firebase Auth;
+- autorizar acesso no backend com base em usuario interno, status, papel, permissao e escopo;
+- tratar middleware e guards visuais apenas como conveniencia de UX, nunca como unica barreira;
+- validar autenticacao, autorizacao e input em toda Server Action, Route Handler e funcao de acesso a dados;
+- impedir que usuario pendente, inativo ou sem perfil interno acesse rotas, APIs, arquivos ou dados;
+- impedir que um usuario ativo opere modulos sem permissao explicita;
+- proteger documentos, NFs, boletos, comprovantes e imagens no Firebase Storage;
+- registrar auditoria de acoes administrativas, financeiras, patrimoniais, estoque, NF e facilities;
+- evitar vazamento de detalhes tecnicos, tokens, dados bancarios, documentos ou logs sensiveis;
+- manter consistencia e rastreabilidade mesmo quando houver erro parcial, retry ou clique duplicado.
+
+## Modelo De Autorizacao Para Neon + Prisma
+
+O documento de requisitos original menciona Row Level Security. Como a stack aprovada usa Neon PostgreSQL com Prisma, a expectativa deve ser traduzida para um modelo equivalente de seguranca:
+
+- PostgreSQL/Neon e a fonte de verdade dos dados.
+- Prisma e a camada padrao de acesso ao banco.
+- Toda consulta ou mutation sensivel deve passar por uma camada server-side de autorizacao.
+- A autorizacao deve verificar usuario autenticado, status ativo, permissao de modulo, acao e escopo por filial quando aplicavel.
+- Nenhuma mutation deve aceitar `userId`, `role`, `status`, `createdBy` ou `updatedBy` vindo cegamente do client.
+- Campos de autoria devem ser definidos pelo servidor.
+- Constraints do banco devem complementar a seguranca: valores positivos, status permitidos, unicidade, FKs e integridade referencial.
+- Se forem usadas policies nativas no Postgres/Neon futuramente, elas devem reforcar o modelo, nao substituir validacao no backend.
+
+Padrao esperado em toda operacao server-side:
+
+1. validar input com schema runtime;
+2. validar token/sessao Firebase no servidor;
+3. buscar usuario interno no PostgreSQL;
+4. bloquear usuario ausente, pendente ou inativo;
+5. validar permissao de modulo e acao;
+6. validar escopo da entidade, como filial, dono ou vinculo;
+7. executar operacao com Prisma;
+8. registrar auditoria quando a acao for sensivel.
 
 ## Stack Alvo
 
@@ -372,6 +414,8 @@ Lacunas que o novo `schema.prisma` deve corrigir:
 - Nenhuma rota operacional deve ser acessivel sem Firebase Auth.
 - Nenhuma rota operacional deve aceitar usuario sem perfil interno ativo.
 - Nenhuma acao de escrita deve confiar apenas no frontend.
+- Middleware Next.js, layouts protegidos e guards client-side nao sao suficientes como controle de seguranca.
+- Toda Server Action, Route Handler e funcao de dados deve autenticar, autorizar e validar input.
 - APIs/server actions devem validar usuario, status e permissao.
 - Arquivos privados devem ser lidos por fluxo autorizado, preferencialmente URL assinada curta.
 - Upload deve validar tamanho, tipo declarado e assinatura real do arquivo quando aplicavel.
@@ -380,6 +424,54 @@ Lacunas que o novo `schema.prisma` deve corrigir:
 - Dados financeiros, NF e permissao de usuario nunca devem depender de regra visual da tela.
 - Erros tecnicos nao devem ser expostos ao usuario final.
 - Logs devem guardar detalhes internos sem vazar segredo.
+- Texto extraido de NF/OCR deve ser tratado como dado nao confiavel para evitar prompt injection.
+- Dados pessoais devem seguir minimizacao, necessidade de acesso e revisao periodica de permissoes.
+- Integracao por iframe deve restringir dominios permitidos por headers e configuracao de deploy.
+
+## Requisitos Nao Funcionais Incorporados
+
+| Tema | Requisito |
+| --- | --- |
+| Autenticacao | 100% das rotas privadas exigem login e usuario interno ativo |
+| Autorizacao | Permissoes por modulo, acao e escopo, validadas no backend |
+| Integridade financeira | Valores monetarios com precisao decimal e exibicao em BRL com duas casas |
+| Quantidades | KG com tres casas decimais; demais unidades com duas casas |
+| Auditoria | `created_at`, `updated_at`, autoria e historico para acoes criticas |
+| Estoque | Saldo consistente por movimentacoes, sem edicao manual livre |
+| NF/OCR | Processamento server-side, credenciais protegidas e validacao da saida |
+| UI segura | AlertDialog customizado em acoes destrutivas; proibido `alert`/`confirm` nativos |
+| Design | Tema escuro SaaS com identidade navy/dourada e tokens semanticos |
+| Relatorios | Exportacao financeira em Excel com abas, filtros e formatacao |
+| Performance | Listagens e dashboards devem responder em ate 3 segundos no volume padrao de homologacao |
+| Compatibilidade | Chrome, Edge e Firefox atuais |
+| LGPD minima | Coleta limitada, acesso restrito, rastreabilidade e revisao periodica de acessos |
+| Iframe | Compatibilidade com intranet e politica explicita de `frame-ancestors` |
+
+## Rastreabilidade De Requisitos
+
+| Origem | Cobertura na matriz |
+| --- | --- |
+| RN-001/RNF-001 - nenhum recurso publico | Objetivo de seguranca, Auth/Admin, Storage e Regras de Seguranca |
+| RN-002/RF-003/RF-004 - usuario novo inativo/pendente | Fluxo de login e liberacao de usuario |
+| RN-003/RN-004/RF-005/RF-007 - papeis e permissoes | Papeis, permissoes granulares e modelo de autorizacao backend |
+| RN-005/RNF-002/RNF-003 - seguranca de dados | Traduzido para Neon + Prisma com autorizacao server-side e constraints |
+| RN-006/RF-008/RF-010/RNF-018 - saldo de estoque | Fluxo de estoque e criterios de aceite de movimentacoes |
+| RN-007/RF-009 - movimentacoes de estoque | Entidades `StockMovement`, `StockMovementItem`, auditoria e origem |
+| RN-008/RF-011/RF-012/RF-014/RNF-014 - NF/OCR | Fluxo de upload, JSON extraido, itens e revisao |
+| RN-009/RF-013 - validacao total NF | Decisoes NF/OCR e checklist de validacao |
+| RN-010/RF-015 - vinculo NF financeiro | Relacionamentos e entidades `FinancialLink`/`FinancialDraft` |
+| RN-011/RN-012/RF-016/RF-017 - colaboradores/localizacao | Entidade `Collaborator`, filial, andar e localizacao |
+| RN-013/RN-014/RF-018/RF-020 - patrimonio | Entidades de patrimonio, historico, conferencia e baixa |
+| RN-015/RF-021/RF-024 - financeiro | Fluxo financeiro, status e cadastros estruturais |
+| RN-016/RF-025/RNF-020 - `request_date` | Regras de financeiro e consumo orcamentario |
+| RN-017/RN-018/RF-027 - orcamento | Orcamento mensal e servico unico de consumo |
+| RN-019/RF-028/RF-029 - recorrencias financeiras | Entidades `RecurringExpense` e `RecurringExpenseRun` idempotentes |
+| RN-020/RN-021/RF-030/RF-033 - facilities | Fluxo de facilities e recorrencia server-side |
+| RN-022 - sem custo por usuario em facilities | Deve permanecer como restricao de produto do modulo Facilities |
+| RN-023/RN-024/RF-036/RNF-009/RNF-010 - acoes destrutivas | UI segura e criterios de homologacao |
+| RN-025/RN-026/RNF-004/RNF-005/RNF-006 - formatos numericos | Requisitos nao funcionais incorporados |
+| RN-027/RNF-019 - indicadores sem distorcao | Dashboards e criterios analiticos |
+| RN-028/RNF-011/RNF-012/RNF-013 - auditoria | Auditoria e Governanca como modulo P0 |
 
 ## Fluxos Criticos
 
