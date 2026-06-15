@@ -1,156 +1,332 @@
-<!--
-  TEMPLATE: Matriz Técnica de Alto Nível
-  ───────────────────────────────────────
-  Este é o artefato do PORTÃO 1 do framework: é o que VOCÊ valida "no olho"
-  antes de qualquer linha de código ou roadmap.
+# Template - Matriz Tecnica De Alto Nivel
 
-  Princípio (herdado do skill define-architecture): nada genérico. Tudo
-  ancorado na codebase real — cite arquivos, módulos e padrões que existem.
+Este e o artefato do Portao 1 do framework SDD. Ele deve ser validado antes de qualquer roadmap detalhado, issue ou implementacao.
 
-  Relação com ADRs: a matriz é a VISÃO CONSOLIDADA do módulo. Cada decisão
-  de arquitetura individual continua morando em seu próprio ADR
-  (docs/adr/NNNN-*.md). A matriz aponta para eles, não os duplica.
+O objetivo deste documento e transformar inputs brutos em uma visao tecnica clara, revisavel por usuario de negocio com apoio tecnico, e capaz de orientar os artefatos seguintes.
 
-  Convenções usadas neste documento:
-    🔒  trava — definido pelo responsável, não editável pelo delegado
-    ⚠️  exige revisão humana antes de avançar
-    <...> substitua pelo conteúdo
--->
+Regra de altitude:
 
-# Matriz Técnica — <nome do módulo>
+- a matriz registra decisoes estaveis, fronteiras, riscos, objetivos e criterios de direcao;
+- detalhes que tendem a mudar durante implementacao devem ir para o design tecnico ou roadmap detalhado;
+- se uma informacao provavelmente muda quando o codigo comeca, ela nao deve ser travada aqui.
 
-- **Status:** Rascunho <!-- Rascunho → Validada (Portão 1) → Substituída -->
-- **Versão:** v0.1
-- **Data:** AAAA-MM-DD
-- **Responsável (valida o Portão 1):** <você>
-- **Stack-base:** <ex.: Next.js 15 (App Router) / TypeScript / Firestore / Firebase Auth>
+Este template deve funcionar para:
 
----
+- desenvolvimento novo;
+- refatoracao;
+- substituicao de sistema legado;
+- automacao interna;
+- produto para area externa;
+- modulo isolado de um sistema maior.
 
-## 1. Objetivo e escopo
+## 1. Metadados E Status
 
-**Objetivo (1–2 frases):** <o que o módulo entrega e para quem>
+| Campo | Valor |
+| --- | --- |
+| Projeto | `<nome do projeto>` |
+| Area solicitante | `<area ou cliente interno>` |
+| Responsavel pela validacao | `<nome>` |
+| Status | `Rascunho` |
+| Versao | `v0.1` |
+| Data | `AAAA-MM-DD` |
+| Stack-base prevista | `<stack>` |
+| Artefato seguinte | `Roadmap macro` |
 
-**No escopo:**
-- <item>
+Status permitidos:
 
-**Fora do escopo (explícito):**
-- <item — o que conscientemente NÃO será feito agora; ancora YAGNI>
+- `Rascunho`
+- `Em revisao`
+- `Validada - Portao 1`
+- `Substituida`
 
-**Motivação do refazer:** <por que reconstruir do zero — resuma o problema de segurança da versão anterior; isto justifica o rigor dos portões adiante>
+## 2. Resumo Executivo, Objetivo, Escopo E Fora De Escopo
 
----
+### Resumo Executivo
 
-## 2. Requisitos não-funcionais (NFRs) 🔒
+`<Resumo em 3 a 5 linhas, em linguagem de negocio, explicando o que sera feito, para quem, por que importa e qual resultado esperado.>`
 
-<!--
-  Estes NFRs viram os critérios objetivos que os portões determinísticos do CI
-  vão cobrar lá no roadmap detalhado. Seja específico e mensurável.
--->
+### Objetivo
 
-| Categoria | Requisito | Como será verificado |
-|-----------|-----------|----------------------|
-| Segurança | <ex.: todo endpoint exige sessão autenticada> | <ex.: teste de integração + SAST> |
-| Autorização | <ex.: RBAC por perfil; negação por padrão> | <teste de policy> |
-| LGPD / privacidade | <ex.: dado pessoal só acessível ao titular e admin> | <teste + revisão humana> |
-| Performance | <ex.: p95 < 300ms nas leituras> | <medição> |
-| Escala / custo | <volume esperado> | <—> |
-| Observabilidade | <logs estruturados, auditoria de ações sensíveis> | <—> |
+`<Descrever em 1 a 3 frases o que sera construido e qual problema resolve.>`
 
----
+### No Escopo
 
-## 3. Componentes e fronteiras
+- `<item>`
+- `<item>`
 
-| Componente | Responsabilidade | Tecnologia | Arquivos/módulos (reais) |
-|------------|------------------|------------|--------------------------|
-| <ex.: API de admin> | <o que faz> | <Route Handlers> | `src/app/api/admin/...` |
-| <ex.: Camada de dados> | <acesso a dados> | <Firestore> | `src/lib/firestore-service.ts` |
+### Fora Do Escopo
 
-> 💡 Liste só as fronteiras que importam para a decisão. Cada fronteira é um ponto
-> onde dado/permissão atravessa — e portanto candidato a teste de segurança.
+- `<item que nao sera feito agora>`
+- `<item que deve ficar para evolucao futura>`
 
----
+### Resultado Esperado
 
-## 4. Modelo de segurança ⭐ 🔒
+- `<ganho operacional, economico, tecnico, regulatorio ou de qualidade esperado>`
 
-<!--
-  Esta é a seção mais importante: o módulo está sendo refeito por causa de segurança.
-  É aqui que os critérios "travados" do roadmap nascem.
--->
+## 3. Inputs Usados
 
-- **Autenticação:** <quem é o usuário; como a identidade é provada>
-- **Autorização:** <modelo de permissão — papéis, regra; princípio de negação por padrão>
-- **Gestão de segredos:** <onde ficam; nunca no código; variáveis de ambiente / secret manager>
-- **Superfície de ataque mapeada:** <endpoints, inputs, uploads, integrações>
-- **Controles obrigatórios:** <validação de input, anti-IDOR, rate limit, auditoria, etc.>
-- **⚠️ Pontos de revisão humana obrigatória:** <auth, mudança de permissão, acesso a dado pessoal>
+| Input | Caminho/Fonte | Status | Observacoes |
+| --- | --- | --- | --- |
+| Documento de requisitos | `<path ou link>` | `<lido/pendente>` | `<observacao>` |
+| Prints/telas/referencias | `<path ou link>` | `<lido/pendente>` | `<observacao>` |
+| Codigo legado | `<path ou repo>` | `<opcional>` | `<observacao>` |
+| Auditoria de seguranca | `<path ou link>` | `<opcional>` | `<observacao>` |
+| Entrevistas/regras verbais | `<fonte>` | `<pendente/validado>` | `<observacao>` |
+| Restricoes de stack/custo/prazo | `<fonte>` | `<validado>` | `<observacao>` |
 
----
+## 4. Motivacao Do Fazer Ou Refazer
 
-## 5. Modelo de dados e LGPD
+### Contexto
+
+`<Por que este projeto existe?>`
+
+### Dor Atual
+
+- `<dor operacional ou tecnica>`
+- `<dor de seguranca, governanca ou escala, se houver>`
+
+### Risco De Nao Fazer
+
+- `<risco>`
+
+### Motivacao Do Refazer, Se Aplicavel
+
+`<Opcional. Usar apenas quando houver sistema legado ou versao anterior.>`
+
+## 5. Stack E Restricoes
+
+### Stack Proposta Ou Aprovada
+
+- Frontend: `<ex.: Next.js + TypeScript>`
+- Backend: `<ex.: Next.js Route Handlers / Server Actions>`
+- Banco: `<ex.: PostgreSQL / Neon>`
+- ORM: `<ex.: Prisma>`
+- Auth: `<ex.: Firebase Auth>`
+- Storage: `<ex.: Firebase Storage / GCS>`
+- Deploy: `<ex.: Vercel>`
+- Analytics/observabilidade: `<ex.: Firebase Analytics / logs estruturados>`
+
+### Restricoes
+
+- Prazo: `<restricao>`
+- Custo: `<restricao>`
+- Infraestrutura: `<restricao>`
+- Compliance: `<restricao>`
+- Integracao: `<restricao>`
+- Compatibilidade: `<restricao>`
+
+### Premissas
+
+- `<premissa>`
+
+## 6. Objetivo De Seguranca E Modelo De Ameacas
+
+O sistema deve nascer seguro por desenho. Segurança nao deve ser tratada como etapa final de hardening.
+
+Objetivos obrigatorios:
+
+- negar acesso por padrao;
+- autenticar todo usuario em recurso privado;
+- autorizar no backend toda acao sensivel;
+- validar input em toda entrada de dados;
+- proteger segredos fora do client;
+- proteger arquivos e documentos;
+- registrar auditoria de acoes criticas;
+- nao expor erro tecnico ao usuario final;
+- minimizar dados pessoais;
+- manter rastreabilidade de operacoes sensiveis.
+
+### Atores E Abuse Cases
+
+Esta secao descreve contra quais abusos o sistema precisa se defender. Os itens daqui devem virar criterios e testes travados no roadmap detalhado.
+
+| Ator/Cenario | Tentativa de abuso | Controle esperado | Teste futuro |
+| --- | --- | --- | --- |
+| Usuario autenticado sem permissao | `<ex.: acessar dados de outro modulo>` | `<controle>` | `<teste esperado>` |
+| Usuario de outra filial/escopo | `<ex.: acessar dados de outra filial>` | `<controle>` | `<teste esperado>` |
+| Usuario malicioso ou conta comprometida | `<ex.: alterar status/valor sem permissao>` | `<controle>` | `<teste esperado>` |
+| Agente/desenvolvedor | `<ex.: subir segredo no repo ou expor chave no client>` | `<controle>` | `<scan/teste>` |
+| Upload/arquivo externo | `<ex.: arquivo invalido, payload grande, conteudo hostil>` | `<controle>` | `<teste>` |
+| Integracao externa | `<ex.: callback ou iframe fora do dominio permitido>` | `<controle>` | `<teste>` |
+
+## 7. Modelo De Autorizacao
+
+### Autenticacao
+
+`<Como a identidade do usuario sera provada.>`
+
+### Autorizacao
+
+`<Como o sistema decide o que o usuario pode fazer.>`
+
+### Principios
+
+- Usuario autenticado nao e automaticamente usuario autorizado.
+- Middleware, layout protegido e guard visual nao sao suficientes como controle de seguranca.
+- Toda Server Action, Route Handler, API ou funcao de dados deve validar autenticacao, autorizacao e input.
+- Campos como `userId`, `role`, `status`, `createdBy` e `updatedBy` devem ser definidos ou verificados no servidor.
+- Permissao deve considerar modulo, acao e escopo quando aplicavel.
+
+### Modelo Conceitual De Acesso
+
+| Area/Modulo | Tipo de acesso necessario | Escopo esperado | Observacoes |
+| --- | --- | --- | --- |
+| `<modulo>` | `<leitura/operacao/aprovacao/admin>` | `<global/filial/proprio>` | `<observacao>` |
+
+Observacao: a lista granular de permissoes, como `module:action`, deve ficar no design tecnico ou roadmap detalhado. A matriz deve registrar o modelo e exemplos, nao a tabela final de RBAC.
+
+## 8. Requisitos Nao Funcionais
+
+| Categoria | Requisito | Como sera verificado | Prioridade |
+| --- | --- | --- | --- |
+| Seguranca | `<requisito>` | `<teste/revisao/scan>` | `<alta/media/baixa>` |
+| Autorizacao | `<requisito>` | `<teste>` | `<alta>` |
+| LGPD/privacidade | `<requisito>` | `<revisao>` | `<alta/media>` |
+| Performance | `<requisito mensuravel>` | `<medicao>` | `<media>` |
+| Observabilidade | `<logs/auditoria>` | `<teste/revisao>` | `<media>` |
+| Usabilidade | `<requisito>` | `<homologacao>` | `<media>` |
+| Compatibilidade | `<navegadores/dispositivos>` | `<teste>` | `<media>` |
+| Custo/escala | `<limites esperados>` | `<monitoramento>` | `<media>` |
+
+## 9. Modulos, Fronteiras E Dependencias
+
+| Modulo | Objetivo | Telas/fluxos | Depende de | Pode rodar em paralelo com | Prioridade | Observacoes |
+| --- | --- | --- | --- | --- | --- | --- |
+| `<modulo>` | `<objetivo>` | `<referencias>` | `<dependencias>` | `<modulos>` | `<P0/P1/P2>` | `<observacao>` |
+
+## 10. Achados Do Legado Opcional
+
+Usar somente quando existir sistema anterior, codigo legado, planilhas, automacoes ou processo manual a substituir.
+
+| Area | Achado | Impacto | Decisao Para O Novo Sistema |
+| --- | --- | --- | --- |
+| `<area>` | `<problema ou comportamento atual>` | `<impacto>` | `<como tratar>` |
+
+## 11. Entidades Principais
+
+| Entidade | Descricao | Modulos Relacionados | Observacoes |
+| --- | --- | --- | --- |
+| `<Entidade>` | `<descricao>` | `<modulos>` | `<observacao>` |
+
+## 12. Relacionamentos Conceituais E Fronteiras De Dados
 
 ```mermaid
 erDiagram
-    <ENTIDADE_A> ||--o{ <ENTIDADE_B> : "<relação>"
+    USER ||--o{ AUDIT_LOG : "gera"
 ```
-<!-- Ajuste/troque o diagrama. Use erDiagram para dados, flowchart para componentes. -->
 
-| Entidade | Dado pessoal? | Sensível? | Base legal | Retenção | Controle de acesso |
-|----------|---------------|-----------|------------|----------|--------------------|
-| <ex.: Usuário> | Sim | Não | <legítimo interesse / consentimento> | <prazo> | <regra> |
+Use esta secao para registrar relacoes conceituais importantes e fronteiras de dados. Cardinalidades, FKs finais e regras detalhadas pertencem ao design tecnico.
 
-> ⚠️ Qualquer linha marcada como "dado pessoal/sensível" obriga validação do DPO/jurídico
-> sobre a base legal antes de implementar a subetapa correspondente.
+| Relacao/Fronteira | Por que importa | Risco se mal desenhada | Observacoes |
+| --- | --- | --- | --- |
+| `<A se relaciona com B>` | `<motivo>` | `<risco>` | `<observacao>` |
 
----
+## 13. LGPD Por Entidade
 
-## 6. Integrações externas
+| Entidade | Dado pessoal? | Dado sensivel? | Base/justificativa | Retencao | Controle de acesso |
+| --- | --- | --- | --- | --- | --- |
+| `<Entidade>` | `<sim/nao>` | `<sim/nao>` | `<justificativa>` | `<prazo/politica>` | `<regra>` |
 
-| Integração | Protocolo | Dado que trafega | Credencial |
-|------------|-----------|------------------|------------|
-| <ex.: Zoom SDK> | <HTTPS/JWT> | <participantes> | <env var server-side> |
+Pontos que exigem revisao humana:
 
----
+- dados pessoais;
+- dados bancarios;
+- documentos;
+- logs com informacao identificavel;
+- acesso administrativo;
+- exportacao de dados.
 
-## 7. Diagrama de arquitetura (alto nível)
+## 14. Integracoes
 
-```mermaid
-flowchart LR
-    User([Usuário]) -->|HTTPS| Web[<App>]
-    Web -->|auth| Auth[(<Auth>)]
-    Web -->|queries| DB[(<Dados>)]
-```
-<!-- Legenda curta em prosa logo abaixo, explicando o que o diagrama mostra. -->
+| Integracao | Protocolo | Dado Trafegado | Credencial | Risco | Controle |
+| --- | --- | --- | --- | --- | --- |
+| `<integracao>` | `<HTTPS/API/iframe/etc>` | `<dados>` | `<env/secret manager/nenhuma>` | `<risco>` | `<controle>` |
 
-<Legenda: ...>
+## 15. Fluxos Criticos
 
----
+### Fluxo 1 - `<nome>`
 
-## 8. Decisões de arquitetura (ADRs vinculados)
+1. `<passo>`
+2. `<passo>`
+3. `<passo>`
 
-| Decisão | ADR | Status |
-|---------|-----|--------|
-| <ex.: estratégia de autorização> | `docs/adr/00NN-...md` | Aceito |
+Controles obrigatorios:
 
-> 💡 Decisões fechadas aqui devem virar ADRs via skill `define-architecture`.
-> A matriz aponta; o ADR justifica em detalhe.
+- `<validacao>`
+- `<auditoria>`
+- `<permissao>`
 
----
+## 16. Papeis E Permissoes
 
-## 9. Restrições e premissas
+### Papeis
 
-- **Restrições:** <prazo, orçamento, stack imposta, compatibilidade>
-- **Premissas:** <o que estamos assumindo; se cair, revisitar a matriz>
+| Papel | Descricao | Observacoes |
+| --- | --- | --- |
+| `<papel>` | `<descricao>` | `<observacao>` |
 
----
+### Regras De Acesso Em Alto Nivel
 
-## 10. Critérios de aceite da matriz — PORTÃO 1 🔒
+| Papel/Grupo | Pode acessar | Nao pode acessar | Observacoes |
+| --- | --- | --- | --- |
+| `<papel>` | `<modulos/acoes gerais>` | `<restricoes>` | `<observacao>` |
 
-<!-- Você (responsável) marca isto "no olho" antes de liberar o roadmap. -->
+Observacao: permissoes granulares e nomes finais de claims/scopes devem ser definidos no design tecnico.
 
-- [ ] O objetivo e o escopo (in/out) estão inequívocos
-- [ ] O modelo de segurança cobre auth, autorização e segredos
-- [ ] Todo dado pessoal/sensível tem base legal e controle de acesso definidos
-- [ ] Os NFRs são mensuráveis (dá para escrever teste/medição a partir deles)
-- [ ] As decisões relevantes têm (ou terão) ADR vinculado
-- [ ] **Validada por <você> em AAAA-MM-DD** → libera a geração do roadmap
+## 17. Rastreabilidade De Requisitos
+
+Esta secao e condicional.
+
+Use quando houver catalogo de requisitos numerados, como RN/RF/RNF. Se os inputs ainda forem brutos, primeiro gerar ou consolidar um catalogo de requisitos antes de preencher esta tabela.
+
+| Requisito | Tipo | Descricao resumida | Cobertura na matriz | Status |
+| --- | --- | --- | --- |
+| `<ID>` | `<RN/RF/RNF/outro>` | `<descricao>` | `<secao/modulo/fluxo>` | `<coberto/pendente>` |
+
+## 18. Decisoes, Criticidade E ADRs
+
+| Decisao | Criticidade | Reversibilidade | ADR | Status | Observacoes |
+| --- | --- | --- | --- | --- | --- |
+| `<decisao>` | `<alta/media/baixa>` | `<facil/media/dificil>` | `<path>` | `<proposto/aceito/rejeitado>` | `<observacao>` |
+
+ADRs recomendados:
+
+- escolha de stack;
+- modelo de autenticacao/autorizacao;
+- modelo de dados;
+- estrategia de storage;
+- estrategia de deploy;
+- integracoes externas relevantes.
+
+## 19. Criterios De Aceite Da Matriz - Portao 1
+
+Antes de gerar roadmap, validar com duas assinaturas.
+
+### Portao 1A - Validacao De Negocio
+
+- [ ] Objetivo e escopo estao claros.
+- [ ] Fora de escopo esta explicito.
+- [ ] Inputs usados estao listados.
+- [ ] Resumo executivo representa corretamente a necessidade da area.
+- [ ] Modulos, fluxos e resultado esperado fazem sentido para a operacao.
+- [ ] Insumos pendentes foram identificados e nao bloqueiam indevidamente o roadmap.
+- [ ] Validada por `<responsavel de negocio>` em `AAAA-MM-DD`.
+
+### Portao 1B - Validacao Tecnica
+
+- [ ] Stack e restricoes estao documentadas.
+- [ ] Modelo de seguranca cobre ameacas, auth, autorizacao, segredos, dados e arquivos.
+- [ ] Requisitos nao funcionais sao mensuraveis.
+- [ ] Entidades principais e relacionamentos conceituais estao claros o suficiente para iniciar design tecnico.
+- [ ] Dados pessoais/sensiveis possuem controle de acesso e justificativa.
+- [ ] Integracoes externas possuem risco e controle.
+- [ ] Fluxos criticos possuem permissao, validacao e auditoria.
+- [ ] Rastreabilidade de requisitos esta coberta ou marcada como condicional/pendente com justificativa.
+- [ ] ADRs necessarios foram listados.
+- [ ] Detalhes mutaveis foram deixados para design tecnico ou roadmap detalhado.
+- [ ] Validada por `<responsavel tecnico>` em `AAAA-MM-DD`.
+
+## 20. Insumos Pendentes
+
+| Insumo | Por Que Importa | Bloqueia Roadmap? | Responsavel |
+| --- | --- | --- | --- |
+| `<insumo>` | `<motivo>` | `<sim/nao>` | `<responsavel>` |

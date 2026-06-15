@@ -36,7 +36,29 @@ Sao documentos gerados a partir dos inputs e validados antes da execucao:
 
 - matriz tecnica;
 - roadmap macro;
+- especificacao tecnica / design tecnico;
 - roadmap detalhado.
+
+Papel de cada artefato:
+
+1. Matriz Tecnica
+   - decide o que sera construido, por que, riscos, escopo, seguranca e fronteiras.
+   - deve ser validavel por responsavel de negocio com apoio tecnico.
+   - nao deve carregar detalhes que mudam durante implementacao.
+
+2. Roadmap Macro
+   - decide a ordem das etapas, dependencias, paralelizacao e portoes.
+   - conecta a matriz com o planejamento de execucao.
+
+3. Especificacao Tecnica / Design Tecnico
+   - decide como o sistema sera desenhado tecnicamente.
+   - concentra modelagem, permissoes detalhadas, contratos, APIs, storage, auditoria e decisoes de implementacao.
+   - deve ser validado por responsavel tecnico.
+
+4. Roadmap Detalhado
+   - quebra o trabalho em subetapas executaveis por agentes.
+   - define criterios de aceite e testes travados.
+   - deve ser a principal fonte de execucao para agentes.
 
 ### Portoes
 
@@ -44,9 +66,10 @@ Sao pontos de controle que impedem avanco sem validacao:
 
 - Portao 1: matriz tecnica validada;
 - Portao 2: roadmap macro validado;
-- Portao 3: roadmap detalhado validado;
-- Portao 4: criterios e testes travados antes da implementacao;
-- Portao 5: CI, testes e revisao antes de aceitar entrega.
+- Portao 3: especificacao tecnica / design tecnico validado;
+- Portao 4: roadmap detalhado validado;
+- Portao 5: criterios e testes travados antes da implementacao;
+- Portao 6: CI, testes e revisao antes de aceitar entrega.
 
 ## Fase 0 - Validar O Piloto Do Framework
 
@@ -60,6 +83,7 @@ Entregaveis:
 
 - matriz tecnica no formato do template;
 - roadmap macro no formato do template;
+- especificacao tecnica / design tecnico no formato do template;
 - roadmap detalhado no formato do template;
 - lista de ajustes nos templates;
 - conclusoes do piloto.
@@ -83,7 +107,8 @@ Templates base:
 
 - `1-matriz-tecnica.template.md`;
 - `2-roadmap.template.md`;
-- `3-roadmap-detalhado.template.md`.
+- `3-design-tecnico.template.md`;
+- `4-roadmap-detalhado.template.md`.
 
 Ajustes recomendados:
 
@@ -97,6 +122,7 @@ Ajustes recomendados:
 - incluir testes que validam;
 - incluir relacao com ADRs;
 - incluir relacao com issues.
+- separar claramente decisoes estaveis de matriz das decisoes mutaveis de design tecnico.
 
 Criterio de pronto:
 
@@ -123,12 +149,14 @@ sdd/
   templates/
     1-matriz-tecnica.template.md
     2-roadmap.template.md
-    3-roadmap-detalhado.template.md
+    3-design-tecnico.template.md
+    4-roadmap-detalhado.template.md
     prd.template.md
   features/
     <feature-ou-modulo>/
       matriz-tecnica.md
       roadmap.md
+      design-tecnico.md
       roadmap-detalhado.md
       prds/
       tests/
@@ -167,6 +195,7 @@ Responsabilidades da skill:
 - mapear modulos e fronteiras;
 - gerar matriz tecnica;
 - gerar roadmap macro;
+- gerar especificacao tecnica / design tecnico;
 - gerar roadmap detalhado;
 - marcar pontos de revisao humana;
 - preparar criterios de aceite travados.
@@ -189,6 +218,7 @@ Objetivo:
 Responsabilidades da build:
 
 - ler matriz, roadmap e roadmap detalhado;
+- ler design tecnico quando existir;
 - executar apenas subetapas liberadas;
 - respeitar escopo e arquivos definidos;
 - nao alterar criterios travados;
@@ -286,6 +316,7 @@ Entregaveis:
 
 - matriz do modulo;
 - roadmap do modulo;
+- design tecnico do modulo;
 - roadmap detalhado do modulo;
 - PRDs das primeiras subetapas;
 - testes de seguranca iniciais;
@@ -328,15 +359,17 @@ Criterio de pronto:
 
 1. Reformatar a matriz atual do piloto 3A RIVA para o template oficial.
 2. Reformatar o roadmap macro para o template oficial.
-3. Criar o roadmap detalhado inicial.
-4. Ajustar os templates com os aprendizados.
-5. Criar estrutura `sdd/`.
-6. Criar skill `sdd-planning`.
-7. Adaptar skill de build.
-8. Criar PRD template.
-9. Definir gates automaticos e humanos.
-10. Rodar modulo piloto `auth-admin`.
-11. Consolidar documentacao do framework.
+3. Criar o template de design tecnico.
+4. Criar o design tecnico inicial do piloto.
+5. Criar o roadmap detalhado inicial.
+6. Ajustar os templates com os aprendizados.
+7. Criar estrutura `sdd/`.
+8. Criar skill `sdd-planning`.
+9. Adaptar skill de build.
+10. Criar PRD template.
+11. Definir gates automaticos e humanos.
+12. Rodar modulo piloto `auth-admin`.
+13. Consolidar documentacao do framework.
 
 ## Riscos
 
@@ -344,7 +377,9 @@ Criterio de pronto:
 - deixar criterio de aceite editavel pelo agente executor;
 - misturar input bruto com documento validado;
 - gerar roadmap sem matriz validada;
-- codar antes do Portao 3;
+- colocar detalhe tecnico mutavel demais na matriz;
+- pular o design tecnico e tentar jogar modelagem fina direto no roadmap detalhado;
+- codar antes do Portao 4;
 - tratar seguranca como checklist final, nao como requisito de desenho;
 - criar estrutura pesada demais para projetos pequenos;
 - depender de contexto de conversa em vez de arquivos versionados.
@@ -357,6 +392,6 @@ O framework sera considerado validado quando:
 - agentes conseguirem executar subetapas sem reinterpretar o projeto;
 - criterios de aceite forem objetivos e testaveis;
 - seguranca estiver presente desde a matriz;
+- design tecnico concentrar as decisoes de implementacao que nao pertencem a matriz;
 - modulo piloto passar pelos gates definidos;
 - os documentos forem reutilizaveis em outro projeto.
-
