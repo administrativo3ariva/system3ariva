@@ -1,86 +1,113 @@
 # Template - PRD De Subetapa
 
-Este artefato transforma uma subetapa do Roadmap Detalhado em um briefing executavel para agente ou delegado.
+Este e o briefing executavel de uma unica subetapa do Roadmap Detalhado (Portao 4). Cada PRD transforma uma subetapa `<En.Sn>` em uma tarefa que um agente ou pessoa consegue executar sem reabrir decisoes ja travadas.
 
-Regra:
+Regra de ouro:
 
-- o PRD nao pode contradizer a matriz, o roadmap macro, o design tecnico ou o roadmap detalhado;
-- criterios de aceite e testes travados devem ser copiados do roadmap detalhado;
-- se o executor identificar problema em criterio ou teste, deve escalar para revisao humana.
+- o PRD detalha COMO executar uma subetapa, dentro do que o Design Tecnico ja decidiu;
+- criterios de aceite e testes travados aqui vem do Roadmap Detalhado e nao podem ser enfraquecidos pelo executor;
+- se o PRD parecer incorreto ou insuficiente, o executor escala para revisao humana, nao improvisa.
 
-## 1. Metadados
+## 1. Metadados E Status
 
 | Campo | Valor |
 | --- | --- |
-| Projeto | `<nome do projeto>` |
-| Subetapa | `<E1.S1>` |
-| Titulo | `<titulo>` |
-| Escopo do documento | `<Global/Modulo/Feature/Subfeature>` |
-| Responsavel por criterios | `<nome>` |
-| Executor | `<agente/delegado>` |
+| Subetapa | `<En.Sn>` |
+| Titulo | `<titulo curto>` |
+| Escopo | `global` ou `modulo <X>` |
+| Etapa macro | `<En>` |
+| Baseado no Design Tecnico | `<path + secao>` |
+| Baseado no Roadmap Detalhado | `<path + subetapa>` |
+| Responsavel por travar criterios | `<nome>` |
+| Execucao | `<agente/delegado/responsavel>` |
+| Gate | `<AUTO/HUMANO/BLOQUEADO>` |
 | Status | `Rascunho` |
+| Versao | `v0.1` |
 | Data | `AAAA-MM-DD` |
-| Roadmap Detalhado | `<path + versao>` |
-| Design Tecnico | `<path + secao>` |
+
+Status permitidos:
+
+- `Rascunho`
+- `Em revisao`
+- `Pronto para execucao`
+- `Em execucao`
+- `Concluido`
+- `Substituido`
 
 ## 2. Objetivo
 
-`<Descrever em 1 frase o que esta subetapa entrega.>`
+`<O que esta subetapa entrega, em 1 frase clara e verificavel.>`
 
-## 3. Contexto Necessario
-
-- `<contexto minimo para executar sem reabrir decisoes>`
-- `<referencias a matriz/design/roadmap>`
-
-## 4. Escopo
+## 3. Escopo
 
 - `<o que deve ser feito>`
+- `<o que deve ser criado ou alterado>`
 
-## 5. Fora De Escopo
+## 4. Fora De Escopo
 
-- `<o que nao deve ser feito nesta subetapa>`
+- `<o que NAO deve ser feito nesta subetapa>`
 
-## 6. Arquivos Ou Areas Afetadas
+## 5. Arquivos Ou Modulos Afetados
 
-| Area/Arquivo | Acao esperada | Observacoes |
+| Arquivo/Modulo | Acao | Observacoes |
 | --- | --- | --- |
-| `<path ou area>` | `<criar/alterar/remover>` | `<observacao>` |
+| `<path/modulo>` | `<criar/alterar/remover>` | `<observacao>` |
+
+## 6. Dependencias
+
+- `<subetapa, decisao, credencial ou ambiente necessario antes de comecar>`
 
 ## 7. Criterios De Aceite Travados
 
-- [ ] `<criterio do roadmap detalhado>`
-- [ ] `<criterio do roadmap detalhado>`
+> Copiados do Roadmap Detalhado. Nao podem ser alterados ou enfraquecidos pelo executor.
+
+- [ ] `<criterio testavel 1>`
+- [ ] `<criterio testavel 2>`
+- [ ] `<criterio testavel 3>`
 
 ## 8. Testes Que Validam
 
-| Tipo | Teste/Arquivo | Obrigatorio? |
-| --- | --- | --- |
-| Unit | `<path>` | `<sim/nao>` |
-| Integration | `<path>` | `<sim/nao>` |
-| E2E/Smoke | `<path>` | `<sim/nao>` |
-| Security | `<path/scan>` | `<sim/nao>` |
-| Manual | `<roteiro>` | `<sim/nao>` |
+| Tipo | Teste/Arquivo | O que valida | Abuse case de origem (matriz sec. 6) | Obrigatorio? |
+| --- | --- | --- | --- | --- |
+| Unit | `<path>` | `<regra>` | `-` | `<sim/nao>` |
+| Integration | `<path>` | `<fluxo/API/db>` | `-` | `<sim/nao>` |
+| E2E/Smoke | `<path>` | `<jornada>` | `-` | `<sim/nao>` |
+| Security | `<path/scan>` | `<auth/secrets/upload>` | `<abuse case da matriz sec. 6>` | `<sim/nao>` |
+| Manual | `<roteiro>` | `<validacao humana>` | `-` | `<sim/nao>` |
 
-## 9. Gate
+## 9. Riscos
+
+| Risco | Impacto | Mitigacao |
+| --- | --- | --- |
+| `<risco>` | `<nenhum/baixo/medio/alto>` | `<mitigacao>` |
+
+## 10. Gate E Aprovacao
 
 | Campo | Valor |
 | --- | --- |
 | Tipo | `<AUTO/HUMANO/BLOQUEADO>` |
-| Justificativa | `<motivo>` |
-| Evidencia exigida | `<CI/testes/screenshot/revisao>` |
-| Aprovador humano | `<nome/papel>` |
+| Justificativa | `<por que este gate>` |
+| Evidencia exigida | `<CI/testes/screenshot/revisao/log>` |
+| Aprovador humano, se aplicavel | `<nome/papel>` |
 
-## 10. Riscos E Cuidados
+Gate `HUMANO` obrigatorio quando a subetapa tocar: auth/autorizacao, segredos, dados pessoais, dados financeiros, storage privado, migrations destrutivas, mudanca de permissao/papel, integracao externa sensivel, exclusao/cancelamento/baixa.
 
-- `<risco>`
-- `<cuidado de seguranca/dados/UX>`
+## 11. Rollback Ou Reversao
 
-## 11. Definition Of Done
+- `<como desfazer ou mitigar se der errado>`
 
-- [ ] Implementacao respeita escopo.
-- [ ] Fora de escopo nao foi implementado.
-- [ ] Criterios travados atendidos.
-- [ ] Testes obrigatorios passam.
-- [ ] Nenhum criterio/teste travado foi alterado pelo executor.
-- [ ] Evidencias foram anexadas no PR/issue.
+## 12. Definition Of Done
 
+- [ ] Implementacao dentro do escopo.
+- [ ] Criterios de aceite travados atendidos.
+- [ ] Testes obrigatorios passando.
+- [ ] Sem alteracao indevida em criterios/testes travados.
+- [ ] Documentacao/PRD atualizado quando aplicavel.
+- [ ] Gate concluido.
+- [ ] Subetapa marcada como `Concluido` no Roadmap Detalhado.
+
+## 13. Historico De Alteracoes
+
+| Versao | Data | Autor | Mudanca | Status resultante |
+| --- | --- | --- | --- | --- |
+| `v0.1` | `AAAA-MM-DD` | `<nome>` | `Criacao inicial` | `Rascunho` |

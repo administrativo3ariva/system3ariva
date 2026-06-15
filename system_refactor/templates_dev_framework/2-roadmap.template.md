@@ -24,9 +24,9 @@ Este documento nao deve conter:
 | Campo | Valor |
 | --- | --- |
 | Projeto | `<nome do projeto>` |
+| Escopo | `global` ou `modulo <X>` |
 | Area solicitante | `<area ou cliente interno>` |
 | Responsavel pelo roadmap | `<nome>` |
-| Escopo do documento | `<Global/Modulo/Feature/Subfeature>` |
 | Status | `Rascunho` |
 | Versao | `v0.1` |
 | Data | `AAAA-MM-DD` |
@@ -38,7 +38,7 @@ Status permitidos:
 
 - `Rascunho`
 - `Em revisao`
-- `Validado - Portao 2`
+- `Validado`
 - `Substituido`
 
 ## 2. Visao Geral
@@ -54,10 +54,10 @@ Exemplo de raciocinio esperado:
 
 ## 3. Etapas Macro
 
-| ID | Etapa | Objetivo | Entregavel principal | Depende de | Design tecnico necessario? | Portao | Status |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| E1 | `<etapa>` | `<objetivo>` | `<entregavel>` | `-` | `<sim/nao/parcial>` | `<HUMANO/AUTO>` | `Pendente` |
-| E2 | `<etapa>` | `<objetivo>` | `<entregavel>` | `E1` | `<sim/nao/parcial>` | `<HUMANO/AUTO>` | `Pendente` |
+| ID | Etapa | Objetivo | Entregavel principal | Cobre (matriz: modulo/req) | Depende de | Design tecnico necessario? | Portao | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| E1 | `<etapa>` | `<objetivo>` | `<entregavel>` | `<modulo/secao/RN-RF da matriz>` | `-` | `<sim/nao/parcial>` | `<HUMANO/AUTO>` | `Pendente` |
+| E2 | `<etapa>` | `<objetivo>` | `<entregavel>` | `<modulo/secao/RN-RF da matriz>` | `E1` | `<sim/nao/parcial>` | `<HUMANO/AUTO>` | `Pendente` |
 
 Tipos de portao:
 
@@ -118,7 +118,7 @@ Observacao:
 Antes de iniciar o design tecnico, validar:
 
 - [ ] A matriz tecnica usada como base esta validada.
-- [ ] As etapas macro cobrem o escopo da matriz.
+- [ ] As etapas macro cobrem o escopo da matriz (coluna `Cobre (matriz)` preenchida para cada etapa).
 - [ ] As etapas nao incluem detalhe de implementacao que pertence ao design tecnico.
 - [ ] Dependencias entre etapas estao claras.
 - [ ] Paralelizacao possivel esta identificada.
@@ -133,3 +133,10 @@ Antes de iniciar o design tecnico, validar:
 | Pendencia | Por que importa | Bloqueia design tecnico? | Responsavel |
 | --- | --- | --- | --- |
 | `<pendencia>` | `<motivo>` | `<sim/nao>` | `<responsavel>` |
+
+## 11. Historico De Alteracoes
+
+| Versao | Data | Autor | Mudanca | Status resultante |
+| --- | --- | --- | --- | --- |
+| `v0.1` | `AAAA-MM-DD` | `<nome>` | `Criacao inicial` | `Rascunho` |
+

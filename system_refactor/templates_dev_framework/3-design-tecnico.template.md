@@ -14,9 +14,9 @@ Regra de escopo:
 | Campo | Valor |
 | --- | --- |
 | Projeto | `<nome do projeto>` |
+| Escopo | `global` ou `modulo <X>` |
 | Area solicitante | `<area ou cliente interno>` |
 | Responsavel tecnico | `<nome>` |
-| Escopo do documento | `<Global/Modulo/Feature/Subfeature>` |
 | Status | `Rascunho` |
 | Versao | `v0.1` |
 | Data | `AAAA-MM-DD` |
@@ -28,7 +28,7 @@ Status permitidos:
 
 - `Rascunho`
 - `Em revisao`
-- `Validado - Portao 3`
+- `Validado`
 - `Substituido`
 
 ## 2. Resumo Tecnico
@@ -264,3 +264,10 @@ Antes de gerar roadmap detalhado, validar:
 - [ ] ADRs necessarios foram criados ou listados.
 - [ ] Pendencias nao bloqueiam indevidamente o roadmap detalhado.
 - [ ] Validado por `<responsavel tecnico>` em `AAAA-MM-DD`.
+
+## 21. Historico De Alteracoes
+
+| Versao | Data | Autor | Mudanca | Status resultante |
+| --- | --- | --- | --- | --- |
+| `v0.1` | `AAAA-MM-DD` | `<nome>` | `Criacao inicial` | `Rascunho` |
+

@@ -24,9 +24,9 @@ Este template deve funcionar para:
 | Campo | Valor |
 | --- | --- |
 | Projeto | `<nome do projeto>` |
+| Escopo | `global` ou `modulo <X>` |
 | Area solicitante | `<area ou cliente interno>` |
 | Responsavel pela validacao | `<nome>` |
-| Escopo do documento | `<Global/Modulo/Feature/Subfeature>` |
 | Status | `Rascunho` |
 | Versao | `v0.1` |
 | Data | `AAAA-MM-DD` |
@@ -37,7 +37,7 @@ Status permitidos:
 
 - `Rascunho`
 - `Em revisao`
-- `Validada - Portao 1`
+- `Validada`
 - `Substituida`
 
 ## 2. Resumo Executivo, Objetivo, Escopo E Fora De Escopo
@@ -331,3 +331,9 @@ Antes de gerar roadmap, validar com duas assinaturas.
 | Insumo | Por Que Importa | Bloqueia Roadmap? | Responsavel |
 | --- | --- | --- | --- |
 | `<insumo>` | `<motivo>` | `<sim/nao>` | `<responsavel>` |
+
+## 21. Historico De Alteracoes
+
+| Versao | Data | Autor | Mudanca | Status resultante |
+| --- | --- | --- | --- | --- |
+| `v0.1` | `AAAA-MM-DD` | `<nome>` | `Criacao inicial` | `Rascunho` |

@@ -16,10 +16,10 @@ Regra de ouro:
 | Campo | Valor |
 | --- | --- |
 | Projeto | `<nome do projeto>` |
+| Escopo | `global` ou `modulo <X>` |
 | Area solicitante | `<area ou cliente interno>` |
 | Responsavel por travar criterios | `<nome>` |
 | Responsavel tecnico | `<nome>` |
-| Escopo do documento | `<Global/Modulo/Feature/Subfeature>` |
 | Status | `Rascunho` |
 | Versao | `v0.1` |
 | Data | `AAAA-MM-DD` |
@@ -33,7 +33,7 @@ Status permitidos:
 
 - `Rascunho`
 - `Em revisao`
-- `Validado - Portao 4`
+- `Validado`
 - `Em execucao`
 - `Concluido`
 - `Substituido`
@@ -105,13 +105,13 @@ Gates humanos obrigatorios quando a subetapa tocar:
 
 #### Testes Que Validam
 
-| Tipo | Teste/Arquivo | O que valida | Obrigatorio? |
-| --- | --- | --- | --- |
-| Unit | `<path>` | `<regra>` | `<sim/nao>` |
-| Integration | `<path>` | `<fluxo/API/db>` | `<sim/nao>` |
-| E2E/Smoke | `<path>` | `<jornada>` | `<sim/nao>` |
-| Security | `<path/scan>` | `<auth/secrets/upload>` | `<sim/nao>` |
-| Manual | `<roteiro>` | `<validacao humana>` | `<sim/nao>` |
+| Tipo | Teste/Arquivo | O que valida | Abuse case de origem (matriz sec. 6) | Obrigatorio? |
+| --- | --- | --- | --- | --- |
+| Unit | `<path>` | `<regra>` | `-` | `<sim/nao>` |
+| Integration | `<path>` | `<fluxo/API/db>` | `-` | `<sim/nao>` |
+| E2E/Smoke | `<path>` | `<jornada>` | `-` | `<sim/nao>` |
+| Security | `<path/scan>` | `<auth/secrets/upload>` | `<abuse case da matriz sec. 6>` | `<sim/nao>` |
+| Manual | `<roteiro>` | `<validacao humana>` | `-` | `<sim/nao>` |
 
 #### Gate
 
@@ -155,6 +155,7 @@ Gates humanos obrigatorios quando a subetapa tocar:
 - [ ] Toda subetapa possui escopo e fora de escopo.
 - [ ] Toda subetapa possui criterios de aceite travados.
 - [ ] Toda subetapa possui testes que validam.
+- [ ] Abuse cases relevantes da matriz (sec. 6) estao ligados a um teste de seguranca travado.
 - [ ] Subetapas sensiveis estao marcadas como `HUMANO`.
 - [ ] Dependencias e paralelizacao estao claras.
 - [ ] Rollback/reversao foi definido quando aplicavel.
@@ -175,3 +176,10 @@ Antes de iniciar execucao por agentes, validar:
 - [ ] Subetapas sensiveis exigem revisao humana.
 - [ ] Dependencias permitem execucao segura por agentes.
 - [ ] Validado por `<responsavel>` em `AAAA-MM-DD`.
+
+## 9. Historico De Alteracoes
+
+| Versao | Data | Autor | Mudanca | Status resultante |
+| --- | --- | --- | --- | --- |
+| `v0.1` | `AAAA-MM-DD` | `<nome>` | `Criacao inicial` | `Rascunho` |
+
