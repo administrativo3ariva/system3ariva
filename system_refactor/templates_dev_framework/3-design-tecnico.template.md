@@ -215,9 +215,9 @@ Principios:
 
 ## 16. Gates Tecnicos
 
-| Gate | Automatico ou humano | Quando aplica | Evidencia |
+| Gate | Tipo | Quando aplica | Evidencia |
 | --- | --- | --- | --- |
-| `<gate>` | `<auto/humano>` | `<condicao>` | `<teste/revisao>` |
+| `<gate>` | `<AUTO/HUMANO/BLOQUEADO>` | `<condicao>` | `<teste/revisao>` |
 
 Gates humanos obrigatorios quando houver:
 
@@ -271,4 +271,3 @@ Antes de gerar roadmap detalhado, validar:
 | Versao | Data | Autor | Mudanca | Status resultante |
 | --- | --- | --- | --- | --- |
 | `v0.1` | `AAAA-MM-DD` | `<nome>` | `Criacao inicial` | `Rascunho` |
-

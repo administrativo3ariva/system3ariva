@@ -96,7 +96,7 @@ Sao pontos de controle que impedem avanco sem validacao:
 - Portao 2: roadmap macro validado;
 - Portao 3: especificacao tecnica / design tecnico validado;
 - Portao 4: roadmap detalhado validado;
-- Portao 5: criterios e testes travados antes da implementacao;
+- Portao 5: PRD de subetapa validado, com criterios e testes travados antes da implementacao;
 - Portao 6: CI, testes e revisao antes de aceitar entrega.
 
 ## Fase 0 - Validar O Piloto Do Framework
@@ -430,7 +430,7 @@ Criterio de pronto:
 - gerar roadmap sem matriz validada;
 - colocar detalhe tecnico mutavel demais na matriz;
 - pular o design tecnico e tentar jogar modelagem fina direto no roadmap detalhado;
-- codar antes do Portao 4;
+- codar antes do Portao 5, com PRD, criterios e testes travados;
 - tratar seguranca como checklist final, nao como requisito de desenho;
 - criar estrutura pesada demais para projetos pequenos;
 - depender de contexto de conversa em vez de arquivos versionados.
