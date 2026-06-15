@@ -26,6 +26,7 @@ Este documento nao deve conter:
 | Projeto | `<nome do projeto>` |
 | Area solicitante | `<area ou cliente interno>` |
 | Responsavel pelo roadmap | `<nome>` |
+| Escopo do documento | `<Global/Modulo/Feature/Subfeature>` |
 | Status | `Rascunho` |
 | Versao | `v0.1` |
 | Data | `AAAA-MM-DD` |
@@ -132,4 +133,3 @@ Antes de iniciar o design tecnico, validar:
 | Pendencia | Por que importa | Bloqueia design tecnico? | Responsavel |
 | --- | --- | --- | --- |
 | `<pendencia>` | `<motivo>` | `<sim/nao>` | `<responsavel>` |
-

@@ -19,6 +19,7 @@ Regra de ouro:
 | Area solicitante | `<area ou cliente interno>` |
 | Responsavel por travar criterios | `<nome>` |
 | Responsavel tecnico | `<nome>` |
+| Escopo do documento | `<Global/Modulo/Feature/Subfeature>` |
 | Status | `Rascunho` |
 | Versao | `v0.1` |
 | Data | `AAAA-MM-DD` |
@@ -174,4 +175,3 @@ Antes de iniciar execucao por agentes, validar:
 - [ ] Subetapas sensiveis exigem revisao humana.
 - [ ] Dependencias permitem execucao segura por agentes.
 - [ ] Validado por `<responsavel>` em `AAAA-MM-DD`.
-

@@ -26,6 +26,7 @@ Este template deve funcionar para:
 | Projeto | `<nome do projeto>` |
 | Area solicitante | `<area ou cliente interno>` |
 | Responsavel pela validacao | `<nome>` |
+| Escopo do documento | `<Global/Modulo/Feature/Subfeature>` |
 | Status | `Rascunho` |
 | Versao | `v0.1` |
 | Data | `AAAA-MM-DD` |
@@ -279,7 +280,7 @@ Esta secao e condicional.
 Use quando houver catalogo de requisitos numerados, como RN/RF/RNF. Se os inputs ainda forem brutos, primeiro gerar ou consolidar um catalogo de requisitos antes de preencher esta tabela.
 
 | Requisito | Tipo | Descricao resumida | Cobertura na matriz | Status |
-| --- | --- | --- | --- |
+| --- | --- | --- | --- | --- |
 | `<ID>` | `<RN/RF/RNF/outro>` | `<descricao>` | `<secao/modulo/fluxo>` | `<coberto/pendente>` |
 
 ## 18. Decisoes, Criticidade E ADRs

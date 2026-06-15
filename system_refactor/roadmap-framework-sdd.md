@@ -60,6 +60,34 @@ Papel de cada artefato:
    - define criterios de aceite e testes travados.
    - deve ser a principal fonte de execucao para agentes.
 
+### Fonte Da Verdade Por Tema
+
+| Tema | Fonte da verdade | Observacoes |
+| --- | --- | --- |
+| Objetivo, escopo, riscos e fronteiras | Matriz Tecnica | Se mudar, revisar Portao 1 |
+| Ordem, dependencias e paralelizacao | Roadmap Macro | Se mudar, revisar Portao 2 |
+| Modelagem, RBAC granular, APIs, storage e auditoria | Design Tecnico | Se mudar, revisar Portao 3 |
+| Subetapas, criterios travados, testes e issues | Roadmap Detalhado | Se mudar, revisar Portao 4 |
+| Execucao real e evidencias | PR/CI/relatorios | Nao altera criterios travados sem revisao |
+
+### Hand-Off Entre Papeis
+
+| Artefato | Autor principal | Validador de negocio | Validador tecnico | Executor |
+| --- | --- | --- | --- | --- |
+| Inputs | Area solicitante + responsavel tecnico | Area solicitante | Responsavel tecnico | Nao se aplica |
+| Matriz Tecnica | Responsavel tecnico com apoio da area | Obrigatorio | Obrigatorio | Nao se aplica |
+| Roadmap Macro | Responsavel tecnico | Recomendado | Obrigatorio | Nao se aplica |
+| Design Tecnico | Responsavel tecnico | Opcional/consultivo | Obrigatorio | Nao se aplica |
+| Roadmap Detalhado | Responsavel tecnico | Opcional/consultivo | Obrigatorio | Agentes/delegados |
+| PRD de subetapa | Responsavel tecnico ou planejador | Quando houver impacto de negocio | Obrigatorio | Agente/delegado |
+| Implementacao | Agente/delegado | Homologa resultado | Revisa quando sensivel | Agente/delegado |
+
+Regra:
+
+- area externa valida necessidade, escopo e resultado esperado;
+- responsavel tecnico valida arquitetura, seguranca, dados e criterios travados;
+- agente executor implementa subetapas aprovadas, sem alterar criterios ou testes travados.
+
 ### Portoes
 
 Sao pontos de controle que impedem avanco sem validacao:
@@ -95,7 +123,7 @@ Criterio de pronto:
 - os criterios de aceite sao testaveis;
 - as etapas podem virar issues ou tarefas para agentes.
 
-## Fase 1 - Consolidar Os 3 Templates Base
+## Fase 1 - Consolidar Os 4 Templates Base
 
 Objetivo:
 
@@ -258,6 +286,24 @@ Criterio de pronto:
 - executor entende o que deve fazer;
 - revisor entende como validar;
 - usuario nao tecnico consegue acompanhar status.
+
+## Fase 5.1 - Definir Templates Auxiliares
+
+Objetivo:
+
+- documentar os artefatos auxiliares que completam o ciclo operacional do framework.
+
+Templates auxiliares recomendados:
+
+- `prd.template.md`: briefing executavel por subetapa;
+- `adr.template.md`: registro de decisao arquitetural, quando nao houver skill externa para ADR;
+- `gates-ci.template.md`: padrao de gates automaticos e humanos;
+- `homologacao.template.md`: roteiro de validacao com a area solicitante.
+
+Criterio de pronto:
+
+- todo artefato referenciado pelos templates principais existe ou possui uma integracao declarada;
+- nenhum agente depende de contexto solto da conversa para entender como executar ou validar uma subetapa.
 
 ## Fase 6 - Definir Gates E CI Padrao
 

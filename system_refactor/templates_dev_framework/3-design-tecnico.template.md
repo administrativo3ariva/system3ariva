@@ -16,6 +16,7 @@ Regra de escopo:
 | Projeto | `<nome do projeto>` |
 | Area solicitante | `<area ou cliente interno>` |
 | Responsavel tecnico | `<nome>` |
+| Escopo do documento | `<Global/Modulo/Feature/Subfeature>` |
 | Status | `Rascunho` |
 | Versao | `v0.1` |
 | Data | `AAAA-MM-DD` |
@@ -263,4 +264,3 @@ Antes de gerar roadmap detalhado, validar:
 - [ ] ADRs necessarios foram criados ou listados.
 - [ ] Pendencias nao bloqueiam indevidamente o roadmap detalhado.
 - [ ] Validado por `<responsavel tecnico>` em `AAAA-MM-DD`.
-
