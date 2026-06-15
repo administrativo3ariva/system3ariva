@@ -56,13 +56,14 @@ Exemplo de raciocinio esperado:
 
 | ID | Etapa | Objetivo | Entregavel principal | Cobre (matriz: modulo/req) | Depende de | Design tecnico necessario? | Portao | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| E1 | `<etapa>` | `<objetivo>` | `<entregavel>` | `<modulo/secao/RN-RF da matriz>` | `-` | `<sim/nao/parcial>` | `<HUMANO/AUTO>` | `Pendente` |
-| E2 | `<etapa>` | `<objetivo>` | `<entregavel>` | `<modulo/secao/RN-RF da matriz>` | `E1` | `<sim/nao/parcial>` | `<HUMANO/AUTO>` | `Pendente` |
+| E1 | `<etapa>` | `<objetivo>` | `<entregavel>` | `<modulo/secao/RN-RF da matriz>` | `-` | `<sim/nao/parcial>` | `<AUTO/HUMANO/BLOQUEADO>` | `Pendente` |
+| E2 | `<etapa>` | `<objetivo>` | `<entregavel>` | `<modulo/secao/RN-RF da matriz>` | `E1` | `<sim/nao/parcial>` | `<AUTO/HUMANO/BLOQUEADO>` | `Pendente` |
 
 Tipos de portao:
 
 - `HUMANO`: exige validacao do responsavel antes de avancar.
 - `AUTO`: pode avancar com criterios objetivos e verificacao automatica.
+- `BLOQUEADO`: nao pode avancar enquanto depender de decisao, input, credencial ou ambiente pendente.
 
 Regra:
 

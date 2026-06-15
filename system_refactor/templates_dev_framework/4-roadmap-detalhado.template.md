@@ -60,7 +60,7 @@ Gates humanos obrigatorios quando a subetapa tocar:
 
 | Etapa Macro | Objetivo | Design tecnico relacionado | Gate padrao | Status |
 | --- | --- | --- | --- | --- |
-| `E1` | `<objetivo>` | `<path/secao>` | `<AUTO/HUMANO>` | `Pendente` |
+| `E1` | `<objetivo>` | `<path/secao>` | `<AUTO/HUMANO/BLOQUEADO>` | `Pendente` |
 
 ## 4. Subetapas
 

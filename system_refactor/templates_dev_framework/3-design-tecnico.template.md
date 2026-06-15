@@ -22,6 +22,7 @@ Regra de escopo:
 | Data | `AAAA-MM-DD` |
 | Baseado na Matriz | `<path + versao>` |
 | Baseado no Roadmap Macro | `<path + versao>` |
+| Artefato anterior | `Roadmap Macro` |
 | Artefato seguinte | `Roadmap Detalhado` |
 
 Status permitidos:

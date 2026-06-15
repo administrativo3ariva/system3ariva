@@ -118,7 +118,7 @@ Entregaveis:
 
 Criterio de pronto:
 
-- os tres artefatos explicam o projeto sem depender de contexto solto da conversa;
+- os artefatos explicam o projeto sem depender de contexto solto da conversa;
 - os pontos de seguranca estao explicitos;
 - os criterios de aceite sao testaveis;
 - as etapas podem virar issues ou tarefas para agentes.
@@ -140,7 +140,7 @@ Templates base:
 
 Ajustes recomendados:
 
-- padronizar status: `Rascunho`, `Validado`, `Substituido`;
+- padronizar status base: `Rascunho`, `Em revisao`, `Validado`/`Validada`, `Substituido`/`Substituida`; roadmap detalhado e PRD acrescentam `Em execucao` e `Concluido`;
 - padronizar versao;
 - padronizar responsavel;
 - padronizar portoes humanos e automaticos;
@@ -157,6 +157,11 @@ Criterio de pronto:
 - qualquer projeto novo consegue iniciar usando apenas os templates e seus inputs;
 - um agente consegue preencher os documentos sem inventar estrutura propria;
 - um usuario nao tecnico consegue revisar os portoes principais.
+
+Estado atual dos templates:
+
+- templates `1` a `4` mais o `prd.template.md` estao em `v1 - aprovado para piloto` (2026-06-15);
+- validacao definitiva por portao esta condicionada a preencher o modulo piloto `auth-admin` e absorver as licoes (Fase 0 e Fase 7).
 
 ## Fase 2 - Criar Estrutura Padrao De Pastas
 

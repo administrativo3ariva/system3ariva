@@ -271,7 +271,7 @@ Controles obrigatorios:
 | --- | --- | --- | --- |
 | `<papel>` | `<modulos/acoes gerais>` | `<restricoes>` | `<observacao>` |
 
-Observacao: permissoes granulares e nomes finais de claims/scopes devem ser definidos no design tecnico.
+Observacao: permissoes granulares e nomes finais de claims/scopes devem ser definidos no design tecnico. A visao por papel aqui complementa o Modelo Conceitual de Acesso por modulo (sec. 7); evitar repetir a mesma informacao nas duas tabelas.
 
 ## 17. Rastreabilidade De Requisitos
 
