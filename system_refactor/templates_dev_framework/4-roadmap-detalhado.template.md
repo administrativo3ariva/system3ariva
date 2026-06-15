@@ -1,128 +1,177 @@
-<!--
-  TEMPLATE: Roadmap Detalhado (etapas → subetapas)
-  ────────────────────────────────────────────────
-  Este é o artefato OPERACIONAL do framework. Cada subetapa daqui vira uma
-  Issue, e é contra ela que o delegado implementa.
+# Template - Roadmap Detalhado
 
-  REGRA DE OURO: o "Critério de aceite" e os "Testes que validam" são 🔒 TRAVADOS
-  — escritos pelo responsável, NÃO editáveis pelo delegado. É a única alavanca de
-  controle real. Se o delegado puder mexer no critério ou nos testes de segurança,
-  o portão vira teatro.
+Este e o artefato operacional do framework SDD. Ele vem depois da Matriz Tecnica, do Roadmap Macro e do Design Tecnico.
 
-  Fluxo por subetapa (relembrando):
-    /prd → revisor confere PRD vs critério → implementa → PR → CI roda os testes
-    travados + lint + gitleaks + semgrep + batebola (consultiva) → veredito.
+Cada subetapa deste documento deve poder virar uma issue, tarefa ou execucao delegada para agente.
 
-  Convenções:
-    🔒  travado pelo responsável
-    🤖  conclui sozinha se o portão automático ficar verde
-    ⚠️  hard-escala: exige sign-off humano mesmo com CI verde
-    <...> substitua
--->
+Regra de ouro:
 
-# Roadmap Detalhado — <nome do módulo>
+- criterios de aceite travados nao podem ser alterados pelo agente executor;
+- testes travados nao podem ser removidos ou enfraquecidos pelo agente executor;
+- se criterio ou teste estiver incorreto, o agente deve escalar para revisao humana;
+- detalhes de implementacao devem respeitar o design tecnico validado.
 
-- **Status:** Rascunho
-- **Versão:** v0.1
-- **Baseado no Roadmap:** v<X> · **Matriz Técnica:** v<X>
-- **Responsável (trava critérios):** <você>
+## 1. Metadados E Status
 
----
+| Campo | Valor |
+| --- | --- |
+| Projeto | `<nome do projeto>` |
+| Area solicitante | `<area ou cliente interno>` |
+| Responsavel por travar criterios | `<nome>` |
+| Responsavel tecnico | `<nome>` |
+| Status | `Rascunho` |
+| Versao | `v0.1` |
+| Data | `AAAA-MM-DD` |
+| Baseado na Matriz Tecnica | `<path + versao>` |
+| Baseado no Roadmap Macro | `<path + versao>` |
+| Baseado no Design Tecnico | `<path + versao>` |
+| Artefato anterior | `Design Tecnico` |
+| Artefato seguinte | `Issues/PRDs/Execucao` |
 
-## Legenda do portão de cada subetapa
+Status permitidos:
 
-- 🤖 **Auto-concluível** — CI verde + batebola sem reprovação → marca concluída.
-- ⚠️ **Escala humana** — toca auth/segredo/dado pessoal/sensível ou migração
-  destrutiva → sign-off do responsável obrigatório, mesmo com CI verde.
+- `Rascunho`
+- `Em revisao`
+- `Validado - Portao 4`
+- `Em execucao`
+- `Concluido`
+- `Substituido`
 
----
+## 2. Legenda De Gates
 
-## EXEMPLO PREENCHIDO (apague ao usar — mostra o nível esperado)
+- `AUTO`: CI verde + testes travados + verificacoes automaticas.
+- `HUMANO`: exige sign-off humano mesmo com CI verde.
+- `BLOQUEADO`: depende de decisao, input, credencial, ambiente ou revisao.
 
-### Subetapa E1.S1 — Middleware de sessão autenticada · ⚠️
+Gates humanos obrigatorios quando a subetapa tocar:
 
-- **Objetivo:** todo request a `/api/admin/*` exige sessão válida; sem sessão → 401.
-- **Escopo (arquivos reais):**
-  - Criar `src/middleware.ts` (matcher em `/api/admin/:path*`)
-  - Alterar `src/lib/auth.ts` (helper `requireSession`)
-- **PRD:** gerar com `/prd E1.S1` antes de codar.
-- **Critério de aceite** 🔒
-  - Request sem cookie de sessão a qualquer rota `/api/admin/*` retorna 401.
-  - Request com sessão válida passa e injeta `userId` no contexto.
-  - Nenhuma rota admin acessível sem passar pelo middleware.
-- **Testes que validam** 🔒 *(escritos/travados pelo responsável)*
-  - `tests/security/admin-auth.spec.ts`: cobre 401 sem sessão, 200 com sessão,
-    e tentativa de bypass por rota não listada no matcher.
-- **Portão:** ⚠️ escala humana (toca autenticação).
-- **Definition of Done:** CI verde + os 3 testes acima passando + sign-off do responsável.
-- **Status:** ☐ · **Responsável pela execução:** <delegado>
+- auth/autorizacao;
+- segredos;
+- dados pessoais;
+- dados financeiros;
+- storage privado;
+- migrations destrutivas;
+- mudanca de permissao/papel;
+- integracao externa sensivel;
+- exclusao, cancelamento ou baixa.
 
----
+## 3. Visao De Etapas
 
-## Etapa E1 — <nome da etapa>
+| Etapa Macro | Objetivo | Design tecnico relacionado | Gate padrao | Status |
+| --- | --- | --- | --- | --- |
+| `E1` | `<objetivo>` | `<path/secao>` | `<AUTO/HUMANO>` | `Pendente` |
 
-> Objetivo da etapa: <1 frase> · Portão da etapa (do roadmap): ⚠️/🤖
+## 4. Subetapas
 
-### Subetapa E1.S1 — <título> · <🤖/⚠️>
+### Subetapa `<E1.S1>` - `<titulo>` - `<AUTO/HUMANO/BLOQUEADO>`
 
-- **Objetivo:** <o que esta subetapa entrega, 1 frase>
-- **Escopo (arquivos reais):**
-  - Criar `<caminho>`
-  - Alterar `<caminho>`
-  - Migrar/remover `<caminho>` <!-- migração destrutiva = ⚠️ automático -->
-- **PRD:** `/prd E1.S1`
-- **Critério de aceite** 🔒
-  - <condição testável 1>
-  - <condição testável 2>
-- **Testes que validam** 🔒
-  - `<arquivo de teste>`: <o que cobre>
-- **Portão:** <🤖 auto / ⚠️ escala humana> — <justificativa do portão>
-- **Definition of Done:** CI verde + testes acima + <sign-off humano, se ⚠️>
-- **Status:** ☐ · **Execução:** <delegado>
+| Campo | Valor |
+| --- | --- |
+| Etapa macro | `<E1>` |
+| Objetivo | `<objetivo claro em 1 frase>` |
+| Design tecnico de referencia | `<path + secao>` |
+| PRD | `<path ou /prd E1.S1>` |
+| Execucao | `<agente/delegado/responsavel>` |
+| Status | `Pendente` |
 
-### Subetapa E1.S2 — <título> · <🤖/⚠️>
+#### Escopo
 
-- **Objetivo:** <...>
-- **Escopo (arquivos reais):**
-  - <...>
-- **PRD:** `/prd E1.S2`
-- **Critério de aceite** 🔒
-  - <...>
-- **Testes que validam** 🔒
-  - <...>
-- **Portão:** <...>
-- **Definition of Done:** <...>
-- **Status:** ☐ · **Execução:** <delegado>
+- `<o que deve ser feito>`
+- `<o que deve ser criado/alterado em termos de area, modulo ou arquivo>`
 
----
+#### Fora De Escopo
 
-## Etapa E2 — <nome da etapa>
+- `<o que nao deve ser feito nesta subetapa>`
 
-> Objetivo da etapa: <...> · Portão: <...>
+#### Dependencias
 
-### Subetapa E2.S1 — <título> · <🤖/⚠️>
+- `<subetapa ou decisao necessaria>`
 
-- **Objetivo:** <...>
-- **Escopo (arquivos reais):**
-  - <...>
-- **PRD:** `/prd E2.S1`
-- **Critério de aceite** 🔒
-  - <...>
-- **Testes que validam** 🔒
-  - <...>
-- **Portão:** <...>
-- **Definition of Done:** <...>
-- **Status:** ☐ · **Execução:** <delegado>
+#### Impacto
 
-<!-- Repita o bloco de subetapa quantas vezes precisar. -->
+| Tipo | Impacto | Observacoes |
+| --- | --- | --- |
+| Seguranca | `<nenhum/baixo/medio/alto>` | `<observacao>` |
+| Dados/migration | `<nenhum/baixo/medio/alto>` | `<observacao>` |
+| UX | `<nenhum/baixo/medio/alto>` | `<observacao>` |
+| Integracao | `<nenhum/baixo/medio/alto>` | `<observacao>` |
 
----
+#### Criterios De Aceite Travados
 
-## Checklist de geração de Issues
+- [ ] `<criterio testavel 1>`
+- [ ] `<criterio testavel 2>`
+- [ ] `<criterio testavel 3>`
 
-<!-- Quando o roadmap detalhado fechar, cada subetapa vira uma Issue. -->
+#### Testes Que Validam
 
-- [ ] Toda subetapa tem critério de aceite testável e travado
-- [ ] Toda subetapa que toca auth/segredo/dado pessoal está marcada ⚠️
-- [ ] Os testes de segurança 🔒 já existem no repo antes de abrir as Issues
-- [ ] Issues criadas na ordem de dependência do roadmap
+| Tipo | Teste/Arquivo | O que valida | Obrigatorio? |
+| --- | --- | --- | --- |
+| Unit | `<path>` | `<regra>` | `<sim/nao>` |
+| Integration | `<path>` | `<fluxo/API/db>` | `<sim/nao>` |
+| E2E/Smoke | `<path>` | `<jornada>` | `<sim/nao>` |
+| Security | `<path/scan>` | `<auth/secrets/upload>` | `<sim/nao>` |
+| Manual | `<roteiro>` | `<validacao humana>` | `<sim/nao>` |
+
+#### Gate
+
+| Campo | Valor |
+| --- | --- |
+| Tipo | `<AUTO/HUMANO/BLOQUEADO>` |
+| Justificativa | `<por que este gate>` |
+| Evidencia exigida | `<CI/testes/screenshot/revisao/log>` |
+| Aprovador humano, se aplicavel | `<nome/papel>` |
+
+#### Rollback Ou Reversao
+
+- `<como desfazer ou mitigar se der errado>`
+
+#### Definition Of Done
+
+- [ ] Implementacao dentro do escopo.
+- [ ] Criterios de aceite travados atendidos.
+- [ ] Testes obrigatorios passando.
+- [ ] Sem alteracao indevida em criterios/testes travados.
+- [ ] Documentacao/PRD atualizado quando aplicavel.
+- [ ] Gate concluido.
+
+## 5. Sequencia De Execucao
+
+| Ordem | Subetapa | Depende de | Pode rodar em paralelo com | Observacoes |
+| --- | --- | --- | --- | --- |
+| `1` | `<E1.S1>` | `-` | `<E1.S2>` | `<observacao>` |
+
+## 6. Mapa De Issues
+
+| Subetapa | Issue | PR | Status | Observacoes |
+| --- | --- | --- | --- | --- |
+| `<E1.S1>` | `<link>` | `<link>` | `<status>` | `<observacao>` |
+
+## 7. Checklist De Geracao De Issues
+
+- [ ] Toda subetapa possui objetivo claro.
+- [ ] Toda subetapa aponta para etapa macro.
+- [ ] Toda subetapa aponta para secao do design tecnico.
+- [ ] Toda subetapa possui escopo e fora de escopo.
+- [ ] Toda subetapa possui criterios de aceite travados.
+- [ ] Toda subetapa possui testes que validam.
+- [ ] Subetapas sensiveis estao marcadas como `HUMANO`.
+- [ ] Dependencias e paralelizacao estao claras.
+- [ ] Rollback/reversao foi definido quando aplicavel.
+- [ ] Issues serao criadas na ordem correta.
+
+## 8. Criterios De Aceite Do Roadmap Detalhado - Portao 4
+
+Antes de iniciar execucao por agentes, validar:
+
+- [ ] Matriz tecnica esta validada.
+- [ ] Roadmap macro esta validado.
+- [ ] Design tecnico esta validado.
+- [ ] Subetapas cobrem as etapas macro planejadas.
+- [ ] Nenhuma subetapa contradiz o design tecnico.
+- [ ] Criterios de aceite sao objetivos, testaveis e travados.
+- [ ] Testes obrigatorios estao definidos.
+- [ ] Gates humanos e automaticos estao corretos.
+- [ ] Subetapas sensiveis exigem revisao humana.
+- [ ] Dependencias permitem execucao segura por agentes.
+- [ ] Validado por `<responsavel>` em `AAAA-MM-DD`.
+
