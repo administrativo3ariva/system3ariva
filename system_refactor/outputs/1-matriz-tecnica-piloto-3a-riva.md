@@ -13,9 +13,9 @@ Regra de altitude aplicada: ficam aqui decisoes estaveis, fronteiras, escopo, ri
 | Area solicitante | Administrativo 3A RIVA, com apoio de TI/Seguranca |
 | Responsavel pela validacao | PENDENTE - definir responsavel de negocio (Portao 1A) e responsavel tecnico (Portao 1B) |
 | Status | `Rascunho` |
-| Versao | `v0.2` |
+| Versao | `v0.3` |
 | Data | 2026-06-15 |
-| Stack-base prevista | Next.js + TypeScript, Firebase Auth, PostgreSQL Neon, Prisma, Firebase Storage, Vercel |
+| Stack-base prevista | Next.js + TypeScript, Firebase Auth, Supabase Postgres, Prisma, Firebase Storage, Vercel |
 | Artefato seguinte | Roadmap macro |
 
 Status permitidos: `Rascunho`, `Em revisao`, `Validada`, `Substituida`.
@@ -69,7 +69,7 @@ Reconstruir a plataforma administrativa interna da 3A RIVA com seguranca por des
 | Codigo legado | Sistema low-code (Lovable) - varredura ja sintetizada na matriz do legado | lido indiretamente | Repositorio/codigo-fonte bruto nao anexado a este pacote de insumos. |
 | Auditoria de seguranca | Embutida na matriz do legado (achados por agente) | parcial | Nao ha relatorio de seguranca formal autonomo; achados estao na fonte tecnica. |
 | Entrevistas/regras verbais | Nao fornecidas | pendente | Confirmacao de perfis reais, filiais ativas e categorias oficiais ainda nao validada com a area. |
-| Restricoes de stack/custo/prazo | Politica de desenvolvimento (sec. 2 - viabilidade) + decisao arquitetural do piloto | parcial | O PDF valida viabilidade, baixo custo, integracao por iframe e prazo de referencia. A stack Next.js/Firebase/Neon/Prisma/Vercel foi decisao arquitetural deste piloto e deve ser formalizada em ADR. |
+| Restricoes de stack/custo/prazo | Politica de desenvolvimento (sec. 2 - viabilidade) + decisao arquitetural do piloto | parcial | O PDF valida viabilidade, baixo custo, integracao por iframe e prazo de referencia. A stack Next.js/Firebase/Supabase Postgres/Prisma/Vercel foi decisao arquitetural deste piloto e deve ser formalizada em ADR. |
 
 ## 4. Motivacao Do Fazer Ou Refazer
 
@@ -92,7 +92,7 @@ A 3A RIVA Investimentos precisa de uma plataforma administrativa unica para regi
 
 ### Motivacao Do Refazer
 
-Reconstruir sobre stack proprietaria (Next.js + Neon/Prisma + Firebase Auth/Storage) com seguranca por desenho, autorizacao server-side e modelo de dados normalizado - corrigindo as lacunas do legado (ver sec. 10) sem perder o valor operacional ja homologado pela area. A UI atual e referencia, nao base tecnica obrigatoria.
+Reconstruir sobre stack proprietaria (Next.js + Supabase Postgres/Prisma + Firebase Auth/Storage) com seguranca por desenho, autorizacao server-side e modelo de dados normalizado - corrigindo as lacunas do legado (ver sec. 10) sem perder o valor operacional ja homologado pela area. A UI atual e referencia, nao base tecnica obrigatoria.
 
 ## 5. Stack E Restricoes
 
@@ -100,7 +100,7 @@ Reconstruir sobre stack proprietaria (Next.js + Neon/Prisma + Firebase Auth/Stor
 
 - Frontend: Next.js + TypeScript
 - Backend: Next.js (Route Handlers / Server Actions) com camada de autorizacao server-side
-- Banco: PostgreSQL Neon (Free/Launch)
+- Banco: Supabase Postgres (PostgreSQL gerenciado)
 - ORM: Prisma
 - Auth: Firebase Auth com Google SSO como login unico inicial; perfil/status/roles/permissoes no PostgreSQL
 - Storage: Firebase Storage (sobre Google Cloud Storage) para arquivos; metadados/referencias no PostgreSQL
@@ -110,8 +110,8 @@ Reconstruir sobre stack proprietaria (Next.js + Neon/Prisma + Firebase Auth/Stor
 ### Restricoes
 
 - Prazo: referencia de ~2 meses para a v1 legada; prazo do piloto reconstruido a definir no roadmap.
-- Custo: baixo desembolso direto esperado (legado custou ~R$ 250 de licenca); sem custo recorrente obrigatorio de manutencao previsto - validar limites dos planos Neon/Firebase/Vercel.
-- Infraestrutura: servicos gerenciados (Neon, Firebase, Vercel); sem infraestrutura on-premise.
+- Custo: baixo desembolso direto esperado (legado custou ~R$ 250 de licenca); sem custo recorrente obrigatorio de manutencao previsto - validar limites dos planos Supabase/Firebase/Vercel.
+- Infraestrutura: servicos gerenciados (Supabase Postgres, Firebase, Vercel); sem infraestrutura on-premise.
 - Compliance: uso interno, LGPD em nivel basico (minimizacao, acesso restrito, rastreabilidade); sem exigencia direta de CVM/ANBIMA neste escopo.
 - Integracao: disponibilizacao por iframe na intranet, com politica explicita de dominios permitidos (`frame-ancestors`).
 - Compatibilidade: navegadores web modernos (Chrome, Edge, Firefox em versoes atuais).
@@ -119,7 +119,8 @@ Reconstruir sobre stack proprietaria (Next.js + Neon/Prisma + Firebase Auth/Stor
 ### Premissas
 
 - A stack acima foi definida como decisao arquitetural do piloto e e a base obrigatoria; a UI legada e referencia visual/funcional, nao tecnica. Esta decisao deve ser formalizada em ADR.
-- Os requisitos do legado que citam Row Level Security, funcoes `has_role`/security definer e Edge Functions (artefatos Supabase/low-code) traduzem-se para autorizacao server-side em Next.js + constraints no Neon (ver sec. 7). Esta substituicao e uma decisao arquitetural aprovada para a matriz e deve ser formalizada em ADR no design tecnico.
+- Os requisitos do legado que citam Row Level Security, funcoes `has_role`/security definer e Edge Functions (artefatos Supabase/low-code) traduzem-se para autorizacao server-side em Next.js + constraints no Supabase Postgres (ver sec. 7). Esta substituicao e uma decisao arquitetural aprovada para a matriz e deve ser formalizada em ADR no design tecnico.
+- Supabase sera usado somente como banco Postgres gerenciado neste piloto; Auth e Storage permanecem no Firebase e o frontend nao deve acessar tabelas operacionais via Supabase client.
 - O sistema permanece de uso interno e nao tem por finalidade tratar dados pessoais sensiveis nem dados de clientes/investidores; anexos podem conter conteudo delicado e devem ser protegidos como potencialmente confidenciais.
 
 ## 6. Objetivo De Seguranca E Modelo De Ameacas
@@ -165,7 +166,7 @@ Identidade provada via Firebase Auth com Google SSO como login unico inicial. O 
 
 A decisao do que o usuario pode fazer e tomada no backend, com base em: usuario interno existente, status ativo, papel, permissao de modulo/acao e escopo por filial quando aplicavel. Middleware, layout protegido e guard visual sao apenas conveniencia de UX, nunca a unica barreira.
 
-O sistema nao usara RLS como controle primario. Como a stack aprovada usa Neon + Prisma, a expectativa de seguranca de dados do requisito original sera atendida por uma camada server-side de autorizacao obrigatoria, reforcada por constraints de banco (valores positivos, status permitidos, unicidade, FKs, integridade referencial). Policies nativas no Postgres, se adotadas, reforcam o modelo, nao substituem a validacao no backend.
+O sistema nao usara RLS como controle primario. Como a stack aprovada usa Supabase Postgres + Prisma, a expectativa de seguranca de dados do requisito original sera atendida por uma camada server-side de autorizacao obrigatoria, reforcada por constraints de banco (valores positivos, status permitidos, unicidade, FKs, integridade referencial). Policies nativas no Postgres, se adotadas, reforcam o modelo, nao substituem a validacao no backend.
 
 ### Principios
 
@@ -213,13 +214,13 @@ Observacao: a lista granular de permissoes (`module:action`) e nomes finais de c
 | Relatorios | Exportacao financeira em Excel preservando abas e formatacao (RNF-017) | Homologacao | media |
 | Qualidade analitica | Indicadores desconsideram registros sem movimentacao relevante (RNF-019) | Revisao | media |
 | Integridade analitica | `request_date` como referencia temporal oficial em filtros/dashboards/relatorios (RNF-020) | Teste/revisao | alta |
-| Custo/escala | Operacao dentro dos limites dos planos gerenciados (Neon/Firebase/Vercel) | Monitoramento | media |
+| Custo/escala | Operacao dentro dos limites dos planos gerenciados (Supabase/Firebase/Vercel) | Monitoramento | media |
 
 ## 9. Modulos, Fronteiras E Dependencias
 
 | Modulo | Objetivo | Telas/fluxos | Depende de | Pode rodar em paralelo com | Prioridade | Observacoes |
 | --- | --- | --- | --- | --- | --- | --- |
-| Auth e Administracao | Login, usuarios, status, papeis e permissoes | `main_page` (entrada); telas de login/admin PENDENTES | Fundacao Next.js, Firebase Auth, Prisma, Neon | Auditoria | P0 | Fundacao de seguranca de todo o sistema |
+| Auth e Administracao | Login, usuarios, status, papeis e permissoes | `main_page` (entrada); telas de login/admin PENDENTES | Fundacao Next.js, Firebase Auth, Prisma, Supabase Postgres | Auditoria | P0 | Fundacao de seguranca de todo o sistema |
 | Auditoria e Governanca | Rastreabilidade de acoes sensiveis | Sem tela dedicada no legado | Deve existir desde a fundacao | Auth/Admin | P0 | Capacidade transversal; nao era centralizada no legado |
 | Storage seguro | Guarda de arquivos privados e metadados | Embutido em NF, Financeiro, Patrimonio, Facilities | Auth/Admin | Auditoria | P0 | `FileObject` como entidade de metadados |
 | Cadastros estruturais | Filiais, fornecedores, categorias, macroblocos, centros de custo | Embutido nos modulos operacionais | Auth/Admin | Storage | P1 | Catalogos controlados compartilhados |
@@ -327,7 +328,7 @@ Pontos que exigem revisao humana (DPO/juridico/TI): dados pessoais cadastrais, d
 | Firebase Storage | HTTPS/SDK | Arquivos privados | Service account no backend | Arquivo publico ou link permanente | Storage privado; URL assinada curta |
 | OCR/IA (provider de NF) | HTTPS/API | Imagem/PDF de NF e texto extraido | Chave gerenciada no backend | Vazamento de chave; prompt injection | Credencial fora do client; saida tratada como nao confiavel; limite/rate limit. Provider PENDENTE |
 | Intranet (iframe) | HTTPS/embed | UI do sistema | Nenhuma | Embed em dominio nao autorizado | Politica `frame-ancestors` restrita |
-| Vercel/Neon (infra gerenciada) | HTTPS | Dados de aplicacao | Variaveis de ambiente | Segredo exposto no repo | Segredos em env; scan de segredos |
+| Vercel/Supabase Postgres (infra gerenciada) | HTTPS | Dados de aplicacao | Variaveis de ambiente | Segredo exposto no repo | Segredos em env; scan de segredos |
 
 ## 15. Fluxos Criticos
 
@@ -429,7 +430,7 @@ Catalogo de origem: politica de desenvolvimento (RN-001 a RN-028; RF-001 a RF-03
 
 | Decisao | Criticidade | Reversibilidade | ADR | Status | Observacoes |
 | --- | --- | --- | --- | --- | --- |
-| Stack Next.js + Neon/Prisma + Firebase Auth/Storage + Vercel | alta | dificil | PENDENTE | aprovado na matriz | Decisao arquitetural do piloto; formalizar ADR |
+| Stack Next.js + Supabase Postgres/Prisma + Firebase Auth/Storage + Vercel | alta | dificil | PENDENTE | aprovado na matriz | Decisao arquitetural do piloto; formalizar ADR |
 | Backend authorization em vez de RLS como controle primario | alta | media | PENDENTE | aprovado na matriz | Difere do texto literal do requisito (RN-005/RNF-002); exige ADR no design tecnico |
 | Firebase Auth com Google SSO como login unico inicial; perfil/roles no PostgreSQL | alta | media | PENDENTE | aprovado na matriz | Usuario nasce pendente; dominio corporativo deve ser controlado quando aplicavel |
 | Modelo de dados normalizado com `FileObject`, FKs e historicos | alta | media | PENDENTE | proposto | Corrige lacunas do legado |
@@ -491,3 +492,4 @@ Antes de gerar roadmap, validar com duas assinaturas.
 | --- | --- | --- | --- | --- |
 | `v0.1` | 2026-06-15 | Equipe SDD 3A RIVA | Criacao inicial consolidando matriz do legado, politica de desenvolvimento e telas de referencia no template do Portao 1 | `Rascunho` |
 | `v0.2` | 2026-06-15 | Equipe SDD 3A RIVA | Consolida decisoes do Portao 1: autorizacao backend em vez de RLS como controle primario, stack como decisao arquitetural, arquivos privados por padrao, Google SSO como login unico inicial e rastreabilidade preliminar ate revisao do catalogo RN/RF/RNF | `Rascunho` |
+| `v0.3` | 2026-06-16 | Equipe SDD 3A RIVA | Altera o banco gerenciado da stack de Neon para Supabase Postgres, mantendo Firebase Auth/Storage, Prisma server-side, Vercel e autorizacao backend como controle primario | `Rascunho` |
