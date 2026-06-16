@@ -13,9 +13,9 @@ Regra de altitude aplicada: este roadmap decide ordem, dependencias, paralelizac
 | Area solicitante | Administrativo 3A RIVA, com apoio de TI/Seguranca |
 | Responsavel pelo roadmap | PENDENTE - responsavel tecnico do piloto |
 | Status | `Rascunho` |
-| Versao | `v0.1` |
+| Versao | `v0.2` |
 | Data | 2026-06-16 |
-| Baseado na Matriz Tecnica | `system_refactor/outputs/1-matriz-tecnica-piloto-3a-riva.md` v0.3 |
+| Baseado na Matriz Tecnica | `system_refactor/outputs/1-matriz-tecnica-piloto-3a-riva.md` v0.4 |
 | Artefato anterior | Matriz Tecnica |
 | Artefato seguinte | Design Tecnico |
 
@@ -27,7 +27,7 @@ Depois da fundacao, entram os cadastros compartilhados e os modulos P1: Estoque,
 
 Por fim entram Patrimonio, Facilities, Dashboards/Relatorios e hardening de homologacao. Essas etapas dependem da fundacao e dos catalogos, mas parte delas pode rodar em paralelo depois que os padroes tecnicos estiverem travados.
 
-Observacao de stack: a matriz v0.3 usa Supabase Postgres como banco gerenciado. A alternativa Railway Postgres esta em avaliacao tecnica/custo; se a decisao mudar mantendo Postgres + Prisma server-side, o impacto esperado neste roadmap e baixo e deve ser registrado por ADR.
+Observacao de stack: a matriz v0.4 decide Supabase Postgres como banco gerenciado da v1. Railway Postgres deve ficar registrado apenas como alternativa avaliada/descartada no ADR de banco.
 
 ## 3. Etapas Macro
 
@@ -79,8 +79,8 @@ flowchart LR
 | Design tecnico | Etapas cobertas | Por que e necessario | Prioridade |
 | --- | --- | --- | --- |
 | `3-design-tecnico-piloto-3a-riva.md` | E1-E10 | Design tecnico global suficiente para gerar roadmap detalhado por agentes | P0 |
-| ADR de stack e banco gerenciado | E1, E2 | Formalizar Supabase Postgres ou alternativa Railway antes de migrations reais | P0 |
-| ADR de auth/autorizacao | E1 | Formalizar Firebase Google SSO, usuario interno e backend authorization em vez de RLS | P0 |
+| ADR de stack e banco gerenciado | E1, E2 | Formalizar Supabase Postgres, pooler recomendado e Railway como alternativa descartada | P0 |
+| ADR de auth/autorizacao | E1 | Formalizar Firebase Google SSO proprio do app em iframe, usuario interno e backend authorization em vez de RLS | P0 |
 | ADR de storage privado | E1, E4, E5, E7, E8 | Garantir arquivos privados por padrao e sem URL publica permanente | P0 |
 | ADR de OCR/IA | E4 | Escolher provider, limites, seguranca e formato de resposta | P1 |
 
@@ -89,7 +89,8 @@ flowchart LR
 | Marco | Quando ocorre | Quem valida | Motivo |
 | --- | --- | --- | --- |
 | Portao 1 - Matriz | Antes de iniciar Design Tecnico | Negocio + tecnico | Confirmar escopo, modulos e decisoes base |
-| Decisao banco gerenciado | Antes de migrations reais | Tecnico/TI | Supabase Postgres x Railway Postgres impacta custo e operacao |
+| Decisao banco gerenciado | Antes de migrations reais | Tecnico/TI | Supabase Postgres decidido; validar pooler recomendado e connection string |
+| Confirmacao SSO em iframe | Antes de E1.S3 | Tecnico/TI | Reproduzir padrao Bob: Firebase Auth + Google popup + frame-ancestors no dominio final |
 | Fundacao segura | Ao concluir E1 | Tecnico/TI | Auth, autorizacao, segredos e banco exigem revisao humana |
 | NF/OCR | Antes de liberar E4 | Negocio/Estoque + tecnico | Fluxo sensivel com arquivo, IA, estoque e financeiro |
 | Financeiro/Orcamento | Antes de liberar E5/E6 | Financeiro/Controladoria + tecnico | Valores, status e realizado x orcado precisam bater |
@@ -99,7 +100,7 @@ flowchart LR
 
 | Risco | Impacto | Mitigacao | Afeta quais etapas |
 | --- | --- | --- | --- |
-| Decisao tardia de banco gerenciado | Rework em env/conexao/pooler e ADR | Tratar como ADR P0 antes de migrations reais | E1, E2 |
+| Pooler/conexao Postgres mal configurados | Esgotamento de conexoes ou falha em serverless | Usar pooler recomendado do Supabase e registrar no ADR P0 | E1, E2 |
 | Agentes criarem acesso direto sem guard | Quebra de seguranca | Design tecnico deve exigir helpers server-side e testes de autorizacao | E1-E10 |
 | Prints pendentes de Auth/Admin e NF/OCR | Validacao visual incompleta | Seguir por fluxo textual e bloquear validacao visual final ate receber prints | E1, E4 |
 | Catalogo RN/RF/RNF ainda preliminar | Requisito pode ser perdido na execucao detalhada | Revisar catalogo antes do Roadmap Detalhado final | E10, Portao 4 |
@@ -124,7 +125,8 @@ flowchart LR
 
 | Pendencia | Por que importa | Bloqueia design tecnico? | Responsavel |
 | --- | --- | --- | --- |
-| Validacao final do banco gerenciado (Supabase Postgres x Railway Postgres) | Impacta connection string, pooler, custo e operacao | nao para rascunho; sim antes de implementacao | TI/Responsavel tecnico |
+| Validacao final de connection string/pooler Supabase | Impacta Prisma, CI, migrations e producao | nao para rascunho; sim antes de implementacao | TI/Responsavel tecnico |
+| Reproduzir padrao Bob de login em iframe | Confirma Google popup, persistencia e dominios no ambiente final | nao para rascunho; sim antes de E1.S3 | TI/Responsavel tecnico |
 | Confirmar dominio Google corporativo permitido | Impacta regra de login SSO | nao | TI |
 | Prints de Auth/Admin e NF/OCR | Impacta validacao visual e copy de fluxo | nao | Negocio/TI |
 | Provider de OCR/IA | Impacta contrato tecnico do modulo NF/OCR | nao para design global; sim para implementacao real | TI |
@@ -136,3 +138,4 @@ flowchart LR
 | Versao | Data | Autor | Mudanca | Status resultante |
 | --- | --- | --- | --- | --- |
 | `v0.1` | 2026-06-16 | Equipe SDD 3A RIVA | Criacao inicial do Roadmap Macro a partir da Matriz Tecnica v0.3 | `Rascunho` |
+| `v0.2` | 2026-06-16 | Equipe SDD 3A RIVA | Consolida decisoes da matriz v0.4: Supabase Postgres decidido, Railway como alternativa descartada, Google SSO proprio do app em iframe, pooler Supabase e confirmacao do padrao Bob antes do auth | `Rascunho` |

@@ -4,6 +4,8 @@ Este e o artefato do Portao 4 do framework SDD aplicado ao piloto de reconstruca
 
 Regra de ouro: criterios de aceite e testes travados nao podem ser removidos ou enfraquecidos pelo agente executor. Se algum criterio estiver incorreto, o agente deve escalar para revisao humana.
 
+Observacao de granularidade: esta v0.2 e validavel como roadmap detalhado de alto nivel operacional. Antes de virar issues de implementacao, cada subetapa de modulo deve ser decomposta em tarefas menores de tamanho de PR, comecando por E1. Essa decomposicao sera feita apos validacao tecnica dos artefatos atuais.
+
 ## 1. Metadados E Status
 
 | Campo | Valor |
@@ -14,11 +16,11 @@ Regra de ouro: criterios de aceite e testes travados nao podem ser removidos ou 
 | Responsavel por travar criterios | PENDENTE |
 | Responsavel tecnico | PENDENTE |
 | Status | `Rascunho` |
-| Versao | `v0.1` |
+| Versao | `v0.2` |
 | Data | 2026-06-16 |
-| Baseado na Matriz Tecnica | `system_refactor/outputs/1-matriz-tecnica-piloto-3a-riva.md` v0.3 |
-| Baseado no Roadmap Macro | `system_refactor/outputs/2-roadmap-macro-piloto-3a-riva.md` v0.1 |
-| Baseado no Design Tecnico | `system_refactor/outputs/3-design-tecnico-piloto-3a-riva.md` v0.1 |
+| Baseado na Matriz Tecnica | `system_refactor/outputs/1-matriz-tecnica-piloto-3a-riva.md` v0.4 |
+| Baseado no Roadmap Macro | `system_refactor/outputs/2-roadmap-macro-piloto-3a-riva.md` v0.2 |
+| Baseado no Design Tecnico | `system_refactor/outputs/3-design-tecnico-piloto-3a-riva.md` v0.2 |
 | Artefato anterior | Design Tecnico |
 | Artefato seguinte | Issues/PRDs/Execucao |
 
@@ -52,7 +54,7 @@ Gates humanos obrigatorios quando a subetapa tocar auth/autorizacao, segredos, d
 | Campo | Valor |
 | --- | --- |
 | Etapa macro | E1 |
-| Objetivo | Formalizar stack, provedor Postgres, Google SSO e autorizacao backend antes de migrations reais. |
+| Objetivo | Formalizar stack, Supabase Postgres, Google SSO proprio do app em iframe e autorizacao backend antes de migrations reais. |
 | Design tecnico de referencia | Sec. 3, 17, 18 |
 | PRD | `outputs/prds/PRD-E1-S1-adrs-p0.md` |
 | Execucao | agente de planejamento + responsavel tecnico |
@@ -60,9 +62,10 @@ Gates humanos obrigatorios quando a subetapa tocar auth/autorizacao, segredos, d
 
 #### Escopo
 
-- Criar ADRs P0 para stack, provedor Postgres, backend authorization, Google SSO e storage privado.
-- Registrar se o banco final sera Supabase Postgres ou Railway Postgres.
-- Confirmar que Firebase Auth/Storage permanecem fora do Supabase/Railway.
+- Criar ADRs P0 para stack, Supabase Postgres, backend authorization, Google SSO proprio do app em iframe, RBAC/escopo multi-filial e storage privado.
+- Registrar Supabase Postgres como banco da v1, com pooler recomendado.
+- Registrar Railway Postgres como alternativa avaliada/descartada por decisao de stack.
+- Confirmar que Firebase Auth/Storage permanecem fora do Supabase.
 
 #### Fora De Escopo
 
@@ -71,7 +74,7 @@ Gates humanos obrigatorios quando a subetapa tocar auth/autorizacao, segredos, d
 
 #### Dependencias
 
-- Matriz v0.3 e validacao tecnica da stack.
+- Matriz v0.4 e validacao tecnica da stack.
 
 #### Impacto
 
@@ -86,7 +89,8 @@ Gates humanos obrigatorios quando a subetapa tocar auth/autorizacao, segredos, d
 
 - [ ] ADR de provedor Postgres registra decisao, motivo, custo e alternativa descartada.
 - [ ] ADR de autorizacao confirma backend authorization como controle primario.
-- [ ] ADR de auth confirma Google SSO e usuario interno `pending/inactive/active`.
+- [ ] ADR de auth confirma Google SSO proprio do app no iframe, padrao Bob (`signInWithPopup` + persistencia Firebase Auth), dominios permitidos e validacao server-side de ID token.
+- [ ] ADR de RBAC confirma Role base + UserPermission/UserScope e suporte multi-filial.
 - [ ] ADR de storage confirma arquivos privados por padrao e sem URL publica permanente.
 
 #### Testes Que Validam
@@ -191,7 +195,7 @@ Gates humanos obrigatorios quando a subetapa tocar auth/autorizacao, segredos, d
 | Campo | Valor |
 | --- | --- |
 | Etapa macro | E1 |
-| Objetivo | Implementar Google SSO, usuario interno pendente/ativo e helper obrigatorio de autorizacao server-side. |
+| Objetivo | Implementar Google SSO proprio do app no iframe, usuario interno pendente/ativo, seed do primeiro admin e helper obrigatorio de autorizacao server-side. |
 | Design tecnico de referencia | Sec. 7, 8, 12, 15 |
 | PRD | `outputs/prds/PRD-E1-S3-auth-guard.md` |
 | Execucao | agente build + revisao tecnica |
@@ -199,15 +203,18 @@ Gates humanos obrigatorios quando a subetapa tocar auth/autorizacao, segredos, d
 
 #### Escopo
 
-- Integrar Firebase Auth Google SSO.
+- Integrar Firebase Auth Google SSO com o padrao ja validado no app Bob: `signInWithPopup`, persistencia do Firebase Auth Web SDK e `frame-ancestors`.
 - Criar modelo/fluxo de `User` interno.
-- Implementar helper `requireActiveUser` e `requirePermission`.
+- Implementar Role base, UserPermission e UserScope/UserBranch para escopo multi-filial.
+- Implementar helper `requireActiveUser`, `requirePermission` e validacao de escopo.
 - Bloquear usuario pendente/inativo no backend.
+- Criar seed controlado do primeiro admin por e-mail informado/allowlist em env, executado uma vez e auditado.
 
 #### Fora De Escopo
 
 - Painel admin completo.
 - Permissoes de todos os modulos operacionais.
+- Login/senha.
 
 #### Dependencias
 
@@ -218,7 +225,7 @@ Gates humanos obrigatorios quando a subetapa tocar auth/autorizacao, segredos, d
 | Tipo | Impacto | Observacoes |
 | --- | --- | --- |
 | Seguranca | alto | Base de acesso |
-| Dados/migration | medio | Tabela User/Role/Permission |
+| Dados/migration | medio | Tabelas User/Role/Permission/UserPermission/UserScope |
 | UX | medio | Login e usuario pendente |
 | Integracao | medio | Firebase Auth |
 
@@ -227,6 +234,8 @@ Gates humanos obrigatorios quando a subetapa tocar auth/autorizacao, segredos, d
 - [ ] Login Google cria/localiza usuario interno.
 - [ ] Usuario novo nasce pendente/inativo e nao acessa operacoes.
 - [ ] Backend rejeita operacao sem usuario ativo.
+- [ ] Primeiro admin pode ser criado por seed controlado e auditado.
+- [ ] Usuario pode ter escopo multi-filial ou global quando admin.
 - [ ] Frontend nao decide autorizacao, apenas reflete estado.
 
 #### Testes Que Validam
@@ -236,7 +245,7 @@ Gates humanos obrigatorios quando a subetapa tocar auth/autorizacao, segredos, d
 | Integration | auth guard tests | pending/inactive bloqueado | Usuario pendente ou inativo | sim |
 | Security | authz tests | sem permissao recebe forbidden | Usuario autenticado sem permissao | sim |
 | Security | domain test | dominio nao permitido bloqueado, se configurado | Usuario fora do dominio permitido | sim |
-| E2E/Smoke | login e tela pendente | Jornada minima | - | sim |
+| E2E/Smoke | login popup em iframe e tela pendente | Jornada minima no padrao Bob | - | sim |
 
 #### Gate
 
@@ -272,7 +281,9 @@ Gates humanos obrigatorios quando a subetapa tocar auth/autorizacao, segredos, d
 
 - Implementar `AuditLog`.
 - Padronizar erros seguros.
-- Criar `FileObject` e helpers de upload/leitura privada.
+- Criar `FileObject` e helpers de upload direto/leitura privada.
+- Criar estado `pending_validation` para arquivo enviado e validacao server-side antes de uso.
+- Criar rate limit simples por banco para upload/OCR na v1.
 - Garantir que nenhum arquivo operacional tenha URL publica permanente.
 
 #### Fora De Escopo
@@ -294,8 +305,11 @@ Gates humanos obrigatorios quando a subetapa tocar auth/autorizacao, segredos, d
 
 #### Criterios De Aceite Travados
 
-- [ ] Upload cria metadado `FileObject` e path privado server-side.
+- [ ] Upload direto usa path gerado pelo backend e cria metadado `FileObject` em `pending_validation`.
+- [ ] Arquivo so fica utilizavel apos validacao server-side de tipo, tamanho e assinatura real.
+- [ ] Storage Rules negam acesso direto de client a arquivos operacionais, salvo excecao aprovada.
 - [ ] Leitura exige autorizacao antes de URL assinada/proxy.
+- [ ] Rate limit por banco bloqueia abuso de upload/OCR.
 - [ ] Erros tecnicos nao vazam stack, token ou segredo ao usuario.
 - [ ] Acoes sensiveis registram auditoria minima.
 
@@ -303,7 +317,7 @@ Gates humanos obrigatorios quando a subetapa tocar auth/autorizacao, segredos, d
 
 | Tipo | Teste/Arquivo | O que valida | Abuse case de origem (matriz sec. 6) | Obrigatorio? |
 | --- | --- | --- | --- | --- |
-| Integration | storage private tests | arquivo privado e leitura autorizada | Upload/arquivo externo | sim |
+| Integration | storage private tests | arquivo privado, pending_validation e leitura autorizada | Upload/arquivo externo | sim |
 | Security | error leakage tests | erro seguro | Agente/desenvolvedor subindo segredo | sim |
 | Integration | audit tests | ator real e evento | Conta comprometida ou usuario malicioso | sim |
 
@@ -1030,3 +1044,4 @@ Gates humanos obrigatorios quando a subetapa tocar auth/autorizacao, segredos, d
 | Versao | Data | Autor | Mudanca | Status resultante |
 | --- | --- | --- | --- | --- |
 | `v0.1` | 2026-06-16 | Equipe SDD 3A RIVA | Criacao inicial do Roadmap Detalhado a partir da Matriz v0.3, Roadmap Macro v0.1 e Design Tecnico v0.1 | `Rascunho` |
+| `v0.2` | 2026-06-16 | Equipe SDD 3A RIVA | Consolida decisoes tecnicas da validacao: Supabase Postgres, Google SSO proprio do app em iframe, RBAC multi-filial, primeiro admin por seed, upload direto com pending_validation, rate limit por banco e roadmap atual validavel antes da decomposicao fina em issues | `Rascunho` |

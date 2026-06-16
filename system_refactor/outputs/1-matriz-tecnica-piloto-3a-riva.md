@@ -13,7 +13,7 @@ Regra de altitude aplicada: ficam aqui decisoes estaveis, fronteiras, escopo, ri
 | Area solicitante | Administrativo 3A RIVA, com apoio de TI/Seguranca |
 | Responsavel pela validacao | PENDENTE - definir responsavel de negocio (Portao 1A) e responsavel tecnico (Portao 1B) |
 | Status | `Rascunho` |
-| Versao | `v0.3` |
+| Versao | `v0.4` |
 | Data | 2026-06-15 |
 | Stack-base prevista | Next.js + TypeScript, Firebase Auth, Supabase Postgres, Prisma, Firebase Storage, Vercel |
 | Artefato seguinte | Roadmap macro |
@@ -102,10 +102,10 @@ Reconstruir sobre stack proprietaria (Next.js + Supabase Postgres/Prisma + Fireb
 - Backend: Next.js (Route Handlers / Server Actions) com camada de autorizacao server-side
 - Banco: Supabase Postgres (PostgreSQL gerenciado)
 - ORM: Prisma
-- Auth: Firebase Auth com Google SSO como login unico inicial; perfil/status/roles/permissoes no PostgreSQL
+- Auth: Firebase Auth com Google SSO proprio do app como login unico inicial; perfil/status/roles/permissoes no PostgreSQL
 - Storage: Firebase Storage (sobre Google Cloud Storage) para arquivos; metadados/referencias no PostgreSQL
 - Deploy: Vercel
-- Analytics/observabilidade: Firebase Analytics + logs estruturados; auditoria de acoes sensiveis no banco
+- Observabilidade v1: logs estruturados e auditoria de acoes sensiveis no banco. Firebase Analytics fica fora da v1.
 
 ### Restricoes
 
@@ -121,6 +121,8 @@ Reconstruir sobre stack proprietaria (Next.js + Supabase Postgres/Prisma + Fireb
 - A stack acima foi definida como decisao arquitetural do piloto e e a base obrigatoria; a UI legada e referencia visual/funcional, nao tecnica. Esta decisao deve ser formalizada em ADR.
 - Os requisitos do legado que citam Row Level Security, funcoes `has_role`/security definer e Edge Functions (artefatos Supabase/low-code) traduzem-se para autorizacao server-side em Next.js + constraints no Supabase Postgres (ver sec. 7). Esta substituicao e uma decisao arquitetural aprovada para a matriz e deve ser formalizada em ADR no design tecnico.
 - Supabase sera usado somente como banco Postgres gerenciado neste piloto; Auth e Storage permanecem no Firebase e o frontend nao deve acessar tabelas operacionais via Supabase client.
+- Supabase Postgres esta decidido para a v1; Railway Postgres fica apenas como alternativa descartada/registrada em ADR, nao como decisao ativa.
+- O padrao de login no iframe replica o app Bob: Firebase Auth Web SDK com Google `signInWithPopup`, persistencia no browser e liberacao via `frame-ancestors`. Nao e SSO herdado da intranet/Connect.
 - O sistema permanece de uso interno e nao tem por finalidade tratar dados pessoais sensiveis nem dados de clientes/investidores; anexos podem conter conteudo delicado e devem ser protegidos como potencialmente confidenciais.
 
 ## 6. Objetivo De Seguranca E Modelo De Ameacas
@@ -130,11 +132,11 @@ O sistema deve nascer seguro por desenho. Seguranca nao e etapa final de hardeni
 Objetivos obrigatorios:
 
 - negar acesso por padrao; impedir acesso publico a qualquer recurso operacional;
-- autenticar todo usuario em recurso privado via Google SSO no Firebase Auth, preferencialmente restrito ao dominio corporativo, e exigir perfil interno ativo;
+- autenticar todo usuario em recurso privado via Google SSO proprio do app no Firebase Auth, restrito a dominios corporativos permitidos, e exigir perfil interno ativo;
 - autorizar no backend toda acao sensivel (modulo, acao e escopo por filial quando aplicavel);
 - validar input em toda entrada de dados (schema runtime no servidor);
 - proteger segredos fora do client (chaves de OCR/IA e credenciais no backend);
-- proteger arquivos e documentos por padrao privado; nenhum arquivo operacional deve ter URL publica permanente; leitura apenas por fluxo autorizado, preferencialmente URL assinada curta;
+- proteger arquivos e documentos por padrao privado; nenhum arquivo operacional deve ter URL publica permanente; upload direto para Firebase Storage deve usar path gerado pelo backend, `FileObject` em `pending_validation` e validacao server-side antes de tornar o arquivo utilizavel;
 - registrar auditoria de acoes administrativas, financeiras, patrimoniais, de estoque, NF e facilities;
 - nao expor erro tecnico, token, dado bancario ou log sensivel ao usuario final;
 - minimizar dados pessoais e manter rastreabilidade de operacoes sensiveis;
@@ -152,7 +154,7 @@ Os itens daqui devem virar criterios e testes travados no roadmap detalhado.
 | Usuario de outra filial/escopo | Ler ou alterar dados de filial diferente da sua | Validacao de escopo (filial/dono/vinculo) no servidor | Teste de isolamento por filial |
 | Conta comprometida ou usuario malicioso | Alterar status/valor/autor (`userId`, `role`, `status`, `createdBy`) via client | Campos de autoria/estado definidos ou verificados no servidor; nunca aceitos cegamente do client | Teste de mass-assignment / forja de payload |
 | Agente/desenvolvedor | Subir segredo no repo ou expor chave no client | Segredos em variaveis de ambiente; scan de segredos | Scan de segredos no CI |
-| Upload/arquivo externo (NF, comprovante, foto) | Arquivo invalido, payload grande, conteudo hostil | Validacao de tamanho, tipo declarado e assinatura real; Storage privado; rate limit | Teste de upload malicioso |
+| Upload/arquivo externo (NF, comprovante, foto) | Arquivo invalido, payload grande, conteudo hostil | Path gerado pelo backend; `FileObject` nasce `pending_validation`; validacao pos-upload de tamanho, tipo e assinatura real; Storage privado; rate limit por banco na v1 | Teste de upload malicioso |
 | Texto de NF/OCR | Prompt injection via conteudo extraido | Tratar saida de OCR/IA como nao confiavel; validar em schema runtime | Teste de saida adversarial de OCR |
 | Integracao por iframe | Embed do app em dominio nao autorizado | Politica `frame-ancestors` restrita a dominios permitidos | Teste de cabecalhos / clickjacking |
 
@@ -160,13 +162,13 @@ Os itens daqui devem virar criterios e testes travados no roadmap detalhado.
 
 ### Autenticacao
 
-Identidade provada via Firebase Auth com Google SSO como login unico inicial. O fluxo deve restringir ou bloquear contas fora do dominio corporativo permitido, quando aplicavel. O backend Next.js valida o token/sessao Firebase no servidor e localiza o `User` interno correspondente no PostgreSQL.
+Identidade provada via Firebase Auth com Google SSO proprio do app como login unico inicial. O fluxo replica o padrao ja validado no app Bob em iframe: Firebase Auth Web SDK, `signInWithPopup`, persistencia no browser e liberacao por `frame-ancestors`. O fluxo deve bloquear contas fora dos dominios corporativos permitidos. O backend Next.js valida o token Firebase no servidor em toda operacao sensivel e localiza o `User` interno correspondente no PostgreSQL.
 
 ### Autorizacao
 
 A decisao do que o usuario pode fazer e tomada no backend, com base em: usuario interno existente, status ativo, papel, permissao de modulo/acao e escopo por filial quando aplicavel. Middleware, layout protegido e guard visual sao apenas conveniencia de UX, nunca a unica barreira.
 
-O sistema nao usara RLS como controle primario. Como a stack aprovada usa Supabase Postgres + Prisma, a expectativa de seguranca de dados do requisito original sera atendida por uma camada server-side de autorizacao obrigatoria, reforcada por constraints de banco (valores positivos, status permitidos, unicidade, FKs, integridade referencial). Policies nativas no Postgres, se adotadas, reforcam o modelo, nao substituem a validacao no backend.
+O sistema nao usara RLS como controle primario. Como a stack aprovada usa Supabase Postgres + Prisma + Firebase Auth, a expectativa de seguranca de dados do requisito original sera atendida por uma camada server-side de autorizacao obrigatoria, reforcada por constraints de banco (valores positivos, status permitidos, unicidade, FKs, integridade referencial). RLS por usuario final nao deve ser tratado como camada efetiva neste desenho, pois o acesso ao banco ocorre via Prisma/backend com credencial tecnica.
 
 ### Principios
 
@@ -177,6 +179,9 @@ O sistema nao usara RLS como controle primario. Como a stack aprovada usa Supaba
 - Permissao deve considerar modulo, acao e escopo (filial/dono/vinculo) quando aplicavel.
 - Usuario novo nasce pendente/inativo ate liberacao administrativa.
 - Google SSO prova identidade; somente usuario interno ativo e autorizado pode operar o sistema.
+- Papeis sao pacotes base de permissao; excecoes e escopos por filial devem ser modelados por permissoes/escopos do usuario.
+- O sistema deve suportar multi-filial desde o inicio. Admins administrativos podem operar em escopo global.
+- O primeiro admin deve ser criado por seed controlado com e-mail informado/allowlist em env, executado uma vez e auditado. Alteracao manual no banco fica apenas como emergencia.
 
 Padrao esperado em operacao server-side sensivel (referencia de direcao, nao implementacao): validar input -> validar token/sessao -> buscar usuario interno -> bloquear ausente/pendente/inativo -> validar permissao de modulo/acao -> validar escopo -> executar com Prisma -> auditar quando sensivel.
 
@@ -255,7 +260,8 @@ Sistema legado: primeira versao construida em ferramenta low-code (Lovable), com
 | --- | --- | --- | --- |
 | User | Usuario interno sincronizado com Firebase Auth | Auth, Admin, Auditoria | Nasce pendente/inativo |
 | Role | Papel de alto nivel (admin, moderator, user) | Auth, Admin | - |
-| Permission / UserPermission | Permissao granular por modulo/acao e vinculo com usuario | Auth, Admin, todos | Pode incluir escopo por filial |
+| Permission / RolePermission / UserPermission | Permissao granular por modulo/acao; Role entrega pacote base e UserPermission trata excecoes | Auth, Admin, todos | Nao substituir autorizacao server-side |
+| UserScope / UserBranch | Escopos/filiais em que o usuario pode operar | Auth, Admin, todos | Suporta multi-filial e escopo global para admin |
 | Branch | Filial/unidade/centro de custo operacional | Estoque, Financeiro, Patrimonio, Facilities | Catalogo controlado |
 | Department | Area/departamento interno | Estoque, Admin, Auditoria | - |
 | Supplier | Fornecedor compartilhado | NF, Estoque, Financeiro, Patrimonio | Entidade unica entre modulos |
@@ -324,7 +330,7 @@ Pontos que exigem revisao humana (DPO/juridico/TI): dados pessoais cadastrais, d
 
 | Integracao | Protocolo | Dado Trafegado | Credencial | Risco | Controle |
 | --- | --- | --- | --- | --- | --- |
-| Firebase Auth | HTTPS/SDK | Identidade/token Google SSO | Config Firebase (publica) + verificacao server-side | Aceitar token sem validar status interno ou dominio permitido | Validacao de token, dominio permitido e usuario interno ativo no backend |
+| Firebase Auth | HTTPS/SDK | Identidade/token Google SSO proprio do app | Config Firebase (publica) + verificacao server-side | Aceitar token sem validar status interno ou dominio permitido | Validacao de token, dominio permitido e usuario interno ativo no backend |
 | Firebase Storage | HTTPS/SDK | Arquivos privados | Service account no backend | Arquivo publico ou link permanente | Storage privado; URL assinada curta |
 | OCR/IA (provider de NF) | HTTPS/API | Imagem/PDF de NF e texto extraido | Chave gerenciada no backend | Vazamento de chave; prompt injection | Credencial fora do client; saida tratada como nao confiavel; limite/rate limit. Provider PENDENTE |
 | Intranet (iframe) | HTTPS/embed | UI do sistema | Nenhuma | Embed em dominio nao autorizado | Politica `frame-ancestors` restrita |
@@ -334,7 +340,7 @@ Pontos que exigem revisao humana (DPO/juridico/TI): dados pessoais cadastrais, d
 
 ### Fluxo 1 - Login e liberacao de usuario
 
-1. Usuario autentica via Google SSO no Firebase Auth.
+1. Usuario autentica via Google SSO proprio do app no Firebase Auth, usando popup/persistencia conforme padrao ja validado no app Bob em iframe.
 2. Backend verifica se existe `User` interno vinculado ao Firebase UID; se nao existir, cria com status `pending`.
 3. Usuario pendente/inativo nao acessa modulos operacionais.
 4. Admin ativo libera usuario e atribui papel e permissoes.
@@ -344,10 +350,12 @@ Controles obrigatorios: validacao de token no servidor; bloqueio por status; aud
 ### Fluxo 2 - Upload e processamento de NF/OCR
 
 1. Usuario autorizado (`nf:upload`) envia arquivo.
-2. Arquivo salvo em Storage privado; metadados em `FileObject`.
-3. OCR/IA extrai dados; saida validada em schema runtime.
-4. `Invoice`/`InvoiceItem` criados em estado de revisao; todos os itens exigem categoria.
-5. Revisao manual (`nf:review`) e aprovacao (`nf:approve`) geram entradas de estoque e eventual vinculo financeiro, em transacao backend.
+2. Backend gera path autorizado e cria `FileObject` em `pending_validation`.
+3. Arquivo e enviado diretamente ao Firebase Storage privado.
+4. Backend valida tamanho, tipo e assinatura real antes de tornar o arquivo utilizavel.
+5. OCR/IA extrai dados; saida validada em schema runtime.
+6. `Invoice`/`InvoiceItem` criados em estado de revisao; todos os itens exigem categoria.
+7. Revisao manual (`nf:review`) e aprovacao (`nf:approve`) geram entradas de estoque e eventual vinculo financeiro, em transacao backend.
 
 Controles obrigatorios: validacao de permissao por etapa; total da NF validado contra o declarado; cidade divergente da filial exige confirmacao; auditoria da aprovacao.
 
@@ -432,14 +440,15 @@ Catalogo de origem: politica de desenvolvimento (RN-001 a RN-028; RF-001 a RF-03
 | --- | --- | --- | --- | --- | --- |
 | Stack Next.js + Supabase Postgres/Prisma + Firebase Auth/Storage + Vercel | alta | dificil | PENDENTE | aprovado na matriz | Decisao arquitetural do piloto; formalizar ADR |
 | Backend authorization em vez de RLS como controle primario | alta | media | PENDENTE | aprovado na matriz | Difere do texto literal do requisito (RN-005/RNF-002); exige ADR no design tecnico |
-| Firebase Auth com Google SSO como login unico inicial; perfil/roles no PostgreSQL | alta | media | PENDENTE | aprovado na matriz | Usuario nasce pendente; dominio corporativo deve ser controlado quando aplicavel |
+| Firebase Auth com Google SSO proprio do app como login unico inicial; perfil/roles no PostgreSQL | alta | media | PENDENTE | aprovado na matriz | Usuario nasce pendente; dominios corporativos devem ser controlados |
+| RBAC com Role base + UserPermission/UserScope | alta | media | PENDENTE | aprovado na matriz | Suporte multi-filial desde o inicio; admin administrativo pode ter escopo global |
 | Modelo de dados normalizado com `FileObject`, FKs e historicos | alta | media | PENDENTE | proposto | Corrige lacunas do legado |
 | Arquivos privados por padrao com URL assinada curta | media | facil | PENDENTE | aprovado na matriz | Para NF, comprovantes e fotos; sem URL publica permanente |
 | Auditoria minima desde a fundacao | alta | media | PENDENTE | proposto | Acoes sensiveis em `AuditLog` |
-| Disponibilizacao por iframe com `frame-ancestors` restrito | media | facil | PENDENTE | proposto | Conforme politica de integracao |
+| Disponibilizacao por iframe com `frame-ancestors` restrito | media | facil | PENDENTE | aprovado na matriz | Reaproveitar padrao do app Bob; validar no dominio final da intranet |
 | Provider de OCR/IA | media | media | PENDENTE | em aberto | Legado usava Gemini; decisao a confirmar |
 
-ADRs recomendados: escolha de stack; modelo de auth/autorizacao (incl. backend authorization em vez de RLS); Google SSO e dominio permitido; modelo de dados/storage privado; estrategia de deploy/iframe; provider de OCR/IA.
+ADRs recomendados: escolha de stack; modelo de auth/autorizacao (incl. backend authorization em vez de RLS); Google SSO proprio do app em iframe e dominios permitidos; modelo RBAC/escopo multi-filial; modelo de dados/storage privado; estrategia de deploy/iframe; provider de OCR/IA.
 
 ## 19. Criterios De Aceite Da Matriz - Portao 1
 
@@ -493,3 +502,4 @@ Antes de gerar roadmap, validar com duas assinaturas.
 | `v0.1` | 2026-06-15 | Equipe SDD 3A RIVA | Criacao inicial consolidando matriz do legado, politica de desenvolvimento e telas de referencia no template do Portao 1 | `Rascunho` |
 | `v0.2` | 2026-06-15 | Equipe SDD 3A RIVA | Consolida decisoes do Portao 1: autorizacao backend em vez de RLS como controle primario, stack como decisao arquitetural, arquivos privados por padrao, Google SSO como login unico inicial e rastreabilidade preliminar ate revisao do catalogo RN/RF/RNF | `Rascunho` |
 | `v0.3` | 2026-06-16 | Equipe SDD 3A RIVA | Altera o banco gerenciado da stack de Neon para Supabase Postgres, mantendo Firebase Auth/Storage, Prisma server-side, Vercel e autorizacao backend como controle primario | `Rascunho` |
+| `v0.4` | 2026-06-16 | Equipe SDD 3A RIVA | Consolida decisoes tecnicas: Supabase Postgres decidido para v1, Analytics fora da v1, Google SSO proprio do app em iframe conforme padrao Bob, RBAC com Role base e escopo multi-filial, seed controlado do primeiro admin, upload direto com validacao posterior e rate limit por banco | `Rascunho` |
